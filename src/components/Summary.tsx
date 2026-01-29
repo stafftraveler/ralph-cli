@@ -178,24 +178,6 @@ export function Summary({ summary }: SummaryProps) {
 }
 
 /**
- * Compact summary for inline display
- */
-export function CompactSummary({ summary }: SummaryProps) {
-  const { totalIterations, totalDurationSeconds, totalCost, commits } = summary;
-
-  return (
-    <Box>
-      <Text color="gray">
-        {totalIterations} iteration{totalIterations !== 1 ? "s" : ""} ·{" "}
-        {formatDuration(totalDurationSeconds)}
-        {totalCost !== undefined && ` · ${formatCost(totalCost)}`} ·{" "}
-        {commits.length} commit{commits.length !== 1 ? "s" : ""}
-      </Text>
-    </Box>
-  );
-}
-
-/**
  * Create a SessionSummary from session data
  */
 export function createSummary({

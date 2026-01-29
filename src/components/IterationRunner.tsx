@@ -236,26 +236,47 @@ export function IterationRunner({
           ))}
         </Box>
       )}
+      {verbose && state.output && (
+        <VerboseOutput output={state.output} />
+      )}
     </Box>
   );
 }
 
 /**
- * Compact iteration status for summary views
+ * Maximum number of lines to display in verbose output
  */
-export function IterationSummary({ result }: { result: IterationResult }) {
-  const statusIcon = result.success ? "✓" : "✗";
-  const statusColor = result.success ? "green" : "red";
+const VERBOSE_MAX_LINES = 20;
+
+/**
+ * Verbose output display showing the last N lines of Claude's response
+ */
+function VerboseOutput({ output }: { output: string }) {
+  // Split into lines and take the last N
+  const lines = output.split("\n");
+  const displayLines =
+    lines.length > VERBOSE_MAX_LINES
+      ? lines.slice(-VERBOSE_MAX_LINES)
+      : lines;
+  const truncated = lines.length > VERBOSE_MAX_LINES;
 
   return (
-    <Box>
-      <Text color={statusColor}>{statusIcon} </Text>
-      <Text>Iteration {result.iteration}</Text>
-      <Text color="gray"> · {formatDuration(result.durationSeconds)}</Text>
-      {result.usage?.totalCostUsd !== undefined && (
-        <Text color="gray"> · {formatCost(result.usage.totalCostUsd)}</Text>
-      )}
-      {result.prdComplete && <Text color="green"> · PRD Complete</Text>}
+    <Box flexDirection="column" marginTop={1} marginLeft={2}>
+      <Text color="gray" dimColor>
+        Claude output:{truncated && ` (last ${VERBOSE_MAX_LINES} lines)`}
+      </Text>
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor="gray"
+        paddingX={1}
+      >
+        {displayLines.map((line, i) => (
+          <Text key={`output-${i}-${line.slice(0, 10)}`} color="white" dimColor>
+            {line || " "}
+          </Text>
+        ))}
+      </Box>
     </Box>
   );
 }

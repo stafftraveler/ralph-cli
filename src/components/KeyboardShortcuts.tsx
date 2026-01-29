@@ -82,22 +82,3 @@ export function KeyboardShortcuts({
     </Box>
   );
 }
-
-/**
- * Compact shortcut hint for inline use
- */
-export function ShortcutHint({
-  keyChar,
-  label,
-}: {
-  keyChar: string;
-  label: string;
-}) {
-  return (
-    <Text color="gray">
-      <Text>[</Text>
-      <Text color="cyan">{keyChar}</Text>
-      <Text>] {label}</Text>
-    </Text>
-  );
-}

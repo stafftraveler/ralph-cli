@@ -273,26 +273,3 @@ export function IterationLoop({
   );
 }
 
-/**
- * Utility to calculate total duration from iterations
- */
-export function calculateTotalDuration(iterations: IterationResult[]): number {
-  return iterations.reduce((sum, iter) => sum + iter.durationSeconds, 0);
-}
-
-/**
- * Utility to calculate total cost from iterations
- */
-export function calculateTotalCost(iterations: IterationResult[]): number {
-  return iterations.reduce(
-    (sum, iter) => sum + (iter.usage?.totalCostUsd ?? 0),
-    0,
-  );
-}
-
-/**
- * Check if any iteration in a list has PRD complete
- */
-export function hasPrdComplete(iterations: IterationResult[]): boolean {
-  return iterations.some((iter) => iter.prdComplete);
-}

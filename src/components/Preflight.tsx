@@ -213,35 +213,3 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
     </Box>
   );
 }
-
-/**
- * Compact preflight result display (for summary/debug)
- */
-export function PreflightSummary({ results }: { results: PreflightResult }) {
-  const checks = [
-    results.claudeCode,
-    results.apiKey,
-    results.git,
-    results.prd,
-    results.claudeMd,
-  ];
-  const passed = checks.filter((c) => c.status === "passed").length;
-  const failed = checks.filter((c) => c.status === "failed").length;
-  const warnings = checks.filter((c) => c.status === "warning").length;
-
-  return (
-    <Text>
-      Preflight: <Text color="green">{passed} passed</Text>
-      {warnings > 0 && (
-        <Text>
-          , <Text color="yellow">{warnings} warnings</Text>
-        </Text>
-      )}
-      {failed > 0 && (
-        <Text>
-          , <Text color="red">{failed} failed</Text>
-        </Text>
-      )}
-    </Text>
-  );
-}
