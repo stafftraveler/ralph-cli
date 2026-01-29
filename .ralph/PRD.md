@@ -12,4 +12,5 @@ Clean-up the codebase.
 
 [x] Scan for code smells: unused exports, dead code, inconsistent patterns, duplicate code. Fix ONE issue per iteration. Repeat until done.
     - ✅ Iteration 1: Eliminated duplicate formatCost() function (3 copies → 1 shared utility in lib/utils.ts)
-    - Remaining issues: unused exports in use-keyboard.ts, unused types, formatDuration duplicate in run-ci.ts, unused params/state, inconsistent patterns
+    - ✅ Iteration 2: Removed unused hook exports from use-keyboard.ts (useKeyHandler, useEnterKey, useEscapeKey)
+    - Remaining issues: unused function exports in claude.ts (formatToolStatus, isPrdComplete), unused params/state in App.tsx and IterationRunner.tsx, inconsistent patterns

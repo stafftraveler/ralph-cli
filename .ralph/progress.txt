@@ -18,3 +18,22 @@
 **Impact**: Eliminated code duplication, improved maintainability. Three identical implementations reduced to one shared utility.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 2
+
+**Task**: Remove unused hook exports from use-keyboard.ts (PRD cleanup task)
+
+**What was done**:
+- Removed unused useKeyHandler() hook (never imported/used)
+- Removed unused useEnterKey() hook (never imported/used)
+- Removed unused useEscapeKey() hook (never imported/used)
+- Kept KeyHandler and KeyHandlers types as they're used by useKeyboardShortcuts
+
+**Files changed**:
+- src/hooks/use-keyboard.ts (removed 3 unused exported functions, ~58 lines)
+
+**Reasoning**: These hooks were exported but never used anywhere. Keeping unused exports increases API surface area and maintenance burden.
+
+**Impact**: Reduced API bloat, cleaner public interface. File reduced from 185 to 127 lines.
+
+**All checks passed**: format, lint, types ✓
