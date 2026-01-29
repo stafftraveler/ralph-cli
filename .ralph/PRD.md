@@ -15,4 +15,5 @@ Clean-up the codebase.
     - ✅ Iteration 2: Removed unused hook exports from use-keyboard.ts (useKeyHandler, useEnterKey, useEscapeKey)
     - ✅ Iteration 3: Made formatToolStatus and isPrdComplete non-exported in claude.ts (only used internally)
     - ✅ Iteration 4: Removed unused state/params from App.tsx and IterationRunner.tsx (_setPrUrl, _keyboardActions, onCancel)
-    - Remaining: Additional code smells detection needed
+    - ✅ Iteration 5: Deleted entire unused run.tsx file (IterationLoop component never imported, 260 lines of dead code)
+    - Continue scanning for more issues

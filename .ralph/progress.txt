@@ -74,3 +74,22 @@
 **Impact**: Cleaner component interfaces, reduced unused code. All functionality preserved (prUrl can still be set by plugins via createSummary).
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 5
+
+**Task**: Remove unused IterationLoop component from run.tsx (PRD cleanup task)
+
+**What was done**:
+- Deleted entire src/commands/run.tsx file (260 lines of dead code)
+- IterationLoop component was exported but never imported anywhere
+- IterationLoopProps interface was also unused
+- Actual iteration loop logic already exists in App.tsx using IterationRunner directly
+
+**Files changed**:
+- src/commands/run.tsx (deleted entirely)
+
+**Reasoning**: Complete dead code file. Component exported but never used. Duplicate logic exists in App.tsx. Removing eliminates 260 lines of maintenance burden and API surface area bloat.
+
+**Impact**: Reduced codebase by 260 lines. Eliminated entire unused component. Clearer module structure.
+
+**All checks passed**: format, lint, types ✓
