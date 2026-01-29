@@ -20,4 +20,5 @@ Clean-up the codebase.
     - ✅ Iteration 7: Removed getDefaultConfig() from config.ts (5 lines) - exported but never imported
     - ✅ Iteration 8: Made 3 exports private in plugins.ts - PluginHook, PluginConfig, runHook() only used internally
     - ✅ Iteration 9: Made 2 interface exports private in use-session.ts - UseSessionState, UseSessionActions only used internally
+    - ✅ Iteration 10: Made 2 interface exports private in use-preflight.ts - UsePreflightState, UsePreflightActions only used internally
     - Continue scanning for more issues

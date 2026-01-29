@@ -165,3 +165,21 @@
 **Impact**: Cleaner hook interface. Consumers still get full type inference from useSession return value without needing explicit interface imports.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 10
+
+**Task**: Remove unused interface exports from use-preflight.ts (PRD cleanup task)
+
+**What was done**:
+- Made UsePreflightState interface private (only used internally as return type)
+- Made UsePreflightActions interface private (only used internally as return type)
+- Both interfaces only referenced within use-preflight.ts, never imported elsewhere
+
+**Files changed**:
+- src/hooks/use-preflight.ts (removed export keywords from 2 interfaces)
+
+**Reasoning**: Both interfaces exported but never imported. Only used within hook file to type the returned tuple. Exporting unnecessarily increases API surface area and suggests they're part of public API when they're implementation details.
+
+**Impact**: Cleaner hook interface. Consumers still get full type inference from usePreflight return value without needing explicit interface imports.
+
+**All checks passed**: format, lint, types ✓

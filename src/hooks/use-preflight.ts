@@ -9,7 +9,7 @@ import { isGitRepo } from "./use-git.js";
 /**
  * State returned by usePreflight hook
  */
-export interface UsePreflightState {
+interface UsePreflightState {
   /** Whether preflight checks are running */
   isChecking: boolean;
   /** Results for all checks */
@@ -23,7 +23,7 @@ export interface UsePreflightState {
 /**
  * Actions returned by usePreflight hook
  */
-export interface UsePreflightActions {
+interface UsePreflightActions {
   /** Run all preflight checks in parallel */
   runChecks: (ralphDir: string) => Promise<PreflightResult>;
   /** Mark API key check as passed (after user provides key) */
