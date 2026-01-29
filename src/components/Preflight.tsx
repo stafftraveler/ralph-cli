@@ -1,8 +1,9 @@
 import { Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePreflight } from "../hooks/use-preflight.js";
 import type { PreflightCheck, PreflightResult } from "../types.js";
+import { ApiKeyPrompt } from "./ApiKeyPrompt.js";
 
 /**
  * Props for the Preflight component
@@ -60,12 +61,15 @@ function CheckStatus({ check }: { check: PreflightCheck }) {
  * Preflight component showing live status for each check
  *
  * Displays spinners while checking, then checkmarks/crosses when complete.
+ * Shows API key prompt if the key is missing.
  * Transitions to TemplateSelector if PRD has no tasks.
  */
 export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
   const { exit } = useApp();
   const [state, actions] = usePreflight();
   const { isChecking, results, allPassed, prdHasTasks } = state;
+  const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false);
+  const [apiKeyProvided, setApiKeyProvided] = useState(false);
 
   useEffect(() => {
     if (skip) {
@@ -75,11 +79,21 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
     }
 
     void actions.runChecks(ralphDir);
-  }, [ralphDir, skip, actions, onComplete]);
+  }, [ralphDir, skip, actions, onComplete, apiKeyProvided]);
+
+  // Check if API key is missing and show prompt
+  useEffect(() => {
+    if (!isChecking && results !== null && !apiKeyProvided) {
+      const apiKeyFailed = results.apiKey.status === "failed";
+      if (apiKeyFailed && !showApiKeyPrompt) {
+        setShowApiKeyPrompt(true);
+      }
+    }
+  }, [isChecking, results, apiKeyProvided, showApiKeyPrompt]);
 
   // When checks complete, notify parent (only if passed) or exit (if failed)
   useEffect(() => {
-    if (!isChecking && results !== null) {
+    if (!isChecking && results !== null && !showApiKeyPrompt) {
       if (allPassed) {
         // Small delay to let user see results before continuing
         const timer = setTimeout(() => {
@@ -87,18 +101,48 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
         }, 800);
         return () => clearTimeout(timer);
       }
-      // If checks failed, exit after a longer delay so user can read the errors
+      // If checks failed (and not waiting for API key), exit after a delay
       const timer = setTimeout(() => {
         exit();
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isChecking, results, allPassed, prdHasTasks, onComplete, exit]);
+  }, [isChecking, results, allPassed, prdHasTasks, onComplete, exit, showApiKeyPrompt]);
+
+  const handleApiKeySubmit = (_apiKey: string) => {
+    setShowApiKeyPrompt(false);
+    setApiKeyProvided(true);
+    // Re-run checks with the new API key
+    void actions.runChecks(ralphDir);
+  };
+
+  const handleApiKeySkip = () => {
+    setShowApiKeyPrompt(false);
+    // Continue with failed check - will exit due to failure
+  };
 
   if (skip) {
     return (
       <Box flexDirection="column">
         <Text color="yellow">⚡ Skipping preflight checks</Text>
+      </Box>
+    );
+  }
+
+  // Show API key prompt if needed
+  if (showApiKeyPrompt) {
+    return (
+      <Box flexDirection="column" marginY={1}>
+        <Box marginBottom={1}>
+          <Text bold>Preflight Checks</Text>
+        </Box>
+        {results && (
+          <Box flexDirection="column" marginLeft={1} marginBottom={1}>
+            <CheckStatus check={results.claudeCode} />
+            <CheckStatus check={results.apiKey} />
+          </Box>
+        )}
+        <ApiKeyPrompt onSubmit={handleApiKeySubmit} onSkip={handleApiKeySkip} />
       </Box>
     );
   }

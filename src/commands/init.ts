@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import * as readline from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import { hasApiKey, isClaudeCodeInstalled } from "../lib/claude.js";
@@ -69,6 +70,52 @@ async function copyIfNotExists(
 }
 
 export type InitOptions = Record<string, never>;
+
+/**
+ * Prompt user for API key interactively
+ */
+async function promptForApiKey(): Promise<string | null> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  console.log(
+    chalk.dim(
+      "\nGet your API key from: https://console.anthropic.com/settings/keys",
+    ),
+  );
+
+  try {
+    const apiKey = await rl.question(chalk.cyan("Enter API key (or press Enter to skip): "));
+    rl.close();
+
+    const trimmed = apiKey.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (!trimmed.startsWith("sk-ant-")) {
+      console.log(chalk.red("Invalid API key format. Expected: sk-ant-..."));
+      return null;
+    }
+
+    // Set the API key for this session
+    process.env.ANTHROPIC_API_KEY = trimmed;
+    console.log(chalk.green("✓ API key set for this session"));
+    console.log(
+      chalk.dim(
+        `\nTo persist, add to your shell profile (~/.zshrc or ~/.bashrc):`,
+      ),
+    );
+    console.log(chalk.yellow(`  export ANTHROPIC_API_KEY=${trimmed.slice(0, 15)}...`));
+
+    return trimmed;
+  } catch {
+    rl.close();
+    return null;
+  }
+}
 
 /**
  * Initialize .ralph/ directory with templates
@@ -150,10 +197,11 @@ export async function runInit(
   console.log(chalk.green("✓ Claude Code is installed"));
 
   // Check if API key is set
-  const hasKey = hasApiKey();
+  let hasKey = hasApiKey();
   if (!hasKey) {
     console.log(chalk.yellow("\nANTHROPIC_API_KEY is not set."));
-    console.log(chalk.dim("Export it: export ANTHROPIC_API_KEY=sk-ant-..."));
+    const providedKey = await promptForApiKey();
+    hasKey = !!providedKey;
   } else {
     console.log(chalk.green("✓ API key is configured"));
   }
