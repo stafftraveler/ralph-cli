@@ -115,7 +115,7 @@ export function Summary({ summary }: SummaryProps) {
     >
       {/* Header */}
       <Box justifyContent="center" marginBottom={1}>
-        <Gradient name="pastel">
+        <Gradient colors={["#FFD90F", "#FF9999", "#FFD90F"]}>
           <Text bold>Session Complete</Text>
         </Gradient>
         {prdComplete && (
