@@ -103,7 +103,7 @@ function shortenPath(filePath: string): string {
  * @param toolInput - The tool input object (optional)
  * @returns Human-friendly status string
  */
-export function formatToolStatus(toolName: string, toolInput?: unknown): string {
+function formatToolStatus(toolName: string, toolInput?: unknown): string {
   const description = TOOL_DESCRIPTIONS[toolName] ?? `Using tool: ${toolName}`;
 
   const filePath = extractFilePath(toolInput);
@@ -157,7 +157,7 @@ export interface ClaudeRunResult {
 /**
  * Checks if output indicates PRD is complete
  */
-export function isPrdComplete(output: string): boolean {
+function isPrdComplete(output: string): boolean {
   return output.includes("<promise>COMPLETE</promise>");
 }
 

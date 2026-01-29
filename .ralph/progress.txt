@@ -37,3 +37,20 @@
 **Impact**: Reduced API bloat, cleaner public interface. File reduced from 185 to 127 lines.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 3
+
+**Task**: Remove unnecessary exports from claude.ts (PRD cleanup task)
+
+**What was done**:
+- Made formatToolStatus() non-exported (only used internally in claude.ts)
+- Made isPrdComplete() non-exported (only used internally in claude.ts)
+
+**Files changed**:
+- src/lib/claude.ts (removed export keywords from 2 functions)
+
+**Reasoning**: Both functions exported but only used within same file. No external imports found. Making them private reduces API surface area.
+
+**Impact**: Cleaner module interface, reduced unnecessary exports by 2 functions.
+
+**All checks passed**: format, lint, types ✓
