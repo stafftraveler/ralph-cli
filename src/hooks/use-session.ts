@@ -14,7 +14,7 @@ import type { IterationResult, SessionState } from "../types.js";
 /**
  * State exposed by the useSession hook
  */
-export interface UseSessionState {
+interface UseSessionState {
   /** Current session state */
   session: SessionState | null;
   /** Whether a session operation is in progress */
@@ -28,7 +28,7 @@ export interface UseSessionState {
 /**
  * Actions returned by the useSession hook
  */
-export interface UseSessionActions {
+interface UseSessionActions {
   /** Load existing session from disk */
   load: () => Promise<SessionState | null>;
   /** Start a new session */

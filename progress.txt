@@ -147,3 +147,21 @@
 **Impact**: Cleaner API. Public interface now only exposes: loadPlugins and 4 specific hook runners. Reduced exports by 3.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 9
+
+**Task**: Remove unused interface exports from use-session.ts (PRD cleanup task)
+
+**What was done**:
+- Made UseSessionState interface private (only used internally as return type)
+- Made UseSessionActions interface private (only used internally as return type)
+- Both interfaces only referenced within use-session.ts, never imported elsewhere
+
+**Files changed**:
+- src/hooks/use-session.ts (removed export keywords from 2 interfaces)
+
+**Reasoning**: Both interfaces exported but never imported. Only used within hook file to type the returned tuple. Exporting unnecessarily increases API surface area and suggests they're part of public API when they're implementation details.
+
+**Impact**: Cleaner hook interface. Consumers still get full type inference from useSession return value without needing explicit interface imports.
+
+**All checks passed**: format, lint, types ✓
