@@ -30,6 +30,9 @@ Thumbs.db
 npm-debug.log*
 pnpm-debug.log*
 
+# Session files
+.ralph/session.json
+
 # Test coverage
 coverage/
 
