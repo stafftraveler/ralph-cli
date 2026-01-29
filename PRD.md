@@ -18,4 +18,5 @@ Clean-up the codebase.
     - ✅ Iteration 5: Made 5 type exports private in use-keyboard.ts - KeyHandler, KeyHandlers, UseKeyboardShortcutsOptions, KeyboardState, KeyboardActions never imported
     - ✅ Iteration 6: Made NotifyOptions interface private in notify.ts - exported but never imported
     - ✅ Iteration 7: Removed getDefaultConfig() from config.ts (5 lines) - exported but never imported
+    - ✅ Iteration 8: Made 3 exports private in plugins.ts - PluginHook, PluginConfig, runHook() only used internally
     - Continue scanning for more issues

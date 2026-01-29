@@ -6,12 +6,12 @@ import type { IterationContext, PluginContext, RalphPlugin } from "../types.js";
 /**
  * Plugin hook names
  */
-export type PluginHook = "beforeRun" | "beforeIteration" | "afterIteration" | "done" | "onError";
+type PluginHook = "beforeRun" | "beforeIteration" | "afterIteration" | "done" | "onError";
 
 /**
  * Plugin configuration in .ralph/config or separate plugin config
  */
-export interface PluginConfig {
+interface PluginConfig {
   /** List of plugin names or paths to enable */
   plugins?: string[];
   /** Plugin-specific options keyed by plugin name */
@@ -130,7 +130,7 @@ async function loadPluginFromFile(filePath: string): Promise<RalphPlugin | null>
  * @param context Context to pass to the hook
  * @param error Optional error for onError hook
  */
-export async function runHook(
+async function runHook(
   plugins: RalphPlugin[],
   hookName: PluginHook,
   context: PluginContext | IterationContext,
