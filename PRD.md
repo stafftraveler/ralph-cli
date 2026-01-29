@@ -13,4 +13,5 @@ Clean-up the codebase.
 [x] Scan for code smells: unused exports, dead code, inconsistent patterns, duplicate code. Fix ONE issue per iteration. Repeat until done.
     - ✅ Iteration 1: Deleted unused editor.ts file (38 lines) - openInEditor() function never imported/used
     - ✅ Iteration 2: Removed unused runBeforeIteration() from plugins.ts (9 lines) - exported but never used
+    - ✅ Iteration 3: Removed unused _getStatusLabel() from DiffPreview.tsx (22 lines) - defined but never called
     - Continue scanning for more issues

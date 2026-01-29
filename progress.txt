@@ -35,3 +35,22 @@
 **Impact**: Reduced API surface area by 1 function. Cleaner plugin interface.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 3
+
+**Task**: Remove unused _getStatusLabel() function (PRD cleanup task)
+
+**What was done**:
+- Removed _getStatusLabel() function from src/components/DiffPreview.tsx (22 lines)
+- Function was defined but never called anywhere
+- Marked as "@internal Reserved for future verbose mode" but never implemented
+- Component only uses getStatusColor() for its display logic
+
+**Files changed**:
+- src/components/DiffPreview.tsx (removed unused function)
+
+**Reasoning**: Dead code reserved for future feature that was never implemented. Function provides string labels for status codes but is never called.
+
+**Impact**: Reduced dead code by 22 lines. Cleaner component, no feature loss.
+
+**All checks passed**: format, lint, types ✓

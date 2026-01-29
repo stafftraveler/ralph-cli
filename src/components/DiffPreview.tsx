@@ -36,29 +36,6 @@ function getStatusColor(
 }
 
 /**
- * Get status label for display
- * @internal Reserved for future verbose mode
- */
-function _getStatusLabel(status: DiffStat["status"]): string {
-  switch (status) {
-    case "M":
-      return "modified";
-    case "A":
-      return "added";
-    case "D":
-      return "deleted";
-    case "R":
-      return "renamed";
-    case "C":
-      return "copied";
-    case "U":
-      return "unmerged";
-    default:
-      return status;
-  }
-}
-
-/**
  * Single file diff line
  */
 function DiffLine({ stat }: { stat: DiffStat }) {
