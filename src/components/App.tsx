@@ -103,6 +103,12 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         exit();
       }
     }, [session, exit]),
+    onIncrementIterations: useCallback(() => {
+      setTotalIterations((prev) => prev + 1);
+    }, []),
+    onDecrementIterations: useCallback(() => {
+      setTotalIterations((prev) => Math.max(prev - 1, currentIteration));
+    }, [currentIteration]),
   });
 
   // Merge verbose/debug from CLI and keyboard toggles
@@ -491,7 +497,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             debug={debug}
           />
           <Box marginTop={1}>
-            <KeyboardShortcuts verbose={verbose} debug={debug} />
+            <KeyboardShortcuts verbose={verbose} debug={debug} totalIterations={totalIterations} />
           </Box>
         </Box>
       )}

@@ -25,6 +25,10 @@ export interface UseKeyboardShortcutsOptions {
   onToggleVerbose?: () => void;
   /** Handler for toggle debug (d key) */
   onToggleDebug?: () => void;
+  /** Handler for increment iterations (up arrow) */
+  onIncrementIterations?: () => void;
+  /** Handler for decrement iterations (down arrow) */
+  onDecrementIterations?: () => void;
   /** Additional custom key handlers */
   handlers?: KeyHandlers;
 }
@@ -66,7 +70,15 @@ export interface KeyboardActions {
 export function useKeyboardShortcuts(
   options: UseKeyboardShortcutsOptions = {},
 ): [KeyboardState, KeyboardActions] {
-  const { isActive = true, onQuit, onToggleVerbose, onToggleDebug, handlers = {} } = options;
+  const {
+    isActive = true,
+    onQuit,
+    onToggleVerbose,
+    onToggleDebug,
+    onIncrementIterations,
+    onDecrementIterations,
+    handlers = {},
+  } = options;
 
   const [verbose, setVerbose] = useState(false);
   const [debug, setDebug] = useState(false);
@@ -86,6 +98,16 @@ export function useKeyboardShortcuts(
       // Handle Ctrl+C as quit
       if (key.ctrl && input === "c") {
         onQuit?.();
+        return;
+      }
+
+      // Handle arrow keys for iteration adjustment
+      if (key.upArrow) {
+        onIncrementIterations?.();
+        return;
+      }
+      if (key.downArrow) {
+        onDecrementIterations?.();
         return;
       }
 
