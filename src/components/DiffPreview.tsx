@@ -1,5 +1,4 @@
 import { Box, Text } from "ink";
-import { Fragment } from "react";
 import type { DiffStat } from "../types.js";
 
 /**
@@ -165,43 +164,3 @@ export function DiffPreview({
   );
 }
 
-/**
- * Inline diff badge for compact displays
- */
-export function DiffBadge({ stats }: { stats: DiffStat[] }) {
-  if (stats.length === 0) {
-    return null;
-  }
-
-  const totalAdditions = stats.reduce((sum, s) => sum + s.additions, 0);
-  const totalDeletions = stats.reduce((sum, s) => sum + s.deletions, 0);
-
-  return (
-    <Text>
-      <Text color="gray">[</Text>
-      <Text color="green">+{totalAdditions}</Text>
-      <Text color="gray">/</Text>
-      <Text color="red">-{totalDeletions}</Text>
-      <Text color="gray">]</Text>
-    </Text>
-  );
-}
-
-/**
- * Legend showing status code meanings
- */
-export function DiffLegend() {
-  const statuses: DiffStat["status"][] = ["M", "A", "D", "R", "C"];
-
-  return (
-    <Box>
-      {statuses.map((status, index) => (
-        <Fragment key={status}>
-          {index > 0 && <Text color="gray"> · </Text>}
-          <Text color={getStatusColor(status)}>{status}</Text>
-          <Text color="gray">={getStatusLabel(status)}</Text>
-        </Fragment>
-      ))}
-    </Box>
-  );
-}

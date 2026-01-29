@@ -82,3 +82,23 @@
 
 **Notes**:
 - 2 more unused components remain (DiffBadge, DiffLegend) - both in DiffPreview.tsx
+
+## Iteration 6
+
+**Task**: Removed unused DiffBadge and DiffLegend components from src/components/DiffPreview.tsx
+
+**PRD Reference**: [ ] Remove remaining 2 unused exported React components (DiffBadge, DiffLegend) in DiffPreview.tsx
+
+**What was done**:
+- Removed DiffBadge component (inline diff badge for compact displays)
+- Removed DiffLegend component (legend showing status code meanings)
+- Removed unused Fragment import from react (only used by DiffLegend)
+- Verified neither component imported anywhere in codebase
+- Type checking passed
+
+**Files changed**:
+- src/components/DiffPreview.tsx (-39 lines)
+
+**Notes**:
+- All unused exports now removed from codebase
+- Cleanup task complete

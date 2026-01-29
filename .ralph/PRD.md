@@ -23,4 +23,4 @@ Clean-up the codebase.
 [x] Removed PreflightSummary component from src/components/Preflight.tsx
 [x] Removed ShortcutHint component from src/components/KeyboardShortcuts.tsx
 [x] Removed IterationSummary component from src/components/IterationRunner.tsx
-[ ] Remove remaining 2 unused exported React components (DiffBadge, DiffLegend) in DiffPreview.tsx
+[x] Remove remaining 2 unused exported React components (DiffBadge, DiffLegend) in DiffPreview.tsx
