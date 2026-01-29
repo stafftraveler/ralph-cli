@@ -21,4 +21,5 @@ Clean-up the codebase.
     - ✅ Iteration 8: Made 3 exports private in plugins.ts - PluginHook, PluginConfig, runHook() only used internally
     - ✅ Iteration 9: Made 2 interface exports private in use-session.ts - UseSessionState, UseSessionActions only used internally
     - ✅ Iteration 10: Made 2 interface exports private in use-preflight.ts - UsePreflightState, UsePreflightActions only used internally
+    - ✅ Iteration 11: Made 2 interface exports private in use-claude.ts - UseClaudeActions, RunIterationOptions only used internally (kept UseClaudeState exported as it's used by IterationRunner)
     - Continue scanning for more issues

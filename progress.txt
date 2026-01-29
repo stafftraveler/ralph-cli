@@ -183,3 +183,21 @@
 **Impact**: Cleaner hook interface. Consumers still get full type inference from usePreflight return value without needing explicit interface imports.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 11
+
+**Task**: Remove unused interface exports from use-claude.ts (PRD cleanup task)
+
+**What was done**:
+- Made UseClaudeActions interface private (only used internally as return type)
+- Made RunIterationOptions interface private (only used internally as parameter type)
+- Kept UseClaudeState exported (actually imported in IterationRunner.tsx for UsageDisplay component)
+
+**Files changed**:
+- src/hooks/use-claude.ts (removed export keywords from 2 interfaces)
+
+**Reasoning**: UseClaudeActions and RunIterationOptions exported but never imported. Only used within hook file. UseClaudeState properly exported as it's used by IterationRunner component for typing props.
+
+**Impact**: Cleaner hook interface. Reduced unnecessary exports while keeping legitimate public API.
+
+**All checks passed**: format, lint, types ✓

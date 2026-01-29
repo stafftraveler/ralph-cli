@@ -25,7 +25,7 @@ export interface UseClaudeState {
 /**
  * Actions returned by the useClaude hook
  */
-export interface UseClaudeActions {
+interface UseClaudeActions {
   /** Run a single Claude iteration */
   runIteration: (config: RalphConfig, options: RunIterationOptions) => Promise<IterationResult>;
   /** Cancel the current iteration */
@@ -37,7 +37,7 @@ export interface UseClaudeActions {
 /**
  * Options for running a single iteration
  */
-export interface RunIterationOptions {
+interface RunIterationOptions {
   /** Path to .ralph directory */
   ralphDir: string;
   /** Prompt to send to Claude */
