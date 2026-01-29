@@ -1,0 +1,71 @@
+{
+  "name": "@stafftraveler/ralph",
+  "version": "1.0.0",
+  "description": "Interactive CLI for running autonomous Claude Code iterations with real-time status updates",
+  "type": "module",
+  "bin": {
+    "ralph": "./bin/ralph"
+  },
+  "files": [
+    "bin",
+    "src",
+    "tsconfig.json"
+  ],
+  "scripts": {
+    "start": "./bin/ralph",
+    "ralph": "./bin/ralph",
+    "check:types": "tsc --noEmit",
+    "postinstall": "node -e \"console.log('\\n\\x1b[36m@stafftraveler/ralph installed!\\x1b[0m\\nRun \\x1b[33mnpx ralph init\\x1b[0m to initialize Ralph in your project.\\n')\""
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.23",
+    "chalk": "^5.4.0",
+    "commander": "^13.0.0",
+    "execa": "^9.5.0",
+    "ink": "^5.2.0",
+    "ink-big-text": "^2.0.0",
+    "ink-gradient": "^3.0.0",
+    "ink-select-input": "^6.0.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "node-notifier": "^10.0.1",
+    "open": "^10.0.0",
+    "react": "^18.3.1",
+    "tsx": "^4.21.0",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/node-notifier": "^8.0.5",
+    "@types/react": "^18.3.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StaffTraveler/ralph-cli.git"
+  },
+  "homepage": "https://github.com/StaffTraveler/ralph-cli#readme",
+  "bugs": {
+    "url": "https://github.com/StaffTraveler/ralph-cli/issues"
+  },
+  "keywords": [
+    "cli",
+    "claude",
+    "claude-code",
+    "ai",
+    "automation",
+    "developer-tools",
+    "prd",
+    "iterations"
+  ],
+  "author": "StaffTraveler",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

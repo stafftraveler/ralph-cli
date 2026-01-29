@@ -1,0 +1,256 @@
+import { Box, Text } from "ink";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { IterationRunner } from "../components/IterationRunner.js";
+import { KeyboardShortcuts } from "../components/KeyboardShortcuts.js";
+import { runAfterIteration, runBeforeIteration } from "../lib/plugins.js";
+import { addIterationResult, saveCheckpoint } from "../lib/session.js";
+import type {
+  IterationContext,
+  IterationResult,
+  PluginContext,
+  RalphConfig,
+  RalphPlugin,
+  SessionState,
+} from "../types.js";
+
+/**
+ * Props for the IterationLoop component
+ */
+export interface IterationLoopProps {
+  /** Ralph configuration */
+  config: RalphConfig;
+  /** Path to .ralph directory */
+  ralphDir: string;
+  /** Prompt to send to Claude */
+  prompt: string;
+  /** Current session state */
+  session: SessionState;
+  /** Loaded plugins */
+  plugins: RalphPlugin[];
+  /** Repository root path */
+  repoRoot: string;
+  /** Current branch name */
+  branch: string;
+  /** Starting iteration number (for resume) */
+  startIteration: number;
+  /** Total iterations to run */
+  totalIterations: number;
+  /** Verbose mode enabled */
+  verbose: boolean;
+  /** Debug mode enabled */
+  debug: boolean;
+  /** Dry run mode (no actual execution) */
+  dryRun: boolean;
+  /** Called when session is updated */
+  onSessionUpdate: (session: SessionState) => void;
+  /** Called when all iterations complete */
+  onComplete: (prdComplete: boolean) => void;
+  /** Called when an error occurs that can't be retried */
+  onError: (error: string) => void;
+  /** Called when iteration fails but can be retried */
+  onRetryExhausted?: (iteration: number, attempts: number) => void;
+}
+
+/**
+ * IterationLoop component
+ *
+ * Manages the iteration loop, including:
+ * - Running iterations via IterationRunner
+ * - Plugin lifecycle hooks (beforeIteration, afterIteration)
+ * - Retry logic with exponential backoff
+ * - Session checkpointing
+ * - PRD completion detection
+ */
+export function IterationLoop({
+  config,
+  ralphDir,
+  prompt,
+  session,
+  plugins,
+  repoRoot,
+  branch,
+  startIteration,
+  totalIterations,
+  verbose,
+  debug,
+  dryRun,
+  onSessionUpdate,
+  onComplete,
+  onError,
+  onRetryExhausted,
+}: IterationLoopProps) {
+  const [currentIteration, setCurrentIteration] = useState(startIteration);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRunning, setIsRunning] = useState(true);
+  const sessionRef = useRef(session);
+
+  // Keep session ref in sync
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  /**
+   * Build plugin context for hooks
+   */
+  const getPluginContext = useCallback((): PluginContext => {
+    return {
+      config,
+      session: sessionRef.current,
+      repoRoot,
+      branch,
+      verbose,
+      dryRun,
+    };
+  }, [config, repoRoot, branch, verbose, dryRun]);
+
+  /**
+   * Build iteration context for hooks
+   */
+  const getIterationContext = useCallback(
+    (result?: IterationResult): IterationContext => {
+      return {
+        ...getPluginContext(),
+        iteration: currentIteration,
+        totalIterations,
+        result,
+      };
+    },
+    [getPluginContext, currentIteration, totalIterations],
+  );
+
+  /**
+   * Handle iteration completion
+   */
+  const handleIterationComplete = useCallback(
+    async (result: IterationResult) => {
+      const currentSession = sessionRef.current;
+
+      // Add result to session
+      const updatedSession = await addIterationResult(
+        ralphDir,
+        currentSession,
+        result,
+      );
+      sessionRef.current = updatedSession;
+      onSessionUpdate(updatedSession);
+
+      // Save checkpoint
+      await saveCheckpoint(ralphDir, updatedSession, result.iteration);
+
+      // Run afterIteration plugin hook
+      await runAfterIteration(plugins, getIterationContext(result));
+
+      // Check for PRD complete
+      if (result.prdComplete) {
+        setIsRunning(false);
+        onComplete(true);
+        return;
+      }
+
+      // Check if we've reached total iterations
+      if (result.iteration >= totalIterations) {
+        setIsRunning(false);
+        onComplete(false);
+        return;
+      }
+
+      // Handle retry on failure
+      if (!result.success) {
+        const maxRetries = config.maxRetries ?? 3;
+        if (retryCount < maxRetries) {
+          setRetryCount((prev) => prev + 1);
+          // Stay on same iteration for retry
+          return;
+        }
+        setIsRunning(false);
+        onRetryExhausted?.(result.iteration, maxRetries);
+        onError(
+          `Iteration ${result.iteration} failed after ${maxRetries} retries.`,
+        );
+        return;
+      }
+
+      // Reset retry count on success
+      setRetryCount(0);
+
+      // Move to next iteration
+      setCurrentIteration((prev) => prev + 1);
+    },
+    [
+      ralphDir,
+      plugins,
+      getIterationContext,
+      totalIterations,
+      config.maxRetries,
+      retryCount,
+      onSessionUpdate,
+      onComplete,
+      onError,
+      onRetryExhausted,
+    ],
+  );
+
+  /**
+   * Run beforeIteration hook before starting each iteration
+   */
+  useEffect(() => {
+    async function runBeforeIterationHook() {
+      if (!isRunning) return;
+      await runBeforeIteration(plugins, getIterationContext());
+    }
+    void runBeforeIterationHook();
+  }, [plugins, getIterationContext, isRunning]);
+
+  if (!isRunning) {
+    return null;
+  }
+
+  return (
+    <Box flexDirection="column">
+      <IterationRunner
+        config={config}
+        ralphDir={ralphDir}
+        prompt={prompt}
+        iteration={currentIteration}
+        totalIterations={totalIterations}
+        onComplete={handleIterationComplete}
+        verbose={verbose}
+        debug={debug}
+      />
+      {retryCount > 0 && (
+        <Box marginTop={1}>
+          <Text color="yellow">
+            Retry attempt {retryCount} of {config.maxRetries ?? 3}
+          </Text>
+        </Box>
+      )}
+      <Box marginTop={1}>
+        <KeyboardShortcuts verbose={verbose} debug={debug} />
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * Utility to calculate total duration from iterations
+ */
+export function calculateTotalDuration(iterations: IterationResult[]): number {
+  return iterations.reduce((sum, iter) => sum + iter.durationSeconds, 0);
+}
+
+/**
+ * Utility to calculate total cost from iterations
+ */
+export function calculateTotalCost(iterations: IterationResult[]): number {
+  return iterations.reduce(
+    (sum, iter) => sum + (iter.usage?.totalCostUsd ?? 0),
+    0,
+  );
+}
+
+/**
+ * Check if any iteration in a list has PRD complete
+ */
+export function hasPrdComplete(iterations: IterationResult[]): boolean {
+  return iterations.some((iter) => iter.prdComplete);
+}
