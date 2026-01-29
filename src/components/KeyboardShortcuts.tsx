@@ -19,6 +19,8 @@ export interface KeyboardShortcutsProps {
   verbose?: boolean;
   /** Current debug mode state */
   debug?: boolean;
+  /** Current total iterations target */
+  totalIterations?: number;
 }
 
 /**
@@ -28,6 +30,7 @@ const DEFAULT_SHORTCUTS: Shortcut[] = [
   { key: "q", label: "Quit" },
   { key: "v", label: "Toggle verbose" },
   { key: "d", label: "Toggle debug" },
+  { key: "↑/↓", label: "Adjust iterations" },
 ];
 
 /**
@@ -58,13 +61,25 @@ export function KeyboardShortcuts({
   shortcuts = DEFAULT_SHORTCUTS,
   verbose,
   debug,
+  totalIterations,
 }: KeyboardShortcutsProps) {
   return (
     <Box marginTop={1} gap={2}>
       {shortcuts.map((shortcut) => {
         const isActive = (shortcut.key === "v" && verbose) || (shortcut.key === "d" && debug);
+        // Show total iterations count for the arrow keys shortcut
+        const label =
+          shortcut.key === "↑/↓" && totalIterations !== undefined
+            ? `${shortcut.label} (${totalIterations})`
+            : shortcut.label;
 
-        return <ShortcutItem key={shortcut.key} shortcut={shortcut} active={isActive} />;
+        return (
+          <ShortcutItem
+            key={shortcut.key}
+            shortcut={{ ...shortcut, label }}
+            active={isActive}
+          />
+        );
       })}
     </Box>
   );

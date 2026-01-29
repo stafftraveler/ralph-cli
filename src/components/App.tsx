@@ -2,41 +2,41 @@ import { join } from "node:path";
 import { Box, Text, useApp } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  createBranch,
-  getCommitsSince,
-  getCurrentBranch,
-  getDiffStats,
-  getRepoRoot,
+    createBranch,
+    getCommitsSince,
+    getCurrentBranch,
+    getDiffStats,
+    getRepoRoot,
 } from "../hooks/use-git.js";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard.js";
 import { loadConfig } from "../lib/config.js";
 import { notify } from "../lib/notify.js";
 import {
-  loadPlugins,
-  runAfterIteration,
-  runBeforeRun,
-  runDone,
-  runOnError,
+    loadPlugins,
+    runAfterIteration,
+    runBeforeRun,
+    runDone,
+    runOnError,
 } from "../lib/plugins.js";
 import { prdHasTasks } from "../lib/prd.js";
 import {
-  addIterationResult,
-  clearSession,
-  createSession,
-  loadSession,
-  saveCheckpoint,
-  saveSession,
+    addIterationResult,
+    clearSession,
+    createSession,
+    loadSession,
+    saveCheckpoint,
+    saveSession,
 } from "../lib/session.js";
 import { resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
 import type {
-  AppPhase,
-  CliOptions,
-  DiffStat,
-  IterationResult,
-  PluginContext,
-  RalphConfig,
-  RalphPlugin,
-  SessionState,
+    AppPhase,
+    CliOptions,
+    DiffStat,
+    IterationResult,
+    PluginContext,
+    RalphConfig,
+    RalphPlugin,
+    SessionState,
 } from "../types.js";
 import { IterationRunner } from "./IterationRunner.js";
 import { IterationsPrompt } from "./IterationsPrompt.js";
