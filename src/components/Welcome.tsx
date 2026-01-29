@@ -1,8 +1,30 @@
 import { Box, Text } from "ink";
-import BigText from "ink-big-text";
-import Gradient from "ink-gradient";
 import { useEffect, useState } from "react";
 import { getCurrentBranch, getRepoRoot } from "../hooks/use-git.js";
+
+/**
+ * ASCII art logo for Ralph - each line separate for vertical gradient
+ */
+const RALPH_LOGO_LINES = [
+  "    ██████╗  █████╗ ██╗     ██████╗ ██╗  ██╗",
+  "    ██╔══██╗██╔══██╗██║     ██╔══██╗██║  ██║",
+  "    ██████╔╝███████║██║     ██████╔╝███████║",
+  "    ██╔══██╗██╔══██║██║     ██╔═══╝ ██╔══██║",
+  "    ██║  ██║██║  ██║███████╗██║     ██║  ██║",
+  "    ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝",
+];
+
+/**
+ * Simpsons yellow gradient colors (top to bottom, bright to darker)
+ */
+const YELLOW_GRADIENT = [
+  "#FFD800", // Bright Simpsons yellow
+  "#F5C800", // Slightly darker
+  "#E8B800", // Medium
+  "#D4A800", // Darker
+  "#C49800", // Even darker
+  "#B08800", // Darkest
+];
 
 /**
  * Props for the Welcome component
@@ -56,11 +78,13 @@ export function Welcome({ onComplete, duration = 1500 }: WelcomeProps) {
 
   return (
     <Box flexDirection="column" alignItems="center" marginY={1}>
-      {/* ASCII Art Logo with Gradient */}
-      <Box marginBottom={1}>
-        <Gradient name="pastel">
-          <BigText text="Ralph" font="chrome" />
-        </Gradient>
+      {/* ASCII Art Logo with Vertical Yellow Gradient */}
+      <Box flexDirection="column" marginBottom={1}>
+        {RALPH_LOGO_LINES.map((line, index) => (
+          <Text key={index} color={YELLOW_GRADIENT[index]}>
+            {line}
+          </Text>
+        ))}
       </Box>
 
       {/* Tagline */}

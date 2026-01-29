@@ -197,6 +197,7 @@ export interface CliOptions {
  */
 export type AppPhase =
   | "welcome"
+  | "iterations-prompt"
   | "preflight"
   | "template-select"
   | "session-prompt"

@@ -2,43 +2,44 @@ import { join } from "node:path";
 import { Box, Text, useApp } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  createBranch,
-  getCommitsSince,
-  getCurrentBranch,
-  getDiffStats,
-  getRepoRoot,
+    createBranch,
+    getCommitsSince,
+    getCurrentBranch,
+    getDiffStats,
+    getRepoRoot,
 } from "../hooks/use-git.js";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard.js";
 import { loadConfig } from "../lib/config.js";
 import { notify } from "../lib/notify.js";
 import {
-  loadPlugins,
-  runAfterIteration,
-  runBeforeRun,
-  runDone,
-  runOnError,
+    loadPlugins,
+    runAfterIteration,
+    runBeforeRun,
+    runDone,
+    runOnError,
 } from "../lib/plugins.js";
 import { prdHasTasks } from "../lib/prd.js";
 import {
-  addIterationResult,
-  clearSession,
-  createSession,
-  loadSession,
-  saveCheckpoint,
-  saveSession,
+    addIterationResult,
+    clearSession,
+    createSession,
+    loadSession,
+    saveCheckpoint,
+    saveSession,
 } from "../lib/session.js";
 import { resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
 import type {
-  AppPhase,
-  CliOptions,
-  DiffStat,
-  IterationResult,
-  PluginContext,
-  RalphConfig,
-  RalphPlugin,
-  SessionState,
+    AppPhase,
+    CliOptions,
+    DiffStat,
+    IterationResult,
+    PluginContext,
+    RalphConfig,
+    RalphPlugin,
+    SessionState,
 } from "../types.js";
 import { IterationRunner } from "./IterationRunner.js";
+import { IterationsPrompt } from "./IterationsPrompt.js";
 import { KeyboardShortcuts } from "./KeyboardShortcuts.js";
 import { Preflight } from "./Preflight.js";
 import { SessionPrompt } from "./SessionPrompt.js";
@@ -78,8 +79,8 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
   // Iteration state
   const [currentIteration, setCurrentIteration] = useState(1);
-  const [totalIterations, _setTotalIterations] = useState(
-    options.iterations ?? 1,
+  const [totalIterations, setTotalIterations] = useState(
+    options.iterations ?? 5,
   );
   const [prdComplete, setPrdComplete] = useState(false);
   const [prUrl, _setPrUrl] = useState<string | undefined>();
@@ -180,20 +181,35 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   }, [config, session, repoRoot, branch, verbose, options.dryRun]);
 
   // Phase: Welcome complete
-  const handleWelcomeComplete = useCallback(async () => {
-    if (options.skipPreflight) {
-      // Even when skipping preflight, we need to check if PRD has tasks
-      const prdPath = join(ralphDir, "PRD.md");
-      const hasTasks = await prdHasTasks(prdPath);
-      if (!hasTasks) {
-        setPhase("template-select");
-      } else {
-        setPhase("session-prompt");
-      }
+  const handleWelcomeComplete = useCallback(() => {
+    // If iterations not specified via CLI, prompt for them
+    if (options.iterations === undefined) {
+      setPhase("iterations-prompt");
     } else {
       setPhase("preflight");
     }
-  }, [options.skipPreflight, ralphDir]);
+  }, [options.iterations]);
+
+  // Phase: Iterations prompt complete
+  const handleIterationsSubmit = useCallback(
+    async (iterations: number) => {
+      setTotalIterations(iterations);
+
+      if (options.skipPreflight) {
+        // Even when skipping preflight, we need to check if PRD has tasks
+        const prdPath = join(ralphDir, "PRD.md");
+        const hasTasks = await prdHasTasks(prdPath);
+        if (!hasTasks) {
+          setPhase("template-select");
+        } else {
+          setPhase("session-prompt");
+        }
+      } else {
+        setPhase("preflight");
+      }
+    },
+    [options.skipPreflight, ralphDir],
+  );
 
   // Phase: Preflight complete
   const handlePreflightComplete = useCallback(
@@ -468,6 +484,13 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   return (
     <Box flexDirection="column">
       {phase === "welcome" && <Welcome onComplete={handleWelcomeComplete} />}
+
+      {phase === "iterations-prompt" && (
+        <IterationsPrompt
+          onSubmit={handleIterationsSubmit}
+          defaultValue={5}
+        />
+      )}
 
       {phase === "preflight" && (
         <Preflight

@@ -22,29 +22,6 @@ async function loadPrompt(ralphDir: string): Promise<string> {
 }
 
 /**
- * Prompt user for number of iterations using stdin
- */
-async function promptForIterations(): Promise<number> {
-  process.stdout.write(chalk.cyan("Number of iterations: "));
-
-  return new Promise((resolve) => {
-    process.stdin.setRawMode?.(false);
-    process.stdin.resume();
-    process.stdin.once("data", (data) => {
-      process.stdin.pause();
-      const input = data.toString().trim();
-      const parsed = Number.parseInt(input, 10);
-      if (Number.isNaN(parsed) || parsed < 1) {
-        console.log(chalk.yellow("Invalid input, using 1 iteration"));
-        resolve(1);
-      } else {
-        resolve(parsed);
-      }
-    });
-  });
-}
-
-/**
  * Main entry point
  */
 async function main() {
@@ -85,20 +62,11 @@ async function main() {
     // Load the prompt
     const prompt = await loadPrompt(ralphDir);
 
-    // Determine iterations
-    // Skip prompt when --reset is used (reset just exits after resetting)
-    let iterations = options.iterations;
-    if (iterations === undefined && !options.ci && !options.reset) {
-      iterations = await promptForIterations();
-    } else if (iterations === undefined) {
-      iterations = 1; // Default to 1 in CI mode or when --reset is used
-    }
-
-    // Update options with resolved iterations
-    const resolvedOptions = {
-      ...options,
-      iterations,
-    };
+    // For CI mode, default iterations to 1 if not specified
+    const resolvedOptions =
+      options.ci && options.iterations === undefined
+        ? { ...options, iterations: 1 }
+        : options;
 
     // Use CI mode if requested or if stdin is not a TTY
     if (options.ci || !process.stdin.isTTY) {
@@ -106,9 +74,9 @@ async function main() {
       return;
     }
 
-    // Render the Ink app
+    // Render the Ink app (iterations prompt is shown inside App if not specified)
     const { waitUntilExit } = render(
-      <App ralphDir={ralphDir} prompt={prompt} options={resolvedOptions} />,
+      <App ralphDir={ralphDir} prompt={prompt} options={options} />,
     );
 
     // Wait for the app to finish

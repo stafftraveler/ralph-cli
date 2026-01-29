@@ -6,7 +6,7 @@ Fix the described bug(s).
 
 ## Working directory
 
-`src/...`
+`src/`
 
 ## Bug Description
 

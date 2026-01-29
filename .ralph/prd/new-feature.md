@@ -6,7 +6,7 @@ Add new features to the project.
 
 ## Working directory
 
-`src/...`
+`src/`
 
 ## User Story
 

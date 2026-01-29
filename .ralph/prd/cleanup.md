@@ -6,7 +6,7 @@ Clean-up the codebase.
 
 ## Working directory
 
-`src/...`
+`src/`
 
 ## Scope
 

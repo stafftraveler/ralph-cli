@@ -1,7 +1,7 @@
 {
   "name": "@stafftraveler/ralph",
   "version": "1.0.0",
-  "description": "Interactive CLI for running Claude Code iterations with real-time status updates",
+  "description": "Interactive CLI for running a Ralph Wiggum loop in Claude Code",
   "type": "module",
   "bin": {
     "ralph": "./bin/ralph"
@@ -12,9 +12,8 @@
     "tsconfig.json"
   ],
   "scripts": {
-    "start": "./bin/ralph",
     "check:types": "tsc --noEmit",
-    "ralph": "ralph --logs"
+    "ralph": "./bin/ralph"
   },
   "keywords": [
     "cli",
@@ -43,7 +42,6 @@
     "commander": "^13.0.0",
     "execa": "^9.5.0",
     "ink": "^5.2.0",
-    "ink-big-text": "^2.0.0",
     "ink-gradient": "^3.0.0",
     "ink-select-input": "^6.0.0",
     "ink-spinner": "^5.0.0",

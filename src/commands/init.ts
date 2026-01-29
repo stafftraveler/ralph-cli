@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import * as readline from "node:readline/promises";
 import { fileURLToPath } from "node:url";
@@ -37,7 +37,7 @@ async function addRalphScript(repoRoot: string): Promise<boolean> {
       return true;
     }
 
-    pkg.scripts.ralph = "ralph --logs";
+    pkg.scripts.ralph = "npx ralph";
 
     await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
     console.log(chalk.green('Added "ralph" script to package.json'));
@@ -48,20 +48,41 @@ async function addRalphScript(repoRoot: string): Promise<boolean> {
   }
 }
 
-/** Copy file if it doesn't exist */
-async function copyIfNotExists(
+/** Prompt user for yes/no confirmation */
+async function promptYesNo(question: string): Promise<boolean> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    const answer = await rl.question(chalk.cyan(`${question} (y/N): `));
+    rl.close();
+    return answer.trim().toLowerCase() === "y";
+  } catch {
+    rl.close();
+    return false;
+  }
+}
+
+/** Copy file, optionally overwriting if it exists */
+async function copyTemplate(
   src: string,
   dest: string,
   name: string,
+  shouldOverwrite: boolean,
 ): Promise<boolean> {
-  if (existsSync(dest)) {
+  const alreadyExists = existsSync(dest);
+
+  if (alreadyExists && !shouldOverwrite) {
     console.log(chalk.dim(`${name} already exists, skipping`));
     return false;
   }
 
   try {
     await copyFile(src, dest);
-    console.log(chalk.green(`Created ${name}`));
+    const action = alreadyExists ? "Updated" : "Created";
+    console.log(chalk.green(`${action} ${name}`));
     return true;
   } catch (error) {
     console.error(chalk.red(`Failed to create ${name}:`), error);
@@ -155,16 +176,51 @@ export async function runInit(
     console.log(chalk.green("Created .ralph/prd/ directory"));
   }
 
+  // Discover available PRD templates from the bundled templates directory
+  const prdSourceDir = join(templatesDir, "prd");
+  const templateFiles = (await readdir(prdSourceDir)).filter((f) =>
+    f.endsWith(".md"),
+  );
+
+  // Check if any templates already exist
+  const existingTemplates: string[] = [];
+  if (existsSync(join(ralphDir, "prompt.md"))) {
+    existingTemplates.push("prompt.md");
+  }
+  for (const file of templateFiles) {
+    if (existsSync(join(prdTemplatesDir, file))) {
+      existingTemplates.push(`prd/${file}`);
+    }
+  }
+
+  // Ask user if they want to overwrite existing templates
+  let shouldPromptOverwrite = false;
+  if (existingTemplates.length > 0) {
+    console.log(chalk.yellow("\nExisting templates found:"));
+    for (const file of existingTemplates) {
+      console.log(chalk.dim(`  - ${file}`));
+    }
+    shouldPromptOverwrite = await promptYesNo(
+      "\nWould you like to overwrite these templates?",
+    );
+    console.log("");
+  }
+
   // Copy prompt.md
-  await copyIfNotExists(
+  await copyTemplate(
     join(templatesDir, "init", "prompt.md"),
     join(ralphDir, "prompt.md"),
     "prompt.md",
+    shouldPromptOverwrite,
   );
 
-  // Copy initial PRD.md from empty template
+  // Copy initial PRD.md from empty template (never overwrite PRD.md as it contains user's tasks)
   const prdSource = join(templatesDir, "prd", "empty.md");
-  await copyIfNotExists(prdSource, join(ralphDir, "PRD.md"), "PRD.md");
+  if (!existsSync(join(ralphDir, "PRD.md"))) {
+    await copyTemplate(prdSource, join(ralphDir, "PRD.md"), "PRD.md", false);
+  } else {
+    console.log(chalk.dim("PRD.md already exists, skipping"));
+  }
 
   // Create empty progress.txt
   const progressPath = join(ralphDir, "progress.txt");
@@ -176,20 +232,12 @@ export async function runInit(
   }
 
   // Copy prd templates
-  const templateFiles = [
-    "empty.md",
-    "bug-fix.md",
-    "new-feature.md",
-    "refactor.md",
-    "cleanup.md",
-    "update-dependencies.md",
-  ];
-
   for (const file of templateFiles) {
-    await copyIfNotExists(
-      join(templatesDir, "prd", file),
+    await copyTemplate(
+      join(prdSourceDir, file),
       join(prdTemplatesDir, file),
       `prd/${file}`,
+      shouldPromptOverwrite,
     );
   }
 

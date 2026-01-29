@@ -217,7 +217,7 @@ export async function createProgram(): Promise<Command> {
     )
     .option("--skip-preflight", "Skip all preflight checks", false)
     .option("-b, --branch <name>", "Create or switch to a git branch")
-    .option("--logs", "Save each iteration's output to .ralph/logs/", false)
+    .option("--no-logs", "Disable saving iteration output to .ralph/logs/")
     .option(
       "--reset",
       "Reset PRD.md and progress.txt for a fresh session",
@@ -248,7 +248,7 @@ export async function createProgram(): Promise<Command> {
           dryRun: opts.dryRun ?? false,
           skipPreflight: opts.skipPreflight ?? false,
           branch: opts.branch,
-          logs: opts.logs ?? false,
+          logs: opts.logs !== false,
           reset: opts.reset ?? false,
           debug: opts.debug ?? false,
           resume: opts.resume ?? false,
@@ -271,7 +271,7 @@ export async function createProgram(): Promise<Command> {
           verbose: false,
           dryRun: false,
           skipPreflight: false,
-          logs: false,
+          logs: true,
           reset: false,
           debug: false,
           resume: false,
@@ -297,7 +297,7 @@ export function getParsedArgs(): ParsedArgs {
         verbose: false,
         dryRun: false,
         skipPreflight: false,
-        logs: false,
+        logs: true,
         reset: false,
         debug: false,
         resume: false,
