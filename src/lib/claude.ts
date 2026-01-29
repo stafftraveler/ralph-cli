@@ -235,7 +235,7 @@ If all tasks in the PRD are complete, include <promise>COMPLETE</promise> in you
     const response = query({
       prompt: fullPrompt,
       options: {
-        permissionMode: "acceptEdits",
+        permissionMode: "bypassPermissions",
         settingSources: ["project"], // Load CLAUDE.md and .claude/skills/
         cwd: projectRoot,
         ...(options.resumeSessionId && { resume: options.resumeSessionId }),
