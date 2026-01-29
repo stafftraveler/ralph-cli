@@ -138,10 +138,3 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
 
   return config;
 }
-
-/**
- * Get the default config without loading from file
- */
-export function getDefaultConfig(): RalphConfig {
-  return { ...DEFAULT_CONFIG };
-}

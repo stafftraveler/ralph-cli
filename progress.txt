@@ -111,3 +111,21 @@
 **Impact**: Cleaner module interface, reduced unnecessary type export. Function signature unchanged.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 7
+
+**Task**: Remove unused getDefaultConfig() export (PRD cleanup task)
+
+**What was done**:
+- Deleted getDefaultConfig() function from src/lib/config.ts (5 lines)
+- Function exported but never imported anywhere
+- DEFAULT_CONFIG already used internally by loadConfig()
+
+**Files changed**:
+- src/lib/config.ts (removed unused export)
+
+**Reasoning**: Function exported but never used. Appears to be written proactively for potential future use but never integrated. DEFAULT_CONFIG constant already provides defaults within loadConfig().
+
+**Impact**: Reduced API surface area by 1 function, removed 5 lines. Cleaner config module.
+
+**All checks passed**: format, lint, types ✓
