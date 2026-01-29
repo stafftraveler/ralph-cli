@@ -50,11 +50,7 @@ export interface IterationLoopProps {
   /** Called when iteration fails but can be retried */
   onRetryExhausted?: (iteration: number, attempts: number) => void;
   /** Called when cost limit is exceeded */
-  onCostLimitExceeded?: (
-    reason: "iteration" | "session",
-    cost: number,
-    limit: number,
-  ) => void;
+  onCostLimitExceeded?: (reason: "iteration" | "session", cost: number, limit: number) => void;
 }
 
 /**
@@ -89,9 +85,7 @@ export function IterationLoop({
   const [currentIteration, setCurrentIteration] = useState(startIteration);
   const [retryCount, setRetryCount] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
-  const [sessionCostSoFar, setSessionCostSoFar] = useState(
-    session.totalCostUsd ?? 0,
-  );
+  const [sessionCostSoFar, setSessionCostSoFar] = useState(session.totalCostUsd ?? 0);
   const sessionRef = useRef(session);
 
   // Keep session ref in sync
@@ -141,11 +135,7 @@ export function IterationLoop({
       setSessionCostSoFar(newSessionCost);
 
       // Add result to session
-      const updatedSession = await addIterationResult(
-        ralphDir,
-        currentSession,
-        result,
-      );
+      const updatedSession = await addIterationResult(ralphDir, currentSession, result);
       // Also update totalCostUsd on session
       updatedSession.totalCostUsd = newSessionCost;
       sessionRef.current = updatedSession;
@@ -164,10 +154,7 @@ export function IterationLoop({
           result.costLimitReason === "iteration"
             ? config.maxCostPerIteration
             : config.maxCostPerSession;
-        const cost =
-          result.costLimitReason === "iteration"
-            ? iterationCost
-            : newSessionCost;
+        const cost = result.costLimitReason === "iteration" ? iterationCost : newSessionCost;
         onCostLimitExceeded?.(result.costLimitReason, cost, limit ?? 0);
         onError(
           result.costLimitReason === "iteration"
@@ -201,9 +188,7 @@ export function IterationLoop({
         }
         setIsRunning(false);
         onRetryExhausted?.(result.iteration, maxRetries);
-        onError(
-          `Iteration ${result.iteration} failed after ${maxRetries} retries.`,
-        );
+        onError(`Iteration ${result.iteration} failed after ${maxRetries} retries.`);
         return;
       }
 
@@ -272,4 +257,3 @@ export function IterationLoop({
     </Box>
   );
 }
-

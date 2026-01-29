@@ -17,10 +17,7 @@ export interface IterationsPromptProps {
  *
  * Shows a text input for the user to specify how many Claude iterations to run.
  */
-export function IterationsPrompt({
-  onSubmit,
-  defaultValue = 5,
-}: IterationsPromptProps) {
+export function IterationsPrompt({ onSubmit, defaultValue = 5 }: IterationsPromptProps) {
   const [value, setValue] = useState(String(defaultValue));
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +47,7 @@ export function IterationsPrompt({
   };
 
   // Handle escape to use default
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.escape) {
       onSubmit(defaultValue);
     }

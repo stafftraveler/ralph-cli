@@ -44,13 +44,7 @@ function StatItem({
 /**
  * Commit list display
  */
-function CommitList({
-  commits,
-  maxCommits = 5,
-}: {
-  commits: CommitInfo[];
-  maxCommits?: number;
-}) {
+function CommitList({ commits, maxCommits = 5 }: { commits: CommitInfo[]; maxCommits?: number }) {
   if (commits.length === 0) {
     return (
       <Text color="gray" italic>
@@ -69,9 +63,7 @@ function CommitList({
           <Text color="yellow">{commit.shortSha}</Text>
           <Text color="gray"> </Text>
           <Text>
-            {commit.message.length > 60
-              ? `${commit.message.slice(0, 57)}...`
-              : commit.message}
+            {commit.message.length > 60 ? `${commit.message.slice(0, 57)}...` : commit.message}
           </Text>
         </Box>
       ))}
@@ -106,13 +98,7 @@ export function Summary({ summary }: SummaryProps) {
   } = summary;
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="double"
-      borderColor="cyan"
-      paddingX={2}
-      paddingY={1}
-    >
+    <Box flexDirection="column" borderStyle="double" borderColor="cyan" paddingX={2} paddingY={1}>
       {/* Header */}
       <Box justifyContent="center" marginBottom={1}>
         <Gradient colors={["#FFD90F", "#FF9999", "#FFD90F"]}>
@@ -129,11 +115,7 @@ export function Summary({ summary }: SummaryProps) {
       {/* Stats Row */}
       <Box marginBottom={1}>
         <StatItem label="Iterations" value={totalIterations} color="cyan" />
-        <StatItem
-          label="Duration"
-          value={formatDuration(totalDurationSeconds)}
-          color="cyan"
-        />
+        <StatItem label="Duration" value={formatDuration(totalDurationSeconds)} color="cyan" />
         {totalCost !== undefined && (
           <StatItem label="Cost" value={formatCost(totalCost)} color="yellow" />
         )}
@@ -194,10 +176,7 @@ export function createSummary({
   filesChanged: DiffStat[];
   prUrl?: string;
 }): SessionSummary {
-  const totalDurationSeconds = iterations.reduce(
-    (sum, it) => sum + it.durationSeconds,
-    0,
-  );
+  const totalDurationSeconds = iterations.reduce((sum, it) => sum + it.durationSeconds, 0);
 
   const totalCost = iterations.reduce((sum, it) => {
     if (it.usage?.totalCostUsd !== undefined) {
@@ -206,9 +185,7 @@ export function createSummary({
     return sum;
   }, 0);
 
-  const prdComplete = iterations.some(
-    (it) => "prdComplete" in it && it.prdComplete,
-  );
+  const prdComplete = iterations.some((it) => "prdComplete" in it && it.prdComplete);
 
   return {
     totalIterations: iterations.length,

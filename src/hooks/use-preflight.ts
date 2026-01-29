@@ -56,28 +56,20 @@ async function checkGitRepo(): Promise<PreflightCheck> {
   if (inRepo) {
     return createPassedCheck("Git", "Inside git repository");
   }
-  return createFailedCheck(
-    "Git",
-    "Not inside a git repository. Run 'git init' first.",
-  );
+  return createFailedCheck("Git", "Not inside a git repository. Run 'git init' first.");
 }
 
 /**
  * Check if PRD.md exists and has valid tasks
  */
-async function checkPrd(
-  ralphDir: string,
-): Promise<{ check: PreflightCheck; hasTasks: boolean }> {
+async function checkPrd(ralphDir: string): Promise<{ check: PreflightCheck; hasTasks: boolean }> {
   const prdPath = join(ralphDir, "PRD.md");
 
   try {
     await access(prdPath, constants.R_OK);
   } catch {
     return {
-      check: createFailedCheck(
-        "PRD",
-        `PRD.md not found at ${prdPath}. Run 'ralph init' first.`,
-      ),
+      check: createFailedCheck("PRD", `PRD.md not found at ${prdPath}. Run 'ralph init' first.`),
       hasTasks: false,
     };
   }
@@ -91,10 +83,7 @@ async function checkPrd(
   }
 
   return {
-    check: createWarningCheck(
-      "PRD",
-      "PRD.md exists but has no tasks. Will prompt for template.",
-    ),
+    check: createWarningCheck("PRD", "PRD.md exists but has no tasks. Will prompt for template."),
     hasTasks: false,
   };
 }
@@ -121,10 +110,7 @@ async function checkApiKey(): Promise<PreflightCheck> {
   if (hasKey) {
     return createPassedCheck("API Key", "ANTHROPIC_API_KEY is set");
   }
-  return createFailedCheck(
-    "API Key",
-    "ANTHROPIC_API_KEY not found. Enter it when prompted.",
-  );
+  return createFailedCheck("API Key", "ANTHROPIC_API_KEY not found. Enter it when prompted.");
 }
 
 /**
@@ -183,10 +169,7 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
         return result;
       })
       .catch(() => {
-        const failed = createFailedCheck(
-          "Claude Code",
-          "Check failed unexpectedly",
-        );
+        const failed = createFailedCheck("Claude Code", "Check failed unexpectedly");
         setResults((prev) => (prev ? { ...prev, claudeCode: failed } : prev));
         return failed;
       });
@@ -197,10 +180,7 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
         return result;
       })
       .catch(() => {
-        const failed = createFailedCheck(
-          "API Key",
-          "Check failed unexpectedly",
-        );
+        const failed = createFailedCheck("API Key", "Check failed unexpectedly");
         setResults((prev) => (prev ? { ...prev, apiKey: failed } : prev));
         return failed;
       });
@@ -234,23 +214,19 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
         return result;
       })
       .catch(() => {
-        const warning = createWarningCheck(
-          "CLAUDE.md",
-          "Check failed unexpectedly",
-        );
+        const warning = createWarningCheck("CLAUDE.md", "Check failed unexpectedly");
         setResults((prev) => (prev ? { ...prev, claudeMd: warning } : prev));
         return warning;
       });
 
     // Wait for all checks to complete
-    const [finalClaudeCode, finalApiKey, finalGit, finalPrd, finalClaudeMd] =
-      await Promise.all([
-        claudeCodePromise,
-        apiKeyPromise,
-        gitPromise,
-        prdPromise,
-        claudeMdPromise,
-      ]);
+    const [finalClaudeCode, finalApiKey, finalGit, finalPrd, finalClaudeMd] = await Promise.all([
+      claudeCodePromise,
+      apiKeyPromise,
+      gitPromise,
+      prdPromise,
+      claudeMdPromise,
+    ]);
 
     const finalResults: PreflightResult = {
       claudeCode: finalClaudeCode,
@@ -263,13 +239,7 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
     setHasTasks(prdTasksFound);
 
     // Check if all passed (warnings are OK, only failures block)
-    const allChecks = [
-      finalClaudeCode,
-      finalApiKey,
-      finalGit,
-      finalPrd,
-      finalClaudeMd,
-    ];
+    const allChecks = [finalClaudeCode, finalApiKey, finalGit, finalPrd, finalClaudeMd];
     const passed = allChecks.every((c) => c.status !== "failed");
     setAllPassed(passed);
 
@@ -356,8 +326,7 @@ export async function runPreflightChecks(ralphDir: string): Promise<{
       ? prdResult.value.check
       : createFailedCheck("PRD", "Check failed unexpectedly");
 
-  const prdHasTasksResult =
-    prdResult.status === "fulfilled" ? prdResult.value.hasTasks : false;
+  const prdHasTasksResult = prdResult.status === "fulfilled" ? prdResult.value.hasTasks : false;
 
   const claudeMd =
     claudeMdResult.status === "fulfilled"

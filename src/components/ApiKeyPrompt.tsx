@@ -76,22 +76,14 @@ export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
         <Text color="green">✓ API key saved</Text>
         {submitResult.savedToKeychain ? (
           <Box marginTop={1}>
-            <Text color="gray">
-              Stored securely in macOS Keychain - no need to enter again
-            </Text>
+            <Text color="gray">Stored securely in macOS Keychain - no need to enter again</Text>
           </Box>
         ) : (
           <Box flexDirection="column" marginTop={1}>
-            <Text color="yellow">
-              ⚠ Could not save to Keychain - key set for this session only
-            </Text>
-            <Text color="gray">
-              To persist manually, add to ~/.zshrc or ~/.bashrc:
-            </Text>
+            <Text color="yellow">⚠ Could not save to Keychain - key set for this session only</Text>
+            <Text color="gray">To persist manually, add to ~/.zshrc or ~/.bashrc:</Text>
             <Box marginLeft={2}>
-              <Text color="gray">
-                export ANTHROPIC_API_KEY={value.slice(0, 15)}...
-              </Text>
+              <Text color="gray">export ANTHROPIC_API_KEY={value.slice(0, 15)}...</Text>
             </Box>
           </Box>
         )}
@@ -112,9 +104,7 @@ export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
       </Box>
 
       <Box marginBottom={1}>
-        <Text color="gray">
-          Get your API key from: https://console.anthropic.com/settings/keys
-        </Text>
+        <Text color="gray">Get your API key from: https://console.anthropic.com/settings/keys</Text>
       </Box>
 
       <Box>

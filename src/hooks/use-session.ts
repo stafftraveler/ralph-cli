@@ -61,9 +61,7 @@ export interface UseSessionActions {
  * @param ralphDir - Path to .ralph directory
  * @returns Tuple of [state, actions]
  */
-export function useSession(
-  ralphDir: string,
-): [UseSessionState, UseSessionActions] {
+export function useSession(ralphDir: string): [UseSessionState, UseSessionActions] {
   const [session, setSession] = useState<SessionState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [canResume, setCanResume] = useState(false);
@@ -81,8 +79,7 @@ export function useSession(
       setCanResume(loaded?.checkpoint !== undefined);
       return loaded;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load session";
+      const message = err instanceof Error ? err.message : "Failed to load session";
       setError(message);
       return null;
     } finally {
@@ -104,8 +101,7 @@ export function useSession(
         setCanResume(false);
         return newSession;
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to create session";
+        const message = err instanceof Error ? err.message : "Failed to create session";
         setError(message);
         throw err;
       } finally {
@@ -131,8 +127,7 @@ export function useSession(
       }
       return result;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to resume session";
+      const message = err instanceof Error ? err.message : "Failed to resume session";
       setError(message);
       return null;
     } finally {
@@ -152,8 +147,7 @@ export function useSession(
     try {
       await saveSession(ralphDir, session);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to save session";
+      const message = err instanceof Error ? err.message : "Failed to save session";
       setError(message);
       throw err;
     }
@@ -173,8 +167,7 @@ export function useSession(
         const updated = await addIterationResult(ralphDir, session, result);
         setSession(updated);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to add iteration";
+        const message = err instanceof Error ? err.message : "Failed to add iteration";
         setError(message);
         throw err;
       }
@@ -201,8 +194,7 @@ export function useSession(
           setCanResume(true);
         }
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to save checkpoint";
+        const message = err instanceof Error ? err.message : "Failed to save checkpoint";
         setError(message);
         throw err;
       }
@@ -234,8 +226,7 @@ export function useSession(
       setSession(null);
       setCanResume(false);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to clear session";
+      const message = err instanceof Error ? err.message : "Failed to clear session";
       setError(message);
       throw err;
     }

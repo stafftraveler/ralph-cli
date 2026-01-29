@@ -46,10 +46,7 @@ export function Welcome({ onComplete, duration = 1500 }: WelcomeProps) {
 
   useEffect(() => {
     async function loadRepoInfo() {
-      const [root, currentBranch] = await Promise.all([
-        getRepoRoot(),
-        getCurrentBranch(),
-      ]);
+      const [root, currentBranch] = await Promise.all([getRepoRoot(), getCurrentBranch()]);
 
       if (root) {
         // Extract repo name from path (last component)
@@ -81,6 +78,7 @@ export function Welcome({ onComplete, duration = 1500 }: WelcomeProps) {
       {/* ASCII Art Logo with Vertical Yellow Gradient */}
       <Box flexDirection="column" marginBottom={1}>
         {RALPH_LOGO_LINES.map((line, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static array, order never changes
           <Text key={index} color={YELLOW_GRADIENT[index]}>
             {line}
           </Text>

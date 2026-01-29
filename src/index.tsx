@@ -64,9 +64,7 @@ async function main() {
 
     // For CI mode, default iterations to 1 if not specified
     const resolvedOptions =
-      options.ci && options.iterations === undefined
-        ? { ...options, iterations: 1 }
-        : options;
+      options.ci && options.iterations === undefined ? { ...options, iterations: 1 } : options;
 
     // Use CI mode if requested or if stdin is not a TTY
     if (options.ci || !process.stdin.isTTY) {
@@ -75,9 +73,7 @@ async function main() {
     }
 
     // Render the Ink app (iterations prompt is shown inside App if not specified)
-    const { waitUntilExit } = render(
-      <App ralphDir={ralphDir} prompt={prompt} options={options} />,
-    );
+    const { waitUntilExit } = render(<App ralphDir={ralphDir} prompt={prompt} options={options} />);
 
     // Wait for the app to finish
     await waitUntilExit();

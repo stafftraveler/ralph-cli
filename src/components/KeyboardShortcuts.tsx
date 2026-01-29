@@ -33,13 +33,7 @@ const DEFAULT_SHORTCUTS: Shortcut[] = [
 /**
  * Single shortcut display
  */
-function ShortcutItem({
-  shortcut,
-  active,
-}: {
-  shortcut: Shortcut;
-  active?: boolean;
-}) {
+function ShortcutItem({ shortcut, active }: { shortcut: Shortcut; active?: boolean }) {
   const enabled = shortcut.enabled !== false;
   const color = enabled ? (active ? "green" : "gray") : "gray";
 
@@ -68,16 +62,9 @@ export function KeyboardShortcuts({
   return (
     <Box marginTop={1} gap={2}>
       {shortcuts.map((shortcut) => {
-        const isActive =
-          (shortcut.key === "v" && verbose) || (shortcut.key === "d" && debug);
+        const isActive = (shortcut.key === "v" && verbose) || (shortcut.key === "d" && debug);
 
-        return (
-          <ShortcutItem
-            key={shortcut.key}
-            shortcut={shortcut}
-            active={isActive}
-          />
-        );
+        return <ShortcutItem key={shortcut.key} shortcut={shortcut} active={isActive} />;
       })}
     </Box>
   );

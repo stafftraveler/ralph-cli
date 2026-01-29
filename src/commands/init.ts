@@ -18,9 +18,7 @@ async function addRalphScript(repoRoot: string): Promise<boolean> {
   const pkgPath = join(repoRoot, "package.json");
 
   if (!existsSync(pkgPath)) {
-    console.log(
-      chalk.yellow("No package.json found, skipping script addition."),
-    );
+    console.log(chalk.yellow("No package.json found, skipping script addition."));
     return false;
   }
 
@@ -101,16 +99,10 @@ async function promptForApiKey(): Promise<string | null> {
     output: process.stdout,
   });
 
-  console.log(
-    chalk.dim(
-      "\nGet your API key from: https://console.anthropic.com/settings/keys",
-    ),
-  );
+  console.log(chalk.dim("\nGet your API key from: https://console.anthropic.com/settings/keys"));
 
   try {
-    const apiKey = await rl.question(
-      chalk.cyan("Enter API key (or press Enter to skip): "),
-    );
+    const apiKey = await rl.question(chalk.cyan("Enter API key (or press Enter to skip): "));
     rl.close();
 
     const trimmed = apiKey.trim();
@@ -133,13 +125,9 @@ async function promptForApiKey(): Promise<string | null> {
       console.log(chalk.green("✓ API key set for this session"));
       console.log(chalk.yellow("  Could not save to Keychain"));
       console.log(
-        chalk.dim(
-          `\nTo persist manually, add to your shell profile (~/.zshrc or ~/.bashrc):`,
-        ),
+        chalk.dim("\nTo persist manually, add to your shell profile (~/.zshrc or ~/.bashrc):"),
       );
-      console.log(
-        chalk.yellow(`  export ANTHROPIC_API_KEY=${trimmed.slice(0, 15)}...`),
-      );
+      console.log(chalk.yellow(`  export ANTHROPIC_API_KEY=${trimmed.slice(0, 15)}...`));
     }
 
     return trimmed;
@@ -152,10 +140,7 @@ async function promptForApiKey(): Promise<string | null> {
 /**
  * Initialize .ralph/ directory with templates
  */
-export async function runInit(
-  repoRoot: string,
-  _options: InitOptions = {},
-): Promise<boolean> {
+export async function runInit(repoRoot: string, _options: InitOptions = {}): Promise<boolean> {
   console.log(chalk.bold.cyan("\n═══ Ralph Init ═══\n"));
 
   const ralphDir = join(repoRoot, ".ralph");
@@ -178,9 +163,7 @@ export async function runInit(
 
   // Discover available PRD templates from the bundled templates directory
   const prdSourceDir = join(templatesDir, "prd");
-  const templateFiles = (await readdir(prdSourceDir)).filter((f) =>
-    f.endsWith(".md"),
-  );
+  const templateFiles = (await readdir(prdSourceDir)).filter((f) => f.endsWith(".md"));
 
   // Check if any templates already exist
   const existingTemplates: string[] = [];
@@ -200,9 +183,7 @@ export async function runInit(
     for (const file of existingTemplates) {
       console.log(chalk.dim(`  - ${file}`));
     }
-    shouldPromptOverwrite = await promptYesNo(
-      "\nWould you like to overwrite these templates?",
-    );
+    shouldPromptOverwrite = await promptYesNo("\nWould you like to overwrite these templates?");
     console.log("");
   }
 

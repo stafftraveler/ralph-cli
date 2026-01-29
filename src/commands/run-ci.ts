@@ -24,11 +24,7 @@ function formatCost(cost: number): string {
 /**
  * Run Ralph in CI mode (non-interactive)
  */
-export async function runCi(
-  ralphDir: string,
-  prompt: string,
-  options: CliOptions,
-): Promise<void> {
+export async function runCi(ralphDir: string, prompt: string, options: CliOptions): Promise<void> {
   const config = await loadConfig(ralphDir);
   const iterations = options.iterations ?? 1;
 
@@ -40,8 +36,7 @@ export async function runCi(
   // Run preflight checks unless skipped
   if (!options.skipPreflight) {
     console.log(chalk.bold("Preflight Checks:"));
-    const { results, allPassed, prdHasTasks } =
-      await runPreflightChecks(ralphDir);
+    const { results, allPassed, prdHasTasks } = await runPreflightChecks(ralphDir);
 
     for (const [_key, check] of Object.entries(results)) {
       const icon =
@@ -50,9 +45,7 @@ export async function runCi(
           : check.status === "warning"
             ? chalk.yellow("⚠")
             : chalk.red("✗");
-      console.log(
-        `  ${icon} ${check.name}: ${check.message || check.error || ""}`,
-      );
+      console.log(`  ${icon} ${check.name}: ${check.message || check.error || ""}`);
     }
 
     if (!allPassed) {
@@ -61,9 +54,7 @@ export async function runCi(
     }
 
     if (!prdHasTasks) {
-      console.log(
-        chalk.yellow("\nPRD has no tasks. Please add tasks to PRD.md."),
-      );
+      console.log(chalk.yellow("\nPRD has no tasks. Please add tasks to PRD.md."));
       process.exit(1);
     }
 
@@ -126,16 +117,10 @@ export async function runCi(
       console.log("");
       if (result.success) {
         console.log(
-          chalk.green(
-            `✓ Iteration ${i} completed in ${formatDuration(durationSeconds)}`,
-          ),
+          chalk.green(`✓ Iteration ${i} completed in ${formatDuration(durationSeconds)}`),
         );
       } else {
-        console.log(
-          chalk.red(
-            `✗ Iteration ${i} failed: ${result.error || "Unknown error"}`,
-          ),
-        );
+        console.log(chalk.red(`✗ Iteration ${i} failed: ${result.error || "Unknown error"}`));
       }
 
       if (result.usage) {
@@ -144,9 +129,7 @@ export async function runCi(
             `  Tokens: ${result.usage.inputTokens.toLocaleString()} in / ${result.usage.outputTokens.toLocaleString()} out`,
           ),
         );
-        console.log(
-          chalk.dim(`  Cost: ${formatCost(result.usage.totalCostUsd)}`),
-        );
+        console.log(chalk.dim(`  Cost: ${formatCost(result.usage.totalCostUsd)}`));
       }
 
       // Check if PRD is complete
@@ -161,8 +144,7 @@ export async function runCi(
         break;
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.log(chalk.red(`\n✗ Iteration ${i} error: ${errorMessage}`));
       break;
     }
@@ -185,9 +167,9 @@ export async function runCi(
 
   const prdComplete = results.some((r) => r.prdComplete);
   if (prdComplete) {
-    console.log(chalk.green(`PRD Status:       Complete`));
+    console.log(chalk.green("PRD Status:       Complete"));
   } else {
-    console.log(chalk.yellow(`PRD Status:       In Progress`));
+    console.log(chalk.yellow("PRD Status:       In Progress"));
   }
 
   console.log(chalk.cyan("\n═══ End Session ═══\n"));

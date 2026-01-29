@@ -6,12 +6,7 @@ import type { IterationContext, PluginContext, RalphPlugin } from "../types.js";
 /**
  * Plugin hook names
  */
-export type PluginHook =
-  | "beforeRun"
-  | "beforeIteration"
-  | "afterIteration"
-  | "done"
-  | "onError";
+export type PluginHook = "beforeRun" | "beforeIteration" | "afterIteration" | "done" | "onError";
 
 /**
  * Plugin configuration in .ralph/config or separate plugin config
@@ -72,9 +67,7 @@ export async function loadPlugins(ralphDir: string): Promise<RalphPlugin[]> {
         }
 
         // Try to load by path (absolute or relative to .ralph/)
-        const pluginPath = pluginRef.startsWith("/")
-          ? pluginRef
-          : join(ralphDir, pluginRef);
+        const pluginPath = pluginRef.startsWith("/") ? pluginRef : join(ralphDir, pluginRef);
 
         const plugin = await loadPluginFromFile(pluginPath);
         if (plugin) {
@@ -98,9 +91,7 @@ export async function loadPlugins(ralphDir: string): Promise<RalphPlugin[]> {
 /**
  * Load a single plugin from a file path
  */
-async function loadPluginFromFile(
-  filePath: string,
-): Promise<RalphPlugin | null> {
+async function loadPluginFromFile(filePath: string): Promise<RalphPlugin | null> {
   try {
     // Convert to file URL for ESM import
     const fileUrl = pathToFileURL(filePath).href;
@@ -157,17 +148,10 @@ export async function runHook(
           context as PluginContext,
           error,
         );
-      } else if (
-        hookName === "beforeIteration" ||
-        hookName === "afterIteration"
-      ) {
-        await (hook as (ctx: IterationContext) => Promise<void>)(
-          context as IterationContext,
-        );
+      } else if (hookName === "beforeIteration" || hookName === "afterIteration") {
+        await (hook as (ctx: IterationContext) => Promise<void>)(context as IterationContext);
       } else {
-        await (hook as (ctx: PluginContext) => Promise<void>)(
-          context as PluginContext,
-        );
+        await (hook as (ctx: PluginContext) => Promise<void>)(context as PluginContext);
       }
     } catch (hookError) {
       // Log but don't fail on plugin errors
@@ -179,10 +163,7 @@ export async function runHook(
 /**
  * Run beforeRun hook on all plugins
  */
-export async function runBeforeRun(
-  plugins: RalphPlugin[],
-  context: PluginContext,
-): Promise<void> {
+export async function runBeforeRun(plugins: RalphPlugin[], context: PluginContext): Promise<void> {
   await runHook(plugins, "beforeRun", context);
 }
 
@@ -209,10 +190,7 @@ export async function runAfterIteration(
 /**
  * Run done hook on all plugins
  */
-export async function runDone(
-  plugins: RalphPlugin[],
-  context: PluginContext,
-): Promise<void> {
+export async function runDone(plugins: RalphPlugin[], context: PluginContext): Promise<void> {
   await runHook(plugins, "done", context);
 }
 

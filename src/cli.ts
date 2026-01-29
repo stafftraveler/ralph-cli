@@ -36,22 +36,15 @@ export async function findRalphDir(): Promise<string | null> {
 /**
  * Enhanced dry-run output showing config, PRD analysis, and prompt preview
  */
-async function showDryRunInfo(
-  ralphDir: string,
-  options: CliOptions,
-): Promise<void> {
+async function showDryRunInfo(ralphDir: string, options: CliOptions): Promise<void> {
   console.log(chalk.bold.cyan("\n═══ Ralph Dry Run ═══\n"));
 
   // Load and display config
   const config = await loadConfig(ralphDir);
   console.log(chalk.bold("Configuration:"));
   console.log(`  Max Retries:    ${config.maxRetries}`);
-  console.log(
-    `  Sound:          ${config.soundOnComplete ? "enabled" : "disabled"}`,
-  );
-  console.log(
-    `  Logs:           ${options.logs || config.saveOutput ? "yes" : "no"}`,
-  );
+  console.log(`  Sound:          ${config.soundOnComplete ? "enabled" : "disabled"}`);
+  console.log(`  Logs:           ${options.logs || config.saveOutput ? "yes" : "no"}`);
   console.log(`  Output Dir:     ${config.outputDir}`);
   console.log("");
 
@@ -86,7 +79,7 @@ async function showDryRunInfo(
 
     // Show first few tasks
     if (matches && matches.length > 0) {
-      console.log(`  Tasks Preview:`);
+      console.log("  Tasks Preview:");
       const preview = matches.slice(0, 3);
       for (const task of preview) {
         const trimmed = task.trim().slice(0, 60);
@@ -106,11 +99,7 @@ async function showDryRunInfo(
   console.log(chalk.bold("Prompt Preview:"));
   try {
     const promptContent = await readFile(promptPath, "utf-8");
-    const preview = promptContent
-      .slice(0, 200)
-      .split("\n")
-      .slice(0, 5)
-      .join("\n");
+    const preview = promptContent.slice(0, 200).split("\n").slice(0, 5).join("\n");
     console.log(chalk.dim(preview));
     if (promptContent.length > 200) {
       console.log(chalk.dim(`... (${promptContent.length} chars total)`));
@@ -131,9 +120,7 @@ async function showDryRunInfo(
           : check.status === "warning"
             ? chalk.yellow("⚠")
             : chalk.red("✗");
-      console.log(
-        `  ${icon} ${check.name}: ${check.message || check.error || ""}`,
-      );
+      console.log(`  ${icon} ${check.name}: ${check.message || check.error || ""}`);
     }
     console.log("");
   }
@@ -167,11 +154,7 @@ async function showDebugInfo(ralphDir: string): Promise<void> {
   // Claude command that would be executed
   console.log(chalk.bold("Claude Command:"));
   console.log(chalk.dim("  claude --permission-mode acceptEdits \\"));
-  console.log(
-    chalk.dim(
-      `    -p "@${ralphDir}/PRD.md @${ralphDir}/progress.txt <prompt>"`,
-    ),
-  );
+  console.log(chalk.dim(`    -p "@${ralphDir}/PRD.md @${ralphDir}/progress.txt <prompt>"`));
   console.log("");
 
   console.log(chalk.magenta("═══ End Debug ═══\n"));
@@ -210,24 +193,12 @@ export async function createProgram(): Promise<Command> {
     .description("Run Claude Code iterations (default command)")
     .argument("[iterations]", "Number of iterations to run")
     .option("-v, --verbose", "Show full Claude output", false)
-    .option(
-      "--dry-run",
-      "Show what would be executed without running Claude",
-      false,
-    )
+    .option("--dry-run", "Show what would be executed without running Claude", false)
     .option("--skip-preflight", "Skip all preflight checks", false)
     .option("-b, --branch <name>", "Create or switch to a git branch")
     .option("--no-logs", "Disable saving iteration output to .ralph/logs/")
-    .option(
-      "--reset",
-      "Reset PRD.md and progress.txt for a fresh session",
-      false,
-    )
-    .option(
-      "--debug",
-      "Show docker commands, timings, and environment info",
-      false,
-    )
+    .option("--reset", "Reset PRD.md and progress.txt for a fresh session", false)
+    .option("--debug", "Show docker commands, timings, and environment info", false)
     .option("--resume", "Resume from last checkpoint", false)
     .option("--no-plugins", "Disable all plugins")
     .option("--create-pr", "Force create PR on completion", false)
@@ -313,9 +284,7 @@ export function getParsedArgs(): ParsedArgs {
 /**
  * Main CLI entry point
  */
-export async function runCli(
-  argv: string[] = process.argv,
-): Promise<ParsedArgs> {
+export async function runCli(argv: string[] = process.argv): Promise<ParsedArgs> {
   const program = await createProgram();
   await program.parseAsync(argv);
   return getParsedArgs();

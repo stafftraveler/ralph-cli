@@ -27,10 +27,7 @@ export interface UseClaudeState {
  */
 export interface UseClaudeActions {
   /** Run a single Claude iteration */
-  runIteration: (
-    config: RalphConfig,
-    options: RunIterationOptions,
-  ) => Promise<IterationResult>;
+  runIteration: (config: RalphConfig, options: RunIterationOptions) => Promise<IterationResult>;
   /** Cancel the current iteration */
   cancel: () => void;
   /** Reset state between iterations */
@@ -118,10 +115,7 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
    * Runs a single Claude iteration using the Agent SDK
    */
   const runIteration = useCallback(
-    async (
-      config: RalphConfig,
-      options: RunIterationOptions,
-    ): Promise<IterationResult> => {
+    async (config: RalphConfig, options: RunIterationOptions): Promise<IterationResult> => {
       // Reset state but keep sessionId for continuity
       const previousSessionId = sessionId;
       reset();
@@ -167,8 +161,7 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
           signal: abortControllerRef.current.signal,
           onStdout: handleStdout,
           onStatus: handleStatus,
-          resumeSessionId:
-            options.resumeSessionId ?? previousSessionId ?? undefined,
+          resumeSessionId: options.resumeSessionId ?? previousSessionId ?? undefined,
         });
       } catch (_error) {
         // Cancelled or failed
@@ -179,9 +172,7 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
         setIsRunning(false);
 
         const completedAt = new Date().toISOString();
-        const durationSeconds = Math.floor(
-          (Date.now() - startTimeRef.current) / 1000,
-        );
+        const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
         return {
           iteration: options.iteration,
@@ -202,9 +193,7 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
       }
 
       const completedAt = new Date().toISOString();
-      const durationSeconds = Math.floor(
-        (Date.now() - startTimeRef.current) / 1000,
-      );
+      const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
       // Store session ID for potential resume
       if (result.sessionId) {
@@ -218,9 +207,7 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
 
       // Get final status
       const lastStatus =
-        statusHistory.length > 0
-          ? statusHistory[statusHistory.length - 1]
-          : undefined;
+        statusHistory.length > 0 ? statusHistory[statusHistory.length - 1] : undefined;
 
       setIsRunning(false);
 
@@ -233,19 +220,13 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
       let costLimitReason: "iteration" | "session" | undefined;
 
       // Check per-iteration limit
-      if (
-        config.maxCostPerIteration !== undefined &&
-        iterationCost > config.maxCostPerIteration
-      ) {
+      if (config.maxCostPerIteration !== undefined && iterationCost > config.maxCostPerIteration) {
         costLimitExceeded = true;
         costLimitReason = "iteration";
       }
 
       // Check session limit
-      if (
-        config.maxCostPerSession !== undefined &&
-        newSessionTotal > config.maxCostPerSession
-      ) {
+      if (config.maxCostPerSession !== undefined && newSessionTotal > config.maxCostPerSession) {
         costLimitExceeded = true;
         costLimitReason = "session";
       }

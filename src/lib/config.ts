@@ -42,9 +42,7 @@ function parseConfigValue(value: string): string {
  * Convert SCREAMING_SNAKE_CASE to camelCase
  */
 function toCamelCase(key: string): string {
-  return key
-    .toLowerCase()
-    .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  return key.toLowerCase().replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
 /**
@@ -88,8 +86,7 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
       // Map to config properties
       switch (camelKey) {
         case "maxRetries":
-          config.maxRetries =
-            Number.parseInt(value, 10) || DEFAULT_CONFIG.maxRetries;
+          config.maxRetries = Number.parseInt(value, 10) || DEFAULT_CONFIG.maxRetries;
           break;
         case "soundOnComplete":
           config.soundOnComplete = parseBoolean(value);

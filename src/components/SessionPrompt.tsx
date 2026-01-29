@@ -3,11 +3,7 @@ import SelectInput from "ink-select-input";
 import Spinner from "ink-spinner";
 import { useEffect, useState } from "react";
 import { canResumeSession, loadSession } from "../lib/session.js";
-import {
-  clearProgress,
-  formatDuration,
-  progressHasContent,
-} from "../lib/utils.js";
+import { clearProgress, formatDuration, progressHasContent } from "../lib/utils.js";
 import type { SessionState } from "../types.js";
 
 /**
@@ -175,9 +171,7 @@ export function SessionPrompt({
         </Box>
 
         <Box marginBottom={1} paddingLeft={2}>
-          <Text color="gray">
-            progress.txt contains content from a previous session.
-          </Text>
+          <Text color="gray">progress.txt contains content from a previous session.</Text>
         </Box>
 
         <Box marginBottom={1}>
@@ -191,14 +185,9 @@ export function SessionPrompt({
 
   if (phase === "prompt" && session?.checkpoint) {
     const completedIterations = session.checkpoint.iteration;
-    const totalDuration = session.iterations.reduce(
-      (acc, iter) => acc + iter.durationSeconds,
-      0,
-    );
+    const totalDuration = session.iterations.reduce((acc, iter) => acc + iter.durationSeconds, 0);
     const lastCheckpoint = new Date(session.checkpoint.timestamp);
-    const timeSince = Math.floor(
-      (Date.now() - lastCheckpoint.getTime()) / 1000,
-    );
+    const timeSince = Math.floor((Date.now() - lastCheckpoint.getTime()) / 1000);
 
     const items: SelectItem[] = [
       {
@@ -219,20 +208,17 @@ export function SessionPrompt({
 
         <Box flexDirection="column" marginBottom={1} paddingLeft={2}>
           <Text>
-            <Text color="gray">Branch:</Text>{" "}
-            <Text color="green">{session.branch}</Text>
+            <Text color="gray">Branch:</Text> <Text color="green">{session.branch}</Text>
           </Text>
           <Text>
             <Text color="gray">Completed:</Text>{" "}
             <Text color="cyan">{completedIterations} iteration(s)</Text>
           </Text>
           <Text>
-            <Text color="gray">Duration:</Text>{" "}
-            <Text>{formatDuration(totalDuration)}</Text>
+            <Text color="gray">Duration:</Text> <Text>{formatDuration(totalDuration)}</Text>
           </Text>
           <Text>
-            <Text color="gray">Last checkpoint:</Text>{" "}
-            <Text>{formatDuration(timeSince)} ago</Text>
+            <Text color="gray">Last checkpoint:</Text> <Text>{formatDuration(timeSince)} ago</Text>
           </Text>
         </Box>
 

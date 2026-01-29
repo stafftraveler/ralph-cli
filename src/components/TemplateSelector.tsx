@@ -19,13 +19,7 @@ export interface TemplateSelectorProps {
   onCancel?: () => void;
 }
 
-type Phase =
-  | "loading"
-  | "select"
-  | "copying"
-  | "waiting-for-edit"
-  | "validating"
-  | "error";
+type Phase = "loading" | "select" | "copying" | "waiting-for-edit" | "validating" | "error";
 
 interface SelectItem {
   label: string;
@@ -42,16 +36,10 @@ interface SelectItem {
  * 3. Show PRD path and wait for user to edit and press Enter
  * 4. Validate PRD has tasks
  */
-export function TemplateSelector({
-  ralphDir,
-  onComplete,
-  onCancel,
-}: TemplateSelectorProps) {
+export function TemplateSelector({ ralphDir, onComplete, onCancel }: TemplateSelectorProps) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [templates, setTemplates] = useState<PrdTemplate[]>([]);
-  const [_selectedTemplate, setSelectedTemplate] = useState<PrdTemplate | null>(
-    null,
-  );
+  const [_selectedTemplate, setSelectedTemplate] = useState<PrdTemplate | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const prdPath = join(ralphDir, "PRD.md");
@@ -85,9 +73,7 @@ export function TemplateSelector({
         // Show path and wait for user to edit manually
         setPhase("waiting-for-edit");
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to copy template",
-        );
+        setError(err instanceof Error ? err.message : "Failed to copy template");
         setPhase("error");
       }
     },

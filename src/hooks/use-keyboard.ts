@@ -66,13 +66,7 @@ export interface KeyboardActions {
 export function useKeyboardShortcuts(
   options: UseKeyboardShortcutsOptions = {},
 ): [KeyboardState, KeyboardActions] {
-  const {
-    isActive = true,
-    onQuit,
-    onToggleVerbose,
-    onToggleDebug,
-    handlers = {},
-  } = options;
+  const { isActive = true, onQuit, onToggleVerbose, onToggleDebug, handlers = {} } = options;
 
   const [verbose, setVerbose] = useState(false);
   const [debug, setDebug] = useState(false);
@@ -160,10 +154,7 @@ export function useKeyHandler(
 /**
  * Hook for handling Enter key
  */
-export function useEnterKey(
-  handler: KeyHandler,
-  options: { isActive?: boolean } = {},
-): void {
+export function useEnterKey(handler: KeyHandler, options: { isActive?: boolean } = {}): void {
   const { isActive = true } = options;
 
   useInput(
@@ -179,10 +170,7 @@ export function useEnterKey(
 /**
  * Hook for handling Escape key
  */
-export function useEscapeKey(
-  handler: KeyHandler,
-  options: { isActive?: boolean } = {},
-): void {
+export function useEscapeKey(handler: KeyHandler, options: { isActive?: boolean } = {}): void {
   const { isActive = true } = options;
 
   useInput(

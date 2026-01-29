@@ -3,11 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentBranch, getCurrentCommit } from "../hooks/use-git.js";
-import type {
-  IterationResult,
-  SessionCheckpoint,
-  SessionState,
-} from "../types.js";
+import type { IterationResult, SessionCheckpoint, SessionState } from "../types.js";
 
 const SESSION_FILE = "session.json";
 
@@ -22,9 +18,7 @@ function getSessionPath(ralphDir: string): string {
  * Load existing session from .ralph/session.json
  * Returns null if no session exists or file is invalid
  */
-export async function loadSession(
-  ralphDir: string,
-): Promise<SessionState | null> {
+export async function loadSession(ralphDir: string): Promise<SessionState | null> {
   const sessionPath = getSessionPath(ralphDir);
 
   if (!existsSync(sessionPath)) {
@@ -49,10 +43,7 @@ export async function loadSession(
 /**
  * Save session state to .ralph/session.json
  */
-export async function saveSession(
-  ralphDir: string,
-  session: SessionState,
-): Promise<void> {
+export async function saveSession(ralphDir: string, session: SessionState): Promise<void> {
   const sessionPath = getSessionPath(ralphDir);
 
   // Ensure .ralph directory exists

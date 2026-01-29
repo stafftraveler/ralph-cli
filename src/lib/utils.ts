@@ -89,10 +89,7 @@ export async function writeIterationLog(
   }
 
   // Format log filename with timestamp first (for chronological sorting) then iteration
-  const timestamp = new Date(result.startedAt)
-    .toISOString()
-    .replace(/:/g, "-")
-    .slice(0, 16); // yyyy-mm-ddThh-mm (no seconds)
+  const timestamp = new Date(result.startedAt).toISOString().replace(/:/g, "-").slice(0, 16); // yyyy-mm-ddThh-mm (no seconds)
   const filename = `${timestamp}-iteration-${result.iteration.toString().padStart(2, "0")}.log`;
   const logPath = join(logsDir, filename);
 
@@ -107,9 +104,7 @@ export async function writeIterationLog(
     result.usage
       ? `Tokens:   ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`
       : null,
-    result.usage?.totalCostUsd
-      ? `Cost:     $${result.usage.totalCostUsd.toFixed(4)}`
-      : null,
+    result.usage?.totalCostUsd ? `Cost:     $${result.usage.totalCostUsd.toFixed(4)}` : null,
     `PRD Complete: ${result.prdComplete}`,
     "",
     "=== Output ===",
@@ -131,13 +126,7 @@ export async function writeIterationLog(
  */
 export async function resetPrdAndProgress(ralphDir: string): Promise<void> {
   // Copy empty.md template to PRD.md
-  const emptyTemplatePath = join(
-    __dirname,
-    "..",
-    "templates",
-    "prd",
-    "empty.md",
-  );
+  const emptyTemplatePath = join(__dirname, "..", "templates", "prd", "empty.md");
   const prdPath = join(ralphDir, "PRD.md");
   await copyFile(emptyTemplatePath, prdPath);
 

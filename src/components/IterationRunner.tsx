@@ -52,8 +52,7 @@ function StatusDisplay({ status }: { status: string | null }) {
 
   // Truncate long status messages
   const maxLength = 60;
-  const displayStatus =
-    status.length > maxLength ? `${status.slice(0, maxLength)}...` : status;
+  const displayStatus = status.length > maxLength ? `${status.slice(0, maxLength)}...` : status;
 
   return <Text color="cyan">{displayStatus}</Text>;
 }
@@ -70,11 +69,7 @@ interface UsageDisplayProps {
 /**
  * Cost and usage display with optional session total and warning
  */
-function UsageDisplay({
-  state,
-  sessionCostSoFar,
-  warnCostThreshold,
-}: UsageDisplayProps) {
+function UsageDisplay({ state, sessionCostSoFar, warnCostThreshold }: UsageDisplayProps) {
   const { usage } = state;
 
   if (!usage) {
@@ -85,24 +80,18 @@ function UsageDisplay({
   const sessionTotal = (sessionCostSoFar ?? 0) + iterationCost;
   const isApproachingThreshold =
     warnCostThreshold !== undefined && sessionTotal >= warnCostThreshold * 0.8;
-  const hasExceededThreshold =
-    warnCostThreshold !== undefined && sessionTotal >= warnCostThreshold;
+  const hasExceededThreshold = warnCostThreshold !== undefined && sessionTotal >= warnCostThreshold;
 
   return (
     <Box flexDirection="column" marginTop={1}>
       <Text color="gray">
-        Tokens: {usage.inputTokens.toLocaleString()} in /{" "}
-        {usage.outputTokens.toLocaleString()} out
-        {usage.totalCostUsd !== undefined && (
-          <Text> · Cost: {formatCost(usage.totalCostUsd)}</Text>
-        )}
+        Tokens: {usage.inputTokens.toLocaleString()} in / {usage.outputTokens.toLocaleString()} out
+        {usage.totalCostUsd !== undefined && <Text> · Cost: {formatCost(usage.totalCostUsd)}</Text>}
       </Text>
       {sessionCostSoFar !== undefined && sessionCostSoFar > 0 && (
         <Text color="gray">
           Session total: {formatCost(sessionTotal)}
-          {warnCostThreshold !== undefined && (
-            <Text> / {formatCost(warnCostThreshold)} limit</Text>
-          )}
+          {warnCostThreshold !== undefined && <Text> / {formatCost(warnCostThreshold)} limit</Text>}
         </Text>
       )}
       {hasExceededThreshold && (
@@ -112,8 +101,7 @@ function UsageDisplay({
       )}
       {isApproachingThreshold && !hasExceededThreshold && (
         <Text color="yellow">
-          ⚠ Approaching cost threshold (
-          {Math.round((sessionTotal / warnCostThreshold) * 100)}%)
+          ⚠ Approaching cost threshold ({Math.round((sessionTotal / warnCostThreshold) * 100)}%)
         </Text>
       )}
     </Box>
@@ -169,17 +157,7 @@ export function IterationRunner({
       .then((result) => {
         onComplete(result);
       });
-  }, [
-    actions,
-    config,
-    ralphDir,
-    prompt,
-    iteration,
-    verbose,
-    debug,
-    onComplete,
-    sessionCostSoFar,
-  ]);
+  }, [actions, config, ralphDir, prompt, iteration, verbose, debug, onComplete, sessionCostSoFar]);
 
   // Show completion state briefly before parent handles transition
   if (!isRunning && hasStartedRef.current) {
@@ -236,9 +214,7 @@ export function IterationRunner({
           ))}
         </Box>
       )}
-      {verbose && state.output && (
-        <VerboseOutput output={state.output} />
-      )}
+      {verbose && state.output && <VerboseOutput output={state.output} />}
     </Box>
   );
 }
@@ -254,10 +230,7 @@ const VERBOSE_MAX_LINES = 20;
 function VerboseOutput({ output }: { output: string }) {
   // Split into lines and take the last N
   const lines = output.split("\n");
-  const displayLines =
-    lines.length > VERBOSE_MAX_LINES
-      ? lines.slice(-VERBOSE_MAX_LINES)
-      : lines;
+  const displayLines = lines.length > VERBOSE_MAX_LINES ? lines.slice(-VERBOSE_MAX_LINES) : lines;
   const truncated = lines.length > VERBOSE_MAX_LINES;
 
   return (
@@ -265,12 +238,7 @@ function VerboseOutput({ output }: { output: string }) {
       <Text color="gray" dimColor>
         Claude output:{truncated && ` (last ${VERBOSE_MAX_LINES} lines)`}
       </Text>
-      <Box
-        flexDirection="column"
-        borderStyle="single"
-        borderColor="gray"
-        paddingX={1}
-      >
+      <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={1}>
         {displayLines.map((line, i) => (
           <Text key={`output-${i}-${line.slice(0, 10)}`} color="white" dimColor>
             {line || " "}

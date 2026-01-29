@@ -20,11 +20,7 @@ export interface NotifyOptions {
  * Uses node-notifier for cross-platform support.
  * Plays sound via afplay on macOS if configured.
  */
-export function notify(
-  title: string,
-  message: string,
-  options: NotifyOptions = {},
-): void {
+export function notify(title: string, message: string, options: NotifyOptions = {}): void {
   const { icon, sound, playSound = false } = options;
 
   // Default icon path (relative to lib/)

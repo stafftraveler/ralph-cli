@@ -2,7 +2,7 @@ import { Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { useEffect, useRef, useState } from "react";
 import { usePreflight } from "../hooks/use-preflight.js";
-import type { PreflightCheck, PreflightResult } from "../types.js";
+import type { PreflightCheck } from "../types.js";
 import { ApiKeyPrompt } from "./ApiKeyPrompt.js";
 
 /**
@@ -124,15 +124,7 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
       }, 2000);
     }
     // No cleanup - we want the timer to fire regardless of re-renders
-  }, [
-    isChecking,
-    results,
-    allPassed,
-    prdHasTasks,
-    onComplete,
-    exit,
-    apiKeyProvided,
-  ]);
+  }, [isChecking, results, allPassed, prdHasTasks, onComplete, exit, apiKeyProvided]);
 
   const handleApiKeySubmit = (_apiKey: string) => {
     setShowApiKeyPrompt(false);
@@ -204,9 +196,7 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
           {allPassed ? (
             <Text color="green">All checks passed!</Text>
           ) : (
-            <Text color="red">
-              Some checks failed. Please fix the issues above.
-            </Text>
+            <Text color="red">Some checks failed. Please fix the issues above.</Text>
           )}
         </Box>
       )}

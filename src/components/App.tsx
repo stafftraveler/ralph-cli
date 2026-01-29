@@ -2,41 +2,41 @@ import { join } from "node:path";
 import { Box, Text, useApp } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    createBranch,
-    getCommitsSince,
-    getCurrentBranch,
-    getDiffStats,
-    getRepoRoot,
+  createBranch,
+  getCommitsSince,
+  getCurrentBranch,
+  getDiffStats,
+  getRepoRoot,
 } from "../hooks/use-git.js";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard.js";
 import { loadConfig } from "../lib/config.js";
 import { notify } from "../lib/notify.js";
 import {
-    loadPlugins,
-    runAfterIteration,
-    runBeforeRun,
-    runDone,
-    runOnError,
+  loadPlugins,
+  runAfterIteration,
+  runBeforeRun,
+  runDone,
+  runOnError,
 } from "../lib/plugins.js";
 import { prdHasTasks } from "../lib/prd.js";
 import {
-    addIterationResult,
-    clearSession,
-    createSession,
-    loadSession,
-    saveCheckpoint,
-    saveSession,
+  addIterationResult,
+  clearSession,
+  createSession,
+  loadSession,
+  saveCheckpoint,
+  saveSession,
 } from "../lib/session.js";
 import { resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
 import type {
-    AppPhase,
-    CliOptions,
-    DiffStat,
-    IterationResult,
-    PluginContext,
-    RalphConfig,
-    RalphPlugin,
-    SessionState,
+  AppPhase,
+  CliOptions,
+  DiffStat,
+  IterationResult,
+  PluginContext,
+  RalphConfig,
+  RalphPlugin,
+  SessionState,
 } from "../types.js";
 import { IterationRunner } from "./IterationRunner.js";
 import { IterationsPrompt } from "./IterationsPrompt.js";
@@ -79,9 +79,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
   // Iteration state
   const [currentIteration, setCurrentIteration] = useState(1);
-  const [totalIterations, setTotalIterations] = useState(
-    options.iterations ?? 5,
-  );
+  const [totalIterations, setTotalIterations] = useState(options.iterations ?? 5);
   const [prdComplete, setPrdComplete] = useState(false);
   const [prUrl, _setPrUrl] = useState<string | undefined>();
 
@@ -212,24 +210,19 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   );
 
   // Phase: Preflight complete
-  const handlePreflightComplete = useCallback(
-    (passed: boolean, hasTasks: boolean) => {
-      if (!passed) {
-        setError(
-          "Preflight checks failed. Please fix the issues and try again.",
-        );
-        setPhase("error");
-        return;
-      }
+  const handlePreflightComplete = useCallback((passed: boolean, hasTasks: boolean) => {
+    if (!passed) {
+      setError("Preflight checks failed. Please fix the issues and try again.");
+      setPhase("error");
+      return;
+    }
 
-      if (!hasTasks) {
-        setPhase("template-select");
-      } else {
-        setPhase("session-prompt");
-      }
-    },
-    [],
-  );
+    if (!hasTasks) {
+      setPhase("template-select");
+    } else {
+      setPhase("session-prompt");
+    }
+  }, []);
 
   // Phase: Template selected
   const handleTemplateComplete = useCallback(async () => {
@@ -237,9 +230,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
     const prdPath = join(ralphDir, "PRD.md");
     const hasTasks = await prdHasTasks(prdPath);
     if (!hasTasks) {
-      setError(
-        "PRD.md still has no tasks after editing. Please add tasks and try again.",
-      );
+      setError("PRD.md still has no tasks after editing. Please add tasks and try again.");
       setPhase("error");
       return;
     }
@@ -283,16 +274,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
     await runBeforeRun(plugins, ctx);
 
     setPhase("running");
-  }, [
-    config,
-    branch,
-    options.branch,
-    options.dryRun,
-    plugins,
-    ralphDir,
-    repoRoot,
-    verbose,
-  ]);
+  }, [config, branch, options.branch, options.dryRun, plugins, ralphDir, repoRoot, verbose]);
 
   // Phase: Resume session
   const handleResumeSession = useCallback(
@@ -323,15 +305,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
       setPhase("running");
     },
-    [
-      config,
-      ralphDir,
-      repoRoot,
-      verbose,
-      options.dryRun,
-      plugins,
-      handleNewSession,
-    ],
+    [config, ralphDir, repoRoot, verbose, options.dryRun, plugins, handleNewSession],
   );
 
   // Handle iteration complete
@@ -340,11 +314,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       if (!config || !session) return;
 
       // Add result to session
-      const updatedSession = await addIterationResult(
-        ralphDir,
-        session,
-        result,
-      );
+      const updatedSession = await addIterationResult(ralphDir, session, result);
       setSession(updatedSession);
 
       // Save checkpoint
@@ -391,9 +361,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
           // Stay on same iteration for retry
           return;
         }
-        setError(
-          `Iteration ${result.iteration} failed after ${maxRetries} retries.`,
-        );
+        setError(`Iteration ${result.iteration} failed after ${maxRetries} retries.`);
         setPhase("error");
         return;
       }
@@ -441,13 +409,9 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
       // Send notification
       if (config?.soundOnComplete) {
-        notify(
-          "Ralph Complete",
-          `Finished ${session?.iterations.length ?? 0} iterations`,
-          {
-            sound: config.notificationSound,
-          },
-        );
+        notify("Ralph Complete", `Finished ${session?.iterations.length ?? 0} iterations`, {
+          sound: config.notificationSound,
+        });
       }
     }
     void runDonePlugins();
@@ -486,10 +450,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       {phase === "welcome" && <Welcome onComplete={handleWelcomeComplete} />}
 
       {phase === "iterations-prompt" && (
-        <IterationsPrompt
-          onSubmit={handleIterationsSubmit}
-          defaultValue={5}
-        />
+        <IterationsPrompt onSubmit={handleIterationsSubmit} defaultValue={5} />
       )}
 
       {phase === "preflight" && (
@@ -624,9 +585,7 @@ function SummaryView({
     <Box flexDirection="column">
       {isInterrupted && (
         <Box marginBottom={1}>
-          <Text color="yellow">
-            Interrupted - showing summary of completed work
-          </Text>
+          <Text color="yellow">Interrupted - showing summary of completed work</Text>
         </Box>
       )}
       <Summary summary={summary} />

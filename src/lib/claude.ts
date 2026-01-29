@@ -103,10 +103,7 @@ function shortenPath(filePath: string): string {
  * @param toolInput - The tool input object (optional)
  * @returns Human-friendly status string
  */
-export function formatToolStatus(
-  toolName: string,
-  toolInput?: unknown,
-): string {
+export function formatToolStatus(toolName: string, toolInput?: unknown): string {
   const description = TOOL_DESCRIPTIONS[toolName] ?? `Using tool: ${toolName}`;
 
   const filePath = extractFilePath(toolInput);
@@ -302,8 +299,7 @@ If all tasks in the PRD are complete, include <promise>COMPLETE</promise> in you
       sessionId,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     if (options.debug) {
       console.log(`[DEBUG] SDK error: ${errorMessage}`);
@@ -363,10 +359,7 @@ export function hasApiKeySync(): boolean {
  * @param persistToKeychain - Whether to save to keychain for future sessions (default: true)
  * @returns Promise resolving to true if keychain save succeeded (or was skipped)
  */
-export async function setApiKey(
-  apiKey: string,
-  persistToKeychain = true,
-): Promise<boolean> {
+export async function setApiKey(apiKey: string, persistToKeychain = true): Promise<boolean> {
   // Always set in environment for current session
   process.env.ANTHROPIC_API_KEY = apiKey;
 

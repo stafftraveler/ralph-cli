@@ -73,11 +73,7 @@ export async function createBranch(name: string): Promise<boolean> {
  */
 export async function getCommitsSince(sha: string): Promise<CommitInfo[]> {
   try {
-    const { stdout } = await execa("git", [
-      "log",
-      `${sha}..HEAD`,
-      "--format=%H|%h|%s|%an|%aI",
-    ]);
+    const { stdout } = await execa("git", ["log", `${sha}..HEAD`, "--format=%H|%h|%s|%an|%aI"]);
 
     if (!stdout.trim()) {
       return [];
@@ -104,16 +100,9 @@ export async function getCommitsSince(sha: string): Promise<CommitInfo[]> {
 /**
  * Get the number of commits between two SHAs
  */
-export async function getCommitCount(
-  fromSha: string,
-  toSha = "HEAD",
-): Promise<number> {
+export async function getCommitCount(fromSha: string, toSha = "HEAD"): Promise<number> {
   try {
-    const { stdout } = await execa("git", [
-      "rev-list",
-      "--count",
-      `${fromSha}..${toSha}`,
-    ]);
+    const { stdout } = await execa("git", ["rev-list", "--count", `${fromSha}..${toSha}`]);
     return Number.parseInt(stdout.trim(), 10) || 0;
   } catch {
     return 0;
@@ -137,11 +126,7 @@ export async function getDiffStats(fromCommit: string): Promise<DiffStat[]> {
     }
 
     // Get numstat for additions/deletions
-    const { stdout: numstat } = await execa("git", [
-      "diff",
-      "--numstat",
-      `${fromCommit}..HEAD`,
-    ]);
+    const { stdout: numstat } = await execa("git", ["diff", "--numstat", `${fromCommit}..HEAD`]);
 
     const statusMap = new Map<string, DiffStat["status"]>();
     for (const line of nameStatus.trim().split("\n")) {
@@ -181,13 +166,9 @@ export async function getDiffStats(fromCommit: string): Promise<DiffStat[]> {
 export async function hasUncommittedChanges(): Promise<boolean> {
   try {
     // Check staged changes
-    const { exitCode: stagedExit } = await execa(
-      "git",
-      ["diff", "--cached", "--quiet"],
-      {
-        reject: false,
-      },
-    );
+    const { exitCode: stagedExit } = await execa("git", ["diff", "--cached", "--quiet"], {
+      reject: false,
+    });
     if (stagedExit !== 0) return true;
 
     // Check unstaged changes
@@ -205,11 +186,7 @@ export async function hasUncommittedChanges(): Promise<boolean> {
  */
 export async function hasUntrackedFiles(): Promise<boolean> {
   try {
-    const { stdout } = await execa("git", [
-      "ls-files",
-      "--others",
-      "--exclude-standard",
-    ]);
+    const { stdout } = await execa("git", ["ls-files", "--others", "--exclude-standard"]);
     const files = stdout
       .trim()
       .split("\n")

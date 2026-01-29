@@ -37,8 +37,9 @@ function getStatusColor(
 
 /**
  * Get status label for display
+ * @internal Reserved for future verbose mode
  */
-function getStatusLabel(status: DiffStat["status"]): string {
+function _getStatusLabel(status: DiffStat["status"]): string {
   switch (status) {
     case "M":
       return "modified";
@@ -125,11 +126,7 @@ function DiffSummary({ stats }: { stats: DiffStat[] }) {
  *
  * Also shows +/- counts for additions and deletions
  */
-export function DiffPreview({
-  stats,
-  maxFiles = 10,
-  compact = false,
-}: DiffPreviewProps) {
+export function DiffPreview({ stats, maxFiles = 10, compact = false }: DiffPreviewProps) {
   if (stats.length === 0) {
     return (
       <Box>
@@ -163,4 +160,3 @@ export function DiffPreview({
     </Box>
   );
 }
-

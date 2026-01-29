@@ -20,9 +20,9 @@ export async function prdHasTasks(prdPath: string): Promise<boolean> {
   const lines = content.split("\n");
 
   // Check for list items with actual content (not just "..." or empty)
-  // Matches: "- task", "* task", "1. task", "  - nested task", "[ ] task", "[x] task"
-  // Rejects: "- ...", "- ", "..."
-  const taskPattern = /^[\s]*(?:[-*]|\d+\.|\[[ xX]\])\s+(?!\.\.\.)(?!\s*$).+/;
+  // Matches: "- task", "* task", "1. task", "  - nested task", "[ ] task"
+  // Rejects: "- ...", "- ", "...", "[x] task" (completed checkboxes)
+  const taskPattern = /^[\s]*(?:[-*]|\d+\.|\[ \])\s+(?!\.\.\.)(?!\s*$).+/;
 
   for (const line of lines) {
     if (taskPattern.test(line)) {
@@ -38,9 +38,7 @@ export async function prdHasTasks(prdPath: string): Promise<boolean> {
  *
  * Returns template metadata sorted by name.
  */
-export async function listTemplates(
-  templatesDir: string,
-): Promise<PrdTemplate[]> {
+export async function listTemplates(templatesDir: string): Promise<PrdTemplate[]> {
   let entries: string[];
   try {
     entries = await readdir(templatesDir);
@@ -66,8 +64,7 @@ export async function listTemplates(
         // Skip empty lines and markdown headers
         if (!trimmed || trimmed.startsWith("#")) continue;
         // Use first content line as description (truncate if long)
-        description =
-          trimmed.length > 80 ? `${trimmed.slice(0, 77)}...` : trimmed;
+        description = trimmed.length > 80 ? `${trimmed.slice(0, 77)}...` : trimmed;
         break;
       }
     } catch {
