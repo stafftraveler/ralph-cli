@@ -17,3 +17,21 @@
 **Impact**: Reduced codebase by 38 lines. Eliminated unused editor integration module. Cleaner lib/ directory.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 2
+
+**Task**: Remove unused runBeforeIteration() function (PRD cleanup task)
+
+**What was done**:
+- Removed runBeforeIteration() function from src/lib/plugins.ts (9 lines)
+- Function was exported but never imported anywhere
+- Other plugin hook wrappers (runBeforeRun, runAfterIteration, runDone, runOnError) are used but this one was not
+
+**Files changed**:
+- src/lib/plugins.ts (removed unused export)
+
+**Reasoning**: Function exported but never used. Part of incomplete plugin hook pattern - likely written proactively but never integrated.
+
+**Impact**: Reduced API surface area by 1 function. Cleaner plugin interface.
+
+**All checks passed**: format, lint, types ✓
