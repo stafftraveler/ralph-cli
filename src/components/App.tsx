@@ -295,6 +295,9 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
       setSession(loaded);
       setCurrentIteration(resumeIteration);
+      // Adjust total iterations: add the requested iterations to the resume point
+      // e.g., resuming at iteration 6 with 5 iterations = "Iteration 6 of 11"
+      setTotalIterations((prev) => prev + resumeIteration);
       setBranch(loaded.branch);
 
       // Run beforeRun hook
