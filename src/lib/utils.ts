@@ -88,12 +88,12 @@ export async function writeIterationLog(
     }
   }
 
-  // Format log filename with iteration number and timestamp
+  // Format log filename with timestamp first (for chronological sorting) then iteration
   const timestamp = new Date(result.startedAt)
     .toISOString()
     .replace(/:/g, "-")
-    .replace(/\..+/, "");
-  const filename = `iteration-${result.iteration.toString().padStart(2, "0")}-${timestamp}.log`;
+    .slice(0, 16); // yyyy-mm-ddThh-mm (no seconds)
+  const filename = `${timestamp}-iteration-${result.iteration.toString().padStart(2, "0")}.log`;
   const logPath = join(logsDir, filename);
 
   // Format log content with metadata header
