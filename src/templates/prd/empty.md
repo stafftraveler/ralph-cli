@@ -6,7 +6,7 @@ Start with this empty PRD template.
 
 ## Working directory
 
-`src/...`
+`src/`
 
 ## Reference
 

@@ -2,7 +2,7 @@
 
 ## Working directory
 
-`src/...`
+`src/`
 
 ## Package manager
 

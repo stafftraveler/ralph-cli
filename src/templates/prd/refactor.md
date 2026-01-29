@@ -6,7 +6,7 @@ Refactor the codebase.
 
 ## Working directory
 
-`src/...`
+`src/`
 
 ## Current State
 
