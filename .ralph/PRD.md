@@ -14,4 +14,5 @@ Clean-up the codebase.
     - ✅ Iteration 1: Eliminated duplicate formatCost() function (3 copies → 1 shared utility in lib/utils.ts)
     - ✅ Iteration 2: Removed unused hook exports from use-keyboard.ts (useKeyHandler, useEnterKey, useEscapeKey)
     - ✅ Iteration 3: Made formatToolStatus and isPrdComplete non-exported in claude.ts (only used internally)
-    - Remaining issues: unused params/state in App.tsx and IterationRunner.tsx, inconsistent patterns
+    - ✅ Iteration 4: Removed unused state/params from App.tsx and IterationRunner.tsx (_setPrUrl, _keyboardActions, onCancel)
+    - Remaining: Additional code smells detection needed

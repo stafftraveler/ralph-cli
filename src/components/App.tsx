@@ -2,41 +2,41 @@ import { join } from "node:path";
 import { Box, Text, useApp } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    createBranch,
-    getCommitsSince,
-    getCurrentBranch,
-    getDiffStats,
-    getRepoRoot,
+  createBranch,
+  getCommitsSince,
+  getCurrentBranch,
+  getDiffStats,
+  getRepoRoot,
 } from "../hooks/use-git.js";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard.js";
 import { loadConfig } from "../lib/config.js";
 import { notify } from "../lib/notify.js";
 import {
-    loadPlugins,
-    runAfterIteration,
-    runBeforeRun,
-    runDone,
-    runOnError,
+  loadPlugins,
+  runAfterIteration,
+  runBeforeRun,
+  runDone,
+  runOnError,
 } from "../lib/plugins.js";
 import { prdHasTasks } from "../lib/prd.js";
 import {
-    addIterationResult,
-    clearSession,
-    createSession,
-    loadSession,
-    saveCheckpoint,
-    saveSession,
+  addIterationResult,
+  clearSession,
+  createSession,
+  loadSession,
+  saveCheckpoint,
+  saveSession,
 } from "../lib/session.js";
 import { resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
 import type {
-    AppPhase,
-    CliOptions,
-    DiffStat,
-    IterationResult,
-    PluginContext,
-    RalphConfig,
-    RalphPlugin,
-    SessionState,
+  AppPhase,
+  CliOptions,
+  DiffStat,
+  IterationResult,
+  PluginContext,
+  RalphConfig,
+  RalphPlugin,
+  SessionState,
 } from "../types.js";
 import { IterationRunner } from "./IterationRunner.js";
 import { IterationsPrompt } from "./IterationsPrompt.js";
@@ -81,7 +81,6 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const [currentIteration, setCurrentIteration] = useState(1);
   const [totalIterations, setTotalIterations] = useState(options.iterations ?? 5);
   const [prdComplete, setPrdComplete] = useState(false);
-  const [prUrl, _setPrUrl] = useState<string | undefined>();
 
   // Error state
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +92,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const hasRunDonePluginsRef = useRef(false);
 
   // Keyboard shortcuts
-  const [keyboardState, _keyboardActions] = useKeyboardShortcuts({
+  const [keyboardState] = useKeyboardShortcuts({
     isActive: phase === "running",
     onQuit: useCallback(() => {
       isInterruptedRef.current = true;
@@ -501,7 +500,6 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         <SummaryView
           session={session}
           prdComplete={prdComplete}
-          prUrl={prUrl}
           isInterrupted={isInterruptedRef.current}
           onExit={exit}
         />
@@ -525,13 +523,11 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 function SummaryView({
   session,
   prdComplete,
-  prUrl,
   isInterrupted,
   onExit,
 }: {
   session: SessionState;
   prdComplete: boolean;
-  prUrl?: string;
   isInterrupted: boolean;
   onExit: () => void;
 }) {
@@ -573,7 +569,6 @@ function SummaryView({
     iterations: session.iterations,
     commits,
     filesChanged,
-    prUrl,
   });
 
   // Override prdComplete if detected

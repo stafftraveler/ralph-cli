@@ -74,11 +74,7 @@ export function KeyboardShortcuts({
             : shortcut.label;
 
         return (
-          <ShortcutItem
-            key={shortcut.key}
-            shortcut={{ ...shortcut, label }}
-            active={isActive}
-          />
+          <ShortcutItem key={shortcut.key} shortcut={{ ...shortcut, label }} active={isActive} />
         );
       })}
     </Box>

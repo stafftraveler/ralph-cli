@@ -54,3 +54,23 @@
 **Impact**: Cleaner module interface, reduced unnecessary exports by 2 functions.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 4
+
+**Task**: Remove unused parameters and state from App.tsx and IterationRunner.tsx (PRD cleanup task)
+
+**What was done**:
+- Removed unused `prUrl` state and `_setPrUrl` setter from App.tsx (state never set, passed through as undefined)
+- Removed unused `_keyboardActions` from useKeyboardShortcuts return in App.tsx (actions never used)
+- Removed unused `onCancel` prop from IterationRunner.tsx (defined but never called)
+- Updated SummaryView and createSummary to remove prUrl parameter (prUrl still supported in createSummary interface for future plugin use)
+
+**Files changed**:
+- src/components/App.tsx (removed unused state and parameters)
+- src/components/IterationRunner.tsx (removed unused prop)
+
+**Reasoning**: Variables/parameters prefixed with `_` or entirely unused add cognitive overhead. Removed to improve code clarity.
+
+**Impact**: Cleaner component interfaces, reduced unused code. All functionality preserved (prUrl can still be set by plugins via createSummary).
+
+**All checks passed**: format, lint, types ✓

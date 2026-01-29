@@ -21,8 +21,6 @@ export interface IterationRunnerProps {
   totalIterations: number;
   /** Called when iteration completes */
   onComplete: (result: IterationResult) => void;
-  /** Called when user cancels */
-  onCancel?: () => void;
   /** Enable verbose output */
   verbose?: boolean;
   /** Enable debug mode */
@@ -117,7 +115,6 @@ export function IterationRunner({
   iteration,
   totalIterations,
   onComplete,
-  onCancel: _onCancel,
   verbose,
   debug,
   sessionCostSoFar,
