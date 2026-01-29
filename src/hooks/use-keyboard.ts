@@ -4,19 +4,19 @@ import { useCallback, useState } from "react";
 /**
  * Keyboard shortcut handler function
  */
-export type KeyHandler = () => void;
+type KeyHandler = () => void;
 
 /**
  * Map of key characters to handler functions
  */
-export interface KeyHandlers {
+interface KeyHandlers {
   [key: string]: KeyHandler;
 }
 
 /**
  * Options for useKeyboardShortcuts hook
  */
-export interface UseKeyboardShortcutsOptions {
+interface UseKeyboardShortcutsOptions {
   /** Whether keyboard handling is active */
   isActive?: boolean;
   /** Handler for quit (q key) */
@@ -36,7 +36,7 @@ export interface UseKeyboardShortcutsOptions {
 /**
  * State returned by useKeyboardShortcuts
  */
-export interface KeyboardState {
+interface KeyboardState {
   verbose: boolean;
   debug: boolean;
 }
@@ -44,7 +44,7 @@ export interface KeyboardState {
 /**
  * Actions returned by useKeyboardShortcuts
  */
-export interface KeyboardActions {
+interface KeyboardActions {
   setVerbose: (value: boolean) => void;
   setDebug: (value: boolean) => void;
   toggleVerbose: () => void;
