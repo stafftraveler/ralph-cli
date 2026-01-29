@@ -123,6 +123,10 @@ export function IterationRunner({
   const { isRunning, currentStatus, elapsedSeconds } = state;
   const hasStartedRef = useRef(false);
   const lastIterationRef = useRef(iteration);
+  // Keep a ref to onComplete so we always call the latest version
+  // This ensures mid-iteration changes to totalIterations are respected
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   // Reset hasStartedRef when iteration number changes
   if (lastIterationRef.current !== iteration) {
@@ -145,9 +149,9 @@ export function IterationRunner({
         sessionCostSoFar,
       })
       .then((result) => {
-        onComplete(result);
+        onCompleteRef.current(result);
       });
-  }, [actions, config, ralphDir, prompt, iteration, verbose, debug, onComplete, sessionCostSoFar]);
+  }, [actions, config, ralphDir, prompt, iteration, verbose, debug, sessionCostSoFar]);
 
   // Show completion state briefly before parent handles transition
   if (!isRunning && hasStartedRef.current) {
