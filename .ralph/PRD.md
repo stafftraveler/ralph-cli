@@ -10,10 +10,11 @@ Clean-up the codebase.
 
 ## Tasks
 
-[x] Scan for code smells: unused exports, dead code, inconsistent patterns, duplicate code. Fix ONE issue per iteration. Repeat until done.
-    - ✅ Iteration 1: Eliminated duplicate formatCost() function (3 copies → 1 shared utility in lib/utils.ts)
-    - ✅ Iteration 2: Removed unused hook exports from use-keyboard.ts (useKeyHandler, useEnterKey, useEscapeKey)
-    - ✅ Iteration 3: Made formatToolStatus and isPrdComplete non-exported in claude.ts (only used internally)
-    - ✅ Iteration 4: Removed unused state/params from App.tsx and IterationRunner.tsx (_setPrUrl, _keyboardActions, onCancel)
-    - ✅ Iteration 5: Deleted entire unused run.tsx file (IterationLoop component never imported, 260 lines of dead code)
-    - Continue scanning for more issues
+## When the codebase has been cleaned up
+
+[ ] The token usage and costs are possibly not reported after the loop finishes. Read about token usage reporting in https://platform.claude.com/docs/en/agent-sdk/cost-tracking and fix this in our code. If possible, show the live token usage and costs of the session in the status bar on the bottom of the screen.
+[ ] Review the entire codebase. Fix issues.
+[ ] Prepare this package for release to @stafftraveler/ralph-cli. We are going to install it in other repositories to run our Ralph loops. Finish up README.md. Automatically run the init script after installation of the package using pnpm.
+[ ] Create a new `/PRD-advise.md` file with items that you suggest can be improved in this package. Also, add instructions on how to publish this package and integrate it in other repositories.
+[ ] Scan the code to verify if it is correct according to the updated AGENTS.md instructions. Update files if needed.
+[ ] Scan for code smells: unused exports, dead code, inconsistent patterns, duplicate code. Fix ONE issue per iteration. Repeat as needed.

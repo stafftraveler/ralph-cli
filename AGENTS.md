@@ -125,12 +125,22 @@ All types are defined in `src/types.ts`:
 
 ### General Principles
 
+- Write concise, readable TypeScript code
 - Use TypeScript strictly (no `any`)
+- Use functional and declarative programming patterns
 - Use `function` keyword for pure functions
 - Use React hooks for stateful logic
+- Follow DRY (Don't Repeat Yourself) principle
+- Separate concerns: put utility functions in `lib/`, hooks in `hooks/`
 - Prefix Node.js imports with `node:` (e.g., `node:fs/promises`)
+- Import React APIs explicitly (e.g., `import { useState } from "react"`)
 - Use early returns for readability
 - Unused variables must be prefixed with `_`
+
+### Component Structure
+
+- Put each component in its own file
+- Structure components logically: exports, subcomponents, helpers, types
 
 ### Naming Conventions
 
@@ -165,6 +175,10 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
   return [state, actions] as const;
 }
 ```
+
+### Comments
+
+- Use JSDoc comment format (`/** */`).
 
 ### Error Handling
 
