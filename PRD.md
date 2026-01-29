@@ -16,4 +16,5 @@ Clean-up the codebase.
     - ✅ Iteration 3: Removed unused _getStatusLabel() from DiffPreview.tsx (22 lines) - defined but never called
     - ✅ Iteration 4: Removed 3 unused keychain functions from keychain.ts (54 lines) - deleteApiKeyFromKeychain, hasApiKeyInKeychain, loadApiKeyFromKeychain
     - ✅ Iteration 5: Made 5 type exports private in use-keyboard.ts - KeyHandler, KeyHandlers, UseKeyboardShortcutsOptions, KeyboardState, KeyboardActions never imported
+    - ✅ Iteration 6: Made NotifyOptions interface private in notify.ts - exported but never imported
     - Continue scanning for more issues

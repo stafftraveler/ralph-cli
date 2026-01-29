@@ -94,3 +94,20 @@
 **Impact**: Cleaner module interface, reduced unnecessary type exports. Hook still functions identically but with clearer boundaries.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 6
+
+**Task**: Remove unused NotifyOptions export (PRD cleanup task)
+
+**What was done**:
+- Removed export keyword from NotifyOptions interface in src/lib/notify.ts
+- Interface only used as parameter type within notify.ts, never imported elsewhere
+
+**Files changed**:
+- src/lib/notify.ts (made NotifyOptions private)
+
+**Reasoning**: Interface exported but never imported. Only used internally as type for notify() function's options parameter. Exporting unnecessarily increases API surface area.
+
+**Impact**: Cleaner module interface, reduced unnecessary type export. Function signature unchanged.
+
+**All checks passed**: format, lint, types ✓

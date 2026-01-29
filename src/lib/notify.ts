@@ -6,7 +6,7 @@ import notifier from "node-notifier";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export interface NotifyOptions {
+interface NotifyOptions {
   /** Path to icon image */
   icon?: string;
   /** Path to sound file to play */
