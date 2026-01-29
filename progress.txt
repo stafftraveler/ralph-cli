@@ -201,3 +201,23 @@
 **Impact**: Cleaner hook interface. Reduced unnecessary exports while keeping legitimate public API.
 
 **All checks passed**: format, lint, types ✓
+
+## Iteration 12
+
+**Task**: Remove unused hasUncommittedChanges export from use-git.ts (PRD cleanup task)
+
+**What was done**:
+- Deleted hasUncommittedChanges() function from src/hooks/use-git.ts (19 lines)
+- Function exported but never imported anywhere
+- Proactively written git utility that was never integrated
+
+**Files changed**:
+- src/hooks/use-git.ts (removed unused export)
+
+**Reasoning**: Function exported but never used. Written proactively for potential future use but never integrated into any workflow.
+
+**Impact**: Reduced API surface area by 1 function, removed 19 lines. Cleaner git utilities module.
+
+**All checks passed**: format, lint, types ✓
+
+**Note**: Other unused git functions remain: hasUntrackedFiles, isOnMainBranch, getCommitCount. Can be cleaned up in future iterations.

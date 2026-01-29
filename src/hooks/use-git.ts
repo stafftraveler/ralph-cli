@@ -161,27 +161,6 @@ export async function getDiffStats(fromCommit: string): Promise<DiffStat[]> {
 }
 
 /**
- * Check if working directory has uncommitted changes
- */
-export async function hasUncommittedChanges(): Promise<boolean> {
-  try {
-    // Check staged changes
-    const { exitCode: stagedExit } = await execa("git", ["diff", "--cached", "--quiet"], {
-      reject: false,
-    });
-    if (stagedExit !== 0) return true;
-
-    // Check unstaged changes
-    const { exitCode: unstagedExit } = await execa("git", ["diff", "--quiet"], {
-      reject: false,
-    });
-    return unstagedExit !== 0;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Check if there are untracked files (excluding .ralph/ directory)
  */
 export async function hasUntrackedFiles(): Promise<boolean> {
