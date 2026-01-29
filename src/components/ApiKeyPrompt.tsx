@@ -1,6 +1,7 @@
 import { Box, Text, useApp, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { setApiKey } from "../lib/claude.js";
 
 /**
  * Props for the ApiKeyPrompt component
@@ -15,17 +16,20 @@ export interface ApiKeyPromptProps {
 /**
  * Interactive prompt for entering the Anthropic API key
  *
- * Validates the key format and sets it in the environment.
- * Provides instructions for persisting the key.
+ * Validates the key format and saves it securely to the macOS Keychain.
  */
 export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
   const { exit } = useApp();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState<{
+    success: boolean;
+    savedToKeychain: boolean;
+  } | null>(null);
 
-  useInput((input, key) => {
-    if (key.escape) {
+  useInput((_input, key) => {
+    if (key.escape && !isSubmitting) {
       if (onSkip) {
         onSkip();
       } else {
@@ -34,7 +38,7 @@ export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
     }
   });
 
-  const handleSubmit = (inputValue: string) => {
+  const handleSubmit = async (inputValue: string) => {
     const trimmed = inputValue.trim();
 
     if (!trimmed) {
@@ -47,34 +51,57 @@ export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
       return;
     }
 
-    // Set the API key in the environment for this session
-    process.env.ANTHROPIC_API_KEY = trimmed;
-    setIsSubmitted(true);
+    setIsSubmitting(true);
     setError(null);
 
-    // Brief delay to show success message
-    setTimeout(() => {
-      onSubmit(trimmed);
-    }, 500);
+    // Save to environment and keychain
+    const savedToKeychain = await setApiKey(trimmed, true);
+
+    setSubmitResult({ success: true, savedToKeychain });
   };
 
-  if (isSubmitted) {
+  // Handle completion after showing success message
+  useEffect(() => {
+    if (submitResult?.success) {
+      const timer = setTimeout(() => {
+        onSubmit(value.trim());
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitResult, onSubmit, value]);
+
+  if (submitResult) {
     return (
       <Box flexDirection="column" marginY={1}>
-        <Text color="green">✓ API key set for this session</Text>
-        <Box marginTop={1}>
-          <Text color="gray">
-            To persist, add to your shell profile (~/.zshrc or ~/.bashrc):
-          </Text>
-        </Box>
-        <Box marginLeft={2}>
-          <Text color="yellow">
-            export ANTHROPIC_API_KEY={value.slice(0, 15)}...
-          </Text>
-        </Box>
+        <Text color="green">✓ API key saved</Text>
+        {submitResult.savedToKeychain ? (
+          <Box marginTop={1}>
+            <Text color="gray">
+              Stored securely in macOS Keychain - no need to enter again
+            </Text>
+          </Box>
+        ) : (
+          <Box flexDirection="column" marginTop={1}>
+            <Text color="yellow">
+              ⚠ Could not save to Keychain - key set for this session only
+            </Text>
+            <Text color="gray">
+              To persist manually, add to ~/.zshrc or ~/.bashrc:
+            </Text>
+            <Box marginLeft={2}>
+              <Text color="gray">
+                export ANTHROPIC_API_KEY={value.slice(0, 15)}...
+              </Text>
+            </Box>
+          </Box>
+        )}
       </Box>
     );
   }
+
+  const handleSubmitWrapper = (inputValue: string) => {
+    void handleSubmit(inputValue);
+  };
 
   return (
     <Box flexDirection="column" marginY={1}>
@@ -92,13 +119,17 @@ export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
 
       <Box>
         <Text>Enter API key: </Text>
-        <TextInput
-          value={value}
-          onChange={setValue}
-          onSubmit={handleSubmit}
-          mask="*"
-          placeholder="sk-ant-api03-..."
-        />
+        {isSubmitting ? (
+          <Text color="gray">Saving...</Text>
+        ) : (
+          <TextInput
+            value={value}
+            onChange={setValue}
+            onSubmit={handleSubmitWrapper}
+            mask="*"
+            placeholder="sk-ant-api03-..."
+          />
+        )}
       </Box>
 
       {error && (
@@ -107,11 +138,13 @@ export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
         </Box>
       )}
 
-      <Box marginTop={1}>
-        <Text color="gray" dimColor>
-          Press Enter to submit, Escape to cancel
-        </Text>
-      </Box>
+      {!isSubmitting && (
+        <Box marginTop={1}>
+          <Text color="gray" dimColor>
+            Press Enter to submit, Escape to cancel
+          </Text>
+        </Box>
+      )}
     </Box>
   );
 }

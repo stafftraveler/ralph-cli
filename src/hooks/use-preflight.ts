@@ -26,6 +26,8 @@ export interface UsePreflightState {
 export interface UsePreflightActions {
   /** Run all preflight checks in parallel */
   runChecks: (ralphDir: string) => Promise<PreflightResult>;
+  /** Mark API key check as passed (after user provides key) */
+  markApiKeyPassed: () => void;
   /** Reset to initial state */
   reset: () => void;
 }
@@ -112,16 +114,16 @@ async function checkClaudeCode(): Promise<PreflightCheck> {
 }
 
 /**
- * Check if ANTHROPIC_API_KEY is set
+ * Check if ANTHROPIC_API_KEY is available (env var or keychain)
  */
 async function checkApiKey(): Promise<PreflightCheck> {
-  const hasKey = hasApiKey();
+  const hasKey = await hasApiKey();
   if (hasKey) {
     return createPassedCheck("API Key", "ANTHROPIC_API_KEY is set");
   }
   return createFailedCheck(
     "API Key",
-    "ANTHROPIC_API_KEY not set. Export it: export ANTHROPIC_API_KEY=sk-ant-...",
+    "ANTHROPIC_API_KEY not found. Enter it when prompted.",
   );
 }
 
@@ -282,14 +284,33 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
     setHasTasks(false);
   }, []);
 
+  /**
+   * Mark API key check as passed after user provides the key.
+   * This avoids re-running all checks and prevents race conditions.
+   */
+  const markApiKeyPassed = useCallback(() => {
+    // Update results with passed API key check
+    setResults((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        apiKey: createPassedCheck("API Key", "ANTHROPIC_API_KEY is set"),
+      };
+    });
+
+    // If API key was the only failing check, all checks now pass
+    // (we only show the API key prompt when other checks passed)
+    setAllPassed(true);
+  }, []);
+
   const state = useMemo<UsePreflightState>(
     () => ({ isChecking, results, allPassed, prdHasTasks: hasTasks }),
     [isChecking, results, allPassed, hasTasks],
   );
 
   const actions = useMemo<UsePreflightActions>(
-    () => ({ runChecks, reset }),
-    [runChecks, reset],
+    () => ({ runChecks, markApiKeyPassed, reset }),
+    [runChecks, markApiKeyPassed, reset],
   );
 
   return [state, actions] as const;

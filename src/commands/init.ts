@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import * as readline from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
-import { hasApiKey, isClaudeCodeInstalled } from "../lib/claude.js";
+import { hasApiKey, isClaudeCodeInstalled, setApiKey } from "../lib/claude.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -37,7 +37,7 @@ async function addRalphScript(repoRoot: string): Promise<boolean> {
       return true;
     }
 
-    pkg.scripts.ralph = "./ralph-cli/bin/ralph --save-output";
+    pkg.scripts.ralph = "ralph --logs";
 
     await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
     console.log(chalk.green('Added "ralph" script to package.json'));
@@ -87,7 +87,9 @@ async function promptForApiKey(): Promise<string | null> {
   );
 
   try {
-    const apiKey = await rl.question(chalk.cyan("Enter API key (or press Enter to skip): "));
+    const apiKey = await rl.question(
+      chalk.cyan("Enter API key (or press Enter to skip): "),
+    );
     rl.close();
 
     const trimmed = apiKey.trim();
@@ -100,15 +102,24 @@ async function promptForApiKey(): Promise<string | null> {
       return null;
     }
 
-    // Set the API key for this session
-    process.env.ANTHROPIC_API_KEY = trimmed;
-    console.log(chalk.green("✓ API key set for this session"));
-    console.log(
-      chalk.dim(
-        `\nTo persist, add to your shell profile (~/.zshrc or ~/.bashrc):`,
-      ),
-    );
-    console.log(chalk.yellow(`  export ANTHROPIC_API_KEY=${trimmed.slice(0, 15)}...`));
+    // Save API key to environment and keychain
+    const savedToKeychain = await setApiKey(trimmed, true);
+
+    if (savedToKeychain) {
+      console.log(chalk.green("✓ API key saved to macOS Keychain"));
+      console.log(chalk.dim("  Key will persist between sessions"));
+    } else {
+      console.log(chalk.green("✓ API key set for this session"));
+      console.log(chalk.yellow("  Could not save to Keychain"));
+      console.log(
+        chalk.dim(
+          `\nTo persist manually, add to your shell profile (~/.zshrc or ~/.bashrc):`,
+        ),
+      );
+      console.log(
+        chalk.yellow(`  export ANTHROPIC_API_KEY=${trimmed.slice(0, 15)}...`),
+      );
+    }
 
     return trimmed;
   } catch {
@@ -196,8 +207,8 @@ export async function runInit(
   }
   console.log(chalk.green("✓ Claude Code is installed"));
 
-  // Check if API key is set
-  let hasKey = hasApiKey();
+  // Check if API key is set (checks env var and keychain)
+  let hasKey = await hasApiKey();
   if (!hasKey) {
     console.log(chalk.yellow("\nANTHROPIC_API_KEY is not set."));
     const providedKey = await promptForApiKey();

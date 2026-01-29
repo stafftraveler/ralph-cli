@@ -1,6 +1,6 @@
 import { Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePreflight } from "../hooks/use-preflight.js";
 import type { PreflightCheck, PreflightResult } from "../types.js";
 import { ApiKeyPrompt } from "./ApiKeyPrompt.js";
@@ -70,6 +70,8 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
   const { isChecking, results, allPassed, prdHasTasks } = state;
   const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false);
   const [apiKeyProvided, setApiKeyProvided] = useState(false);
+  // Track whether completion has been triggered (use ref to avoid re-renders)
+  const completionTriggeredRef = useRef(false);
 
   useEffect(() => {
     if (skip) {
@@ -79,7 +81,7 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
     }
 
     void actions.runChecks(ralphDir);
-  }, [ralphDir, skip, actions, onComplete, apiKeyProvided]);
+  }, [ralphDir, skip, actions, onComplete]);
 
   // Check if API key is missing and show prompt
   useEffect(() => {
@@ -93,27 +95,50 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
 
   // When checks complete, notify parent (only if passed) or exit (if failed)
   useEffect(() => {
-    if (!isChecking && results !== null && !showApiKeyPrompt) {
-      if (allPassed) {
-        // Small delay to let user see results before continuing
-        const timer = setTimeout(() => {
-          onComplete(allPassed, prdHasTasks);
-        }, 800);
-        return () => clearTimeout(timer);
-      }
-      // If checks failed (and not waiting for API key), exit after a delay
-      const timer = setTimeout(() => {
+    // Don't run if already triggered
+    if (completionTriggeredRef.current) return;
+    if (isChecking || results === null) return;
+
+    // Check if API key failed - if so, wait for user to provide it
+    const apiKeyFailed = results.apiKey.status === "failed";
+    if (apiKeyFailed && !apiKeyProvided) {
+      // Don't complete/exit - wait for API key prompt
+      return;
+    }
+
+    // If user just provided API key, treat as passed (allPassed state may lag)
+    const effectivelyPassed = allPassed || apiKeyProvided;
+
+    // Mark as triggered immediately (before any state changes or timers)
+    completionTriggeredRef.current = true;
+
+    if (effectivelyPassed) {
+      // Small delay to let user see results before continuing
+      setTimeout(() => {
+        onComplete(true, prdHasTasks);
+      }, 800);
+    } else {
+      // If checks failed (not API key), exit after a delay
+      setTimeout(() => {
         exit();
       }, 2000);
-      return () => clearTimeout(timer);
     }
-  }, [isChecking, results, allPassed, prdHasTasks, onComplete, exit, showApiKeyPrompt]);
+    // No cleanup - we want the timer to fire regardless of re-renders
+  }, [
+    isChecking,
+    results,
+    allPassed,
+    prdHasTasks,
+    onComplete,
+    exit,
+    apiKeyProvided,
+  ]);
 
   const handleApiKeySubmit = (_apiKey: string) => {
     setShowApiKeyPrompt(false);
     setApiKeyProvided(true);
-    // Re-run checks with the new API key
-    void actions.runChecks(ralphDir);
+    // Mark API key as passed (no need to re-run all checks)
+    actions.markApiKeyPassed();
   };
 
   const handleApiKeySkip = () => {
@@ -129,8 +154,8 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
     );
   }
 
-  // Show API key prompt if needed
-  if (showApiKeyPrompt) {
+  // Show API key prompt if needed (guard with apiKeyProvided to prevent race conditions)
+  if (showApiKeyPrompt && !apiKeyProvided) {
     return (
       <Box flexDirection="column" marginY={1}>
         <Box marginBottom={1}>

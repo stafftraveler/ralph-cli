@@ -2,6 +2,120 @@ import { readFile } from "node:fs/promises";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import { execa } from "execa";
 import type { RalphConfig, UsageInfo } from "../types.js";
+import { getApiKeyFromKeychain, saveApiKeyToKeychain } from "./keychain.js";
+
+/**
+ * Content block with text from assistant messages
+ */
+interface TextBlock {
+  type: "text";
+  text: string;
+}
+
+/**
+ * Content block representing a tool invocation
+ */
+interface ToolUseBlock {
+  type: "tool_use";
+  name: string;
+  input?: Record<string, unknown>;
+}
+
+/**
+ * Union type for all content block types in assistant messages
+ */
+type ContentBlock = TextBlock | ToolUseBlock | { type: string };
+
+/**
+ * Type guard to check if a content block is a text block
+ */
+function isTextBlock(block: ContentBlock): block is TextBlock {
+  return block.type === "text";
+}
+
+/**
+ * Type guard to check if a content block is a tool use block
+ */
+function isToolUseBlock(block: ContentBlock): block is ToolUseBlock {
+  return block.type === "tool_use";
+}
+
+/**
+ * Human-friendly descriptions for Claude SDK tools
+ */
+const TOOL_DESCRIPTIONS: Record<string, string> = {
+  Read: "Reading",
+  Write: "Writing",
+  Edit: "Editing",
+  StrReplace: "Editing",
+  Bash: "Running command",
+  Shell: "Running command",
+  Grep: "Searching",
+  Glob: "Finding files",
+  LS: "Listing directory",
+  Task: "Running subtask",
+  TodoWrite: "Updating tasks",
+  WebFetch: "Fetching URL",
+  WebSearch: "Searching web",
+  NotebookEdit: "Editing notebook",
+};
+
+/**
+ * Extracts a file path from tool input if available
+ */
+function extractFilePath(toolInput: unknown): string | undefined {
+  if (typeof toolInput !== "object" || toolInput === null) {
+    return undefined;
+  }
+
+  const input = toolInput as Record<string, unknown>;
+
+  // Common file path field names used by various tools
+  if (typeof input.file_path === "string") {
+    return input.file_path;
+  }
+  if (typeof input.path === "string") {
+    return input.path;
+  }
+  if (typeof input.notebook_path === "string") {
+    return input.notebook_path;
+  }
+
+  return undefined;
+}
+
+/**
+ * Shortens a file path to just the filename or last few path segments
+ */
+function shortenPath(filePath: string): string {
+  const parts = filePath.split("/").filter(Boolean);
+  if (parts.length <= 2) {
+    return parts.join("/");
+  }
+  // Show last 2 segments for context
+  return parts.slice(-2).join("/");
+}
+
+/**
+ * Formats a tool use event into a human-friendly status message
+ *
+ * @param toolName - The raw tool name from the SDK
+ * @param toolInput - The tool input object (optional)
+ * @returns Human-friendly status string
+ */
+export function formatToolStatus(
+  toolName: string,
+  toolInput?: unknown,
+): string {
+  const description = TOOL_DESCRIPTIONS[toolName] ?? `Using tool: ${toolName}`;
+
+  const filePath = extractFilePath(toolInput);
+  if (filePath) {
+    return `${description} ${shortenPath(filePath)}`;
+  }
+
+  return description;
+}
 
 /**
  * Options for running Claude via SDK
@@ -137,30 +251,23 @@ If all tasks in the PRD are complete, include <promise>COMPLETE</promise> in you
         }
       }
 
-      // Stream assistant text messages
+      // Process assistant messages: stream text and capture tool use
       if (message.type === "assistant") {
-        const textBlocks = message.message.content.filter(
-          (block: { type: string }): block is { type: "text"; text: string } =>
-            block.type === "text",
-        );
-        const text = textBlocks.map((b: { text: string }) => b.text).join("");
+        const contentBlocks = message.message.content as ContentBlock[];
 
+        // Extract and stream text content
+        const textBlocks = contentBlocks.filter(isTextBlock);
+        const text = textBlocks.map((b) => b.text).join("");
         if (text) {
           output += text;
           options.onStdout?.(text);
         }
-      }
 
-      // Capture tool use for status updates
-      if (message.type === "assistant") {
-        for (const block of message.message.content) {
-          if (block.type === "tool_use") {
-            // Extract status from tool names for progress display
-            const toolName = block.name;
-            if (toolName) {
-              options.onStatus?.(`Using tool: ${toolName}`);
-            }
-          }
+        // Report tool use for status updates
+        const toolUseBlocks = contentBlocks.filter(isToolUseBlock);
+        for (const block of toolUseBlocks) {
+          const status = formatToolStatus(block.name, block.input);
+          options.onStatus?.(status);
         }
       }
 
@@ -213,29 +320,59 @@ If all tasks in the PRD are complete, include <promise>COMPLETE</promise> in you
 }
 
 /**
- * Checks if ANTHROPIC_API_KEY environment variable is set
+ * Checks if ANTHROPIC_API_KEY is available (environment variable or keychain)
  *
- * @returns True if API key is configured
+ * This function checks the environment variable first, then falls back to
+ * the macOS Keychain. If found in the keychain, it loads the key into the
+ * environment for use by the SDK.
+ *
+ * @returns Promise resolving to true if API key is configured
  */
-export function hasApiKey(): boolean {
+export async function hasApiKey(): Promise<boolean> {
+  // Check environment variable first
+  if (process.env.ANTHROPIC_API_KEY) {
+    return true;
+  }
+
+  // Try to load from keychain
+  const keychainKey = await getApiKeyFromKeychain();
+  if (keychainKey) {
+    // Load into environment for SDK to use
+    process.env.ANTHROPIC_API_KEY = keychainKey;
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Synchronous check if ANTHROPIC_API_KEY environment variable is set
+ *
+ * Use this only when you know the key has already been loaded (after hasApiKey was called)
+ *
+ * @returns True if API key is in environment
+ */
+export function hasApiKeySync(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
 }
 
 /**
- * Validates the API key by making a simple request
- * Note: This is a basic check; actual validation happens on first SDK call
+ * Saves the API key to the environment and optionally to the macOS Keychain
  *
- * @returns Promise resolving to true if API key appears valid
+ * @param apiKey - The API key to save
+ * @param persistToKeychain - Whether to save to keychain for future sessions (default: true)
+ * @returns Promise resolving to true if keychain save succeeded (or was skipped)
  */
-export async function validateApiKey(): Promise<boolean> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return false;
-  }
+export async function setApiKey(
+  apiKey: string,
+  persistToKeychain = true,
+): Promise<boolean> {
+  // Always set in environment for current session
+  process.env.ANTHROPIC_API_KEY = apiKey;
 
-  // Basic format validation (sk-ant-api03-...)
-  if (!apiKey.startsWith("sk-ant-")) {
-    return false;
+  // Optionally persist to keychain
+  if (persistToKeychain) {
+    return await saveApiKeyToKeychain(apiKey);
   }
 
   return true;

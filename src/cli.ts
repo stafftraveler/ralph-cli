@@ -50,7 +50,7 @@ async function showDryRunInfo(
     `  Sound:          ${config.soundOnComplete ? "enabled" : "disabled"}`,
   );
   console.log(
-    `  Save Output:    ${options.saveOutput || config.saveOutput ? "yes" : "no"}`,
+    `  Logs:           ${options.logs || config.saveOutput ? "yes" : "no"}`,
   );
   console.log(`  Output Dir:     ${config.outputDir}`);
   console.log("");
@@ -217,11 +217,7 @@ export async function createProgram(): Promise<Command> {
     )
     .option("--skip-preflight", "Skip all preflight checks", false)
     .option("-b, --branch <name>", "Create or switch to a git branch")
-    .option(
-      "--save-output",
-      "Save each iteration's output to .ralph/logs/",
-      false,
-    )
+    .option("--logs", "Save each iteration's output to .ralph/logs/", false)
     .option(
       "--reset",
       "Reset PRD.md and progress.txt for a fresh session",
@@ -235,6 +231,7 @@ export async function createProgram(): Promise<Command> {
     .option("--resume", "Resume from last checkpoint", false)
     .option("--no-plugins", "Disable all plugins")
     .option("--create-pr", "Force create PR on completion", false)
+    .option("--ci", "CI mode - non-interactive, no Ink UI", false)
     .action((iterations, opts) => {
       let parsedIterations: number | undefined;
       if (iterations) {
@@ -251,13 +248,14 @@ export async function createProgram(): Promise<Command> {
           dryRun: opts.dryRun ?? false,
           skipPreflight: opts.skipPreflight ?? false,
           branch: opts.branch,
-          saveOutput: opts.saveOutput ?? false,
+          logs: opts.logs ?? false,
           reset: opts.reset ?? false,
           debug: opts.debug ?? false,
           resume: opts.resume ?? false,
           noPlugins: opts.plugins === false, // --no-plugins sets plugins to false
           createPr: opts.createPr ?? false,
           iterations: parsedIterations,
+          ci: opts.ci ?? false,
         },
       };
     });
@@ -273,12 +271,13 @@ export async function createProgram(): Promise<Command> {
           verbose: false,
           dryRun: false,
           skipPreflight: false,
-          saveOutput: false,
+          logs: false,
           reset: false,
           debug: false,
           resume: false,
           noPlugins: false,
           createPr: false,
+          ci: false,
         },
       };
     });
@@ -298,12 +297,13 @@ export function getParsedArgs(): ParsedArgs {
         verbose: false,
         dryRun: false,
         skipPreflight: false,
-        saveOutput: false,
+        logs: false,
         reset: false,
         debug: false,
         resume: false,
         noPlugins: false,
         createPr: false,
+        ci: false,
       },
     };
   }

@@ -13,6 +13,9 @@ const DEFAULT_CONFIG: RalphConfig = {
   outputDir: "logs",
   prdTemplatesDir: "prd",
   defaultTemplate: "empty",
+  maxCostPerIteration: undefined,
+  maxCostPerSession: undefined,
+  warnCostThreshold: undefined,
 };
 
 /**
@@ -106,6 +109,27 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
         case "defaultTemplate":
           config.defaultTemplate = value || DEFAULT_CONFIG.defaultTemplate;
           break;
+        case "maxCostPerIteration": {
+          const parsed = Number.parseFloat(value);
+          if (!Number.isNaN(parsed) && parsed > 0) {
+            config.maxCostPerIteration = parsed;
+          }
+          break;
+        }
+        case "maxCostPerSession": {
+          const parsed = Number.parseFloat(value);
+          if (!Number.isNaN(parsed) && parsed > 0) {
+            config.maxCostPerSession = parsed;
+          }
+          break;
+        }
+        case "warnCostThreshold": {
+          const parsed = Number.parseFloat(value);
+          if (!Number.isNaN(parsed) && parsed > 0) {
+            config.warnCostThreshold = parsed;
+          }
+          break;
+        }
       }
     }
   } catch (error) {

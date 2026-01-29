@@ -53,6 +53,8 @@ export interface RunIterationOptions {
   debug?: boolean;
   /** SDK session ID to resume (optional) */
   resumeSessionId?: string;
+  /** Cumulative session cost so far in USD (for limit checking) */
+  sessionCostSoFar?: number;
 }
 
 /**
@@ -222,6 +224,32 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
 
       setIsRunning(false);
 
+      // Check cost limits
+      const iterationCost = result.usage?.totalCostUsd ?? 0;
+      const sessionCostSoFar = options.sessionCostSoFar ?? 0;
+      const newSessionTotal = sessionCostSoFar + iterationCost;
+
+      let costLimitExceeded = false;
+      let costLimitReason: "iteration" | "session" | undefined;
+
+      // Check per-iteration limit
+      if (
+        config.maxCostPerIteration !== undefined &&
+        iterationCost > config.maxCostPerIteration
+      ) {
+        costLimitExceeded = true;
+        costLimitReason = "iteration";
+      }
+
+      // Check session limit
+      if (
+        config.maxCostPerSession !== undefined &&
+        newSessionTotal > config.maxCostPerSession
+      ) {
+        costLimitExceeded = true;
+        costLimitReason = "session";
+      }
+
       return {
         iteration: options.iteration,
         startedAt,
@@ -232,6 +260,8 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
         status: lastStatus,
         usage: result.usage,
         prdComplete: result.prdComplete,
+        costLimitExceeded,
+        costLimitReason,
       };
     },
     [reset, sessionId, statusHistory],

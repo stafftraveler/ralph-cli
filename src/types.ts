@@ -9,6 +9,12 @@ export interface RalphConfig {
   outputDir: string;
   prdTemplatesDir: string;
   defaultTemplate: string;
+  /** Maximum cost allowed per iteration in USD. Execution stops if exceeded. */
+  maxCostPerIteration?: number;
+  /** Maximum cumulative cost allowed per session in USD. Execution stops if exceeded. */
+  maxCostPerSession?: number;
+  /** Cost threshold in USD at which to show a warning. */
+  warnCostThreshold?: number;
 }
 
 /**
@@ -49,6 +55,10 @@ export interface IterationResult {
   status?: string;
   usage?: UsageInfo;
   prdComplete: boolean;
+  /** True if this iteration exceeded the configured cost limit */
+  costLimitExceeded?: boolean;
+  /** Reason for cost limit being exceeded (iteration or session) */
+  costLimitReason?: "iteration" | "session";
 }
 
 /**
@@ -171,13 +181,15 @@ export interface CliOptions {
   dryRun: boolean;
   skipPreflight: boolean;
   branch?: string;
-  saveOutput: boolean;
+  logs: boolean;
   reset: boolean;
   debug: boolean;
   resume: boolean;
   noPlugins: boolean;
   createPr: boolean;
   iterations?: number;
+  /** CI mode - non-interactive, no Ink UI */
+  ci: boolean;
 }
 
 /**

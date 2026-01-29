@@ -1,3 +1,12 @@
 #!/bin/bash
-DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# Resolve the real path of this script (following symlinks)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  # Handle relative symlinks
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+
 exec tsx --tsconfig "$DIR/tsconfig.json" "$DIR/src/index.tsx" "$@"

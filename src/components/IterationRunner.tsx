@@ -27,6 +27,8 @@ export interface IterationRunnerProps {
   verbose?: boolean;
   /** Enable debug mode */
   debug?: boolean;
+  /** Cumulative session cost so far in USD */
+  sessionCostSoFar?: number;
 }
 
 /**
@@ -57,17 +59,37 @@ function StatusDisplay({ status }: { status: string | null }) {
 }
 
 /**
- * Cost and usage display
+ * Props for UsageDisplay component
  */
-function UsageDisplay({ state }: { state: UseClaudeState }) {
+interface UsageDisplayProps {
+  state: UseClaudeState;
+  sessionCostSoFar?: number;
+  warnCostThreshold?: number;
+}
+
+/**
+ * Cost and usage display with optional session total and warning
+ */
+function UsageDisplay({
+  state,
+  sessionCostSoFar,
+  warnCostThreshold,
+}: UsageDisplayProps) {
   const { usage } = state;
 
   if (!usage) {
     return null;
   }
 
+  const iterationCost = usage.totalCostUsd ?? 0;
+  const sessionTotal = (sessionCostSoFar ?? 0) + iterationCost;
+  const isApproachingThreshold =
+    warnCostThreshold !== undefined && sessionTotal >= warnCostThreshold * 0.8;
+  const hasExceededThreshold =
+    warnCostThreshold !== undefined && sessionTotal >= warnCostThreshold;
+
   return (
-    <Box marginTop={1}>
+    <Box flexDirection="column" marginTop={1}>
       <Text color="gray">
         Tokens: {usage.inputTokens.toLocaleString()} in /{" "}
         {usage.outputTokens.toLocaleString()} out
@@ -75,6 +97,25 @@ function UsageDisplay({ state }: { state: UseClaudeState }) {
           <Text> · Cost: {formatCost(usage.totalCostUsd)}</Text>
         )}
       </Text>
+      {sessionCostSoFar !== undefined && sessionCostSoFar > 0 && (
+        <Text color="gray">
+          Session total: {formatCost(sessionTotal)}
+          {warnCostThreshold !== undefined && (
+            <Text> / {formatCost(warnCostThreshold)} limit</Text>
+          )}
+        </Text>
+      )}
+      {hasExceededThreshold && (
+        <Text color="red" bold>
+          ⚠ Cost threshold exceeded!
+        </Text>
+      )}
+      {isApproachingThreshold && !hasExceededThreshold && (
+        <Text color="yellow">
+          ⚠ Approaching cost threshold (
+          {Math.round((sessionTotal / warnCostThreshold) * 100)}%)
+        </Text>
+      )}
     </Box>
   );
 }
@@ -98,12 +139,20 @@ export function IterationRunner({
   onCancel: _onCancel,
   verbose,
   debug,
+  sessionCostSoFar,
 }: IterationRunnerProps) {
   const [state, actions] = useClaude();
   const { isRunning, currentStatus, elapsedSeconds } = state;
   const hasStartedRef = useRef(false);
+  const lastIterationRef = useRef(iteration);
 
-  // Start iteration on mount
+  // Reset hasStartedRef when iteration number changes
+  if (lastIterationRef.current !== iteration) {
+    hasStartedRef.current = false;
+    lastIterationRef.current = iteration;
+  }
+
+  // Start iteration on mount or when iteration changes
   useEffect(() => {
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
@@ -115,6 +164,7 @@ export function IterationRunner({
         iteration,
         verbose,
         debug,
+        sessionCostSoFar,
       })
       .then((result) => {
         onComplete(result);
@@ -128,6 +178,7 @@ export function IterationRunner({
     verbose,
     debug,
     onComplete,
+    sessionCostSoFar,
   ]);
 
   // Show completion state briefly before parent handles transition
@@ -144,7 +195,11 @@ export function IterationRunner({
         <Box marginLeft={2} marginTop={1}>
           <Text color="green">Completed</Text>
         </Box>
-        <UsageDisplay state={state} />
+        <UsageDisplay
+          state={state}
+          sessionCostSoFar={sessionCostSoFar}
+          warnCostThreshold={config.warnCostThreshold}
+        />
       </Box>
     );
   }
@@ -164,7 +219,11 @@ export function IterationRunner({
       <Box marginLeft={2} marginTop={1}>
         <StatusDisplay status={currentStatus} />
       </Box>
-      <UsageDisplay state={state} />
+      <UsageDisplay
+        state={state}
+        sessionCostSoFar={sessionCostSoFar}
+        warnCostThreshold={config.warnCostThreshold}
+      />
       {debug && state.statusHistory.length > 0 && (
         <Box flexDirection="column" marginTop={1} marginLeft={2}>
           <Text color="gray" dimColor>

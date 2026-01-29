@@ -1,21 +1,41 @@
 {
   "name": "@stafftraveler/ralph",
   "version": "1.0.0",
-  "description": "Interactive CLI for running autonomous Claude Code iterations with real-time status updates",
+  "description": "Interactive CLI for running Claude Code iterations with real-time status updates",
   "type": "module",
   "bin": {
     "ralph": "./bin/ralph"
   },
   "files": [
-    "bin",
-    "src",
+    "bin/",
+    "src/",
     "tsconfig.json"
   ],
   "scripts": {
     "start": "./bin/ralph",
-    "ralph": "./bin/ralph",
     "check:types": "tsc --noEmit",
-    "postinstall": "node -e \"console.log('\\n\\x1b[36m@stafftraveler/ralph installed!\\x1b[0m\\nRun \\x1b[33mnpx ralph init\\x1b[0m to initialize Ralph in your project.\\n')\""
+    "ralph": "ralph --logs"
+  },
+  "keywords": [
+    "cli",
+    "claude",
+    "anthropic",
+    "ai",
+    "automation",
+    "code-generation",
+    "developer-tools"
+  ],
+  "author": "StaffTraveler",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stafftraveler/ralph-cli.git"
+  },
+  "homepage": "https://github.com/stafftraveler/ralph-cli#readme",
+  "bugs": {
+    "url": "https://github.com/stafftraveler/ralph-cli/issues"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.23",
@@ -44,28 +64,5 @@
   "engines": {
     "node": ">=22"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/StaffTraveler/ralph-cli.git"
-  },
-  "homepage": "https://github.com/StaffTraveler/ralph-cli#readme",
-  "bugs": {
-    "url": "https://github.com/StaffTraveler/ralph-cli/issues"
-  },
-  "keywords": [
-    "cli",
-    "claude",
-    "claude-code",
-    "ai",
-    "automation",
-    "developer-tools",
-    "prd",
-    "iterations"
-  ],
-  "author": "StaffTraveler",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  }
+  "license": "MIT"
 }

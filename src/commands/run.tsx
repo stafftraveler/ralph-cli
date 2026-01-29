@@ -49,6 +49,12 @@ export interface IterationLoopProps {
   onError: (error: string) => void;
   /** Called when iteration fails but can be retried */
   onRetryExhausted?: (iteration: number, attempts: number) => void;
+  /** Called when cost limit is exceeded */
+  onCostLimitExceeded?: (
+    reason: "iteration" | "session",
+    cost: number,
+    limit: number,
+  ) => void;
 }
 
 /**
@@ -78,10 +84,14 @@ export function IterationLoop({
   onComplete,
   onError,
   onRetryExhausted,
+  onCostLimitExceeded,
 }: IterationLoopProps) {
   const [currentIteration, setCurrentIteration] = useState(startIteration);
   const [retryCount, setRetryCount] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
+  const [sessionCostSoFar, setSessionCostSoFar] = useState(
+    session.totalCostUsd ?? 0,
+  );
   const sessionRef = useRef(session);
 
   // Keep session ref in sync
@@ -125,12 +135,19 @@ export function IterationLoop({
     async (result: IterationResult) => {
       const currentSession = sessionRef.current;
 
+      // Update session cost tracking
+      const iterationCost = result.usage?.totalCostUsd ?? 0;
+      const newSessionCost = sessionCostSoFar + iterationCost;
+      setSessionCostSoFar(newSessionCost);
+
       // Add result to session
       const updatedSession = await addIterationResult(
         ralphDir,
         currentSession,
         result,
       );
+      // Also update totalCostUsd on session
+      updatedSession.totalCostUsd = newSessionCost;
       sessionRef.current = updatedSession;
       onSessionUpdate(updatedSession);
 
@@ -139,6 +156,26 @@ export function IterationLoop({
 
       // Run afterIteration plugin hook
       await runAfterIteration(plugins, getIterationContext(result));
+
+      // Check for cost limit exceeded
+      if (result.costLimitExceeded && result.costLimitReason) {
+        setIsRunning(false);
+        const limit =
+          result.costLimitReason === "iteration"
+            ? config.maxCostPerIteration
+            : config.maxCostPerSession;
+        const cost =
+          result.costLimitReason === "iteration"
+            ? iterationCost
+            : newSessionCost;
+        onCostLimitExceeded?.(result.costLimitReason, cost, limit ?? 0);
+        onError(
+          result.costLimitReason === "iteration"
+            ? `Cost limit exceeded: iteration cost $${iterationCost.toFixed(4)} exceeds limit of $${config.maxCostPerIteration?.toFixed(2)}`
+            : `Cost limit exceeded: session total $${newSessionCost.toFixed(4)} exceeds limit of $${config.maxCostPerSession?.toFixed(2)}`,
+        );
+        return;
+      }
 
       // Check for PRD complete
       if (result.prdComplete) {
@@ -182,11 +219,15 @@ export function IterationLoop({
       getIterationContext,
       totalIterations,
       config.maxRetries,
+      config.maxCostPerIteration,
+      config.maxCostPerSession,
       retryCount,
+      sessionCostSoFar,
       onSessionUpdate,
       onComplete,
       onError,
       onRetryExhausted,
+      onCostLimitExceeded,
     ],
   );
 
@@ -216,6 +257,7 @@ export function IterationLoop({
         onComplete={handleIterationComplete}
         verbose={verbose}
         debug={debug}
+        sessionCostSoFar={sessionCostSoFar}
       />
       {retryCount > 0 && (
         <Box marginTop={1}>

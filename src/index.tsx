@@ -5,6 +5,7 @@ import chalk from "chalk";
 import { render } from "ink";
 import { findRalphDir, runCli, showDebugInfo, showDryRunInfo } from "./cli.js";
 import { runInit } from "./commands/init.js";
+import { runCi } from "./commands/run-ci.js";
 import { App } from "./components/App.js";
 import { getRepoRoot } from "./hooks/use-git.js";
 
@@ -85,9 +86,12 @@ async function main() {
     const prompt = await loadPrompt(ralphDir);
 
     // Determine iterations
+    // Skip prompt when --reset is used (reset just exits after resetting)
     let iterations = options.iterations;
-    if (iterations === undefined) {
+    if (iterations === undefined && !options.ci && !options.reset) {
       iterations = await promptForIterations();
+    } else if (iterations === undefined) {
+      iterations = 1; // Default to 1 in CI mode or when --reset is used
     }
 
     // Update options with resolved iterations
@@ -96,6 +100,12 @@ async function main() {
       iterations,
     };
 
+    // Use CI mode if requested or if stdin is not a TTY
+    if (options.ci || !process.stdin.isTTY) {
+      await runCi(ralphDir, prompt, resolvedOptions);
+      return;
+    }
+
     // Render the Ink app
     const { waitUntilExit } = render(
       <App ralphDir={ralphDir} prompt={prompt} options={resolvedOptions} />,
@@ -103,6 +113,9 @@ async function main() {
 
     // Wait for the app to finish
     await waitUntilExit();
+
+    // Explicitly exit to ensure clean termination
+    process.exit(0);
   } catch (error) {
     if (error instanceof Error) {
       console.error(chalk.red(`Error: ${error.message}`));

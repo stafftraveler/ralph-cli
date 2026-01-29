@@ -27,6 +27,7 @@ import {
   saveCheckpoint,
   saveSession,
 } from "../lib/session.js";
+import { resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
 import type {
   AppPhase,
   CliOptions,
@@ -113,6 +114,18 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   // Initialize on mount
   useEffect(() => {
     async function initialize() {
+      // Handle --reset flag early - reset and exit
+      if (options.reset) {
+        await resetPrdAndProgress(ralphDir);
+        await clearSession(ralphDir);
+        console.log("\n✓ Reset complete");
+        console.log("  - PRD.md replaced with empty template");
+        console.log("  - progress.txt cleared");
+        console.log("  - session.json cleared\n");
+        exit();
+        return;
+      }
+
       const [loadedConfig, root, currentBranch] = await Promise.all([
         loadConfig(ralphDir),
         getRepoRoot(),
@@ -128,14 +141,9 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         const loadedPlugins = await loadPlugins(ralphDir);
         setPlugins(loadedPlugins);
       }
-
-      // Handle --reset flag
-      if (options.reset) {
-        await clearSession(ralphDir);
-      }
     }
     void initialize();
-  }, [ralphDir, options.noPlugins, options.reset]);
+  }, [ralphDir, options.noPlugins, options.reset, exit]);
 
   // Handle SIGINT/SIGTERM
   useEffect(() => {
@@ -326,6 +334,12 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       // Save checkpoint
       await saveCheckpoint(ralphDir, updatedSession, result.iteration);
 
+      // Save iteration log if enabled
+      const shouldSaveOutput = options.logs || config.saveOutput;
+      if (shouldSaveOutput) {
+        await writeIterationLog(ralphDir, config.outputDir, result);
+      }
+
       // Run afterIteration hook
       const ctx = {
         config,
@@ -382,6 +396,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       branch,
       verbose,
       options.dryRun,
+      options.logs,
       totalIterations,
       plugins,
       retryCount,
@@ -504,6 +519,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
           prdComplete={prdComplete}
           prUrl={prUrl}
           isInterrupted={isInterruptedRef.current}
+          onExit={exit}
         />
       )}
 
@@ -527,11 +543,13 @@ function SummaryView({
   prdComplete,
   prUrl,
   isInterrupted,
+  onExit,
 }: {
   session: SessionState;
   prdComplete: boolean;
   prUrl?: string;
   isInterrupted: boolean;
+  onExit: () => void;
 }) {
   const [filesChanged, setFilesChanged] = useState<DiffStat[]>([]);
   const [commits, setCommits] = useState<
@@ -555,6 +573,17 @@ function SummaryView({
     }
     void loadSummaryData();
   }, [session.startCommit]);
+
+  // Auto-exit after showing summary when interrupted
+  useEffect(() => {
+    if (isInterrupted && filesChanged.length > 0 && commits.length >= 0) {
+      // Data is loaded, give user a moment to see the summary (1 second)
+      const timer = setTimeout(() => {
+        onExit();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isInterrupted, filesChanged.length, commits.length, onExit]);
 
   const summary = createSummary({
     iterations: session.iterations,
