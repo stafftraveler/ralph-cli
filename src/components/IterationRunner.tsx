@@ -2,7 +2,7 @@ import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import { useEffect, useRef } from "react";
 import { type UseClaudeState, useClaude } from "../hooks/use-claude.js";
-import { formatDuration } from "../lib/utils.js";
+import { formatCost, formatDuration } from "../lib/utils.js";
 import type { IterationResult, RalphConfig } from "../types.js";
 
 /**
@@ -29,13 +29,6 @@ export interface IterationRunnerProps {
   debug?: boolean;
   /** Cumulative session cost so far in USD */
   sessionCostSoFar?: number;
-}
-
-/**
- * Format cost as dollars with 4 decimal places
- */
-function formatCost(cost: number): string {
-  return `$${cost.toFixed(4)}`;
 }
 
 /**

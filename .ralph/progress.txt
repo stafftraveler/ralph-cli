@@ -1,0 +1,20 @@
+## Iteration 1
+
+**Task**: Remove duplicate formatCost() function (PRD cleanup task)
+
+**What was done**:
+- Extracted formatCost() to lib/utils.ts (exported function)
+- Removed local formatCost() from components/Summary.tsx
+- Removed local formatCost() from components/IterationRunner.tsx
+- Removed local formatCost() from commands/run-ci.ts
+- Updated all three files to import formatCost from utils
+
+**Files changed**:
+- src/lib/utils.ts (added formatCost export)
+- src/components/Summary.tsx (removed local formatCost, added import)
+- src/components/IterationRunner.tsx (removed local formatCost, added import)
+- src/commands/run-ci.ts (removed both formatDuration and formatCost, imported from utils)
+
+**Impact**: Eliminated code duplication, improved maintainability. Three identical implementations reduced to one shared utility.
+
+**All checks passed**: format, lint, types ✓

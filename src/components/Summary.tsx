@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
 import Gradient from "ink-gradient";
-import { formatDuration } from "../lib/utils.js";
+import { formatCost, formatDuration } from "../lib/utils.js";
 import type { CommitInfo, DiffStat, SessionSummary } from "../types.js";
 import { DiffPreview } from "./DiffPreview.js";
 
@@ -10,13 +10,6 @@ import { DiffPreview } from "./DiffPreview.js";
 export interface SummaryProps {
   /** Session summary data */
   summary: SessionSummary;
-}
-
-/**
- * Format cost as $X.XXXX
- */
-function formatCost(cost: number): string {
-  return `$${cost.toFixed(4)}`;
 }
 
 /**

@@ -29,6 +29,16 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
+ * Format cost as dollars with 4 decimal places.
+ *
+ * @param cost - Cost in USD
+ * @returns Formatted string (e.g., "$0.0123")
+ */
+export function formatCost(cost: number): string {
+  return `$${cost.toFixed(4)}`;
+}
+
+/**
  * Check if progress.txt exists and has content.
  * Used to detect if there's existing progress from a previous session.
  *

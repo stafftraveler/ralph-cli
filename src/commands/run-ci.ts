@@ -2,24 +2,8 @@ import chalk from "chalk";
 import { runPreflightChecks } from "../hooks/use-preflight.js";
 import { runClaude } from "../lib/claude.js";
 import { loadConfig } from "../lib/config.js";
+import { formatCost, formatDuration } from "../lib/utils.js";
 import type { CliOptions, IterationResult } from "../types.js";
-
-/**
- * Format duration in human-readable format
- */
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}m ${secs}s`;
-}
-
-/**
- * Format cost in USD
- */
-function formatCost(cost: number): string {
-  return `$${cost.toFixed(4)}`;
-}
 
 /**
  * Run Ralph in CI mode (non-interactive)
