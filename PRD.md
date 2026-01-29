@@ -14,4 +14,5 @@ Clean-up the codebase.
     - ✅ Iteration 1: Deleted unused editor.ts file (38 lines) - openInEditor() function never imported/used
     - ✅ Iteration 2: Removed unused runBeforeIteration() from plugins.ts (9 lines) - exported but never used
     - ✅ Iteration 3: Removed unused _getStatusLabel() from DiffPreview.tsx (22 lines) - defined but never called
+    - ✅ Iteration 4: Removed 3 unused keychain functions from keychain.ts (54 lines) - deleteApiKeyFromKeychain, hasApiKeyInKeychain, loadApiKeyFromKeychain
     - Continue scanning for more issues
