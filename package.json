@@ -48,36 +48,36 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.23",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.25",
     "@inkjs/ui": "^2.0.0",
     "@linear/sdk": "^72.0.0",
     "chalk": "^5.4.0",
-    "commander": "^13.0.0",
+    "commander": "^14.0.2",
     "execa": "^9.5.0",
-    "ink": "^5.2.0",
+    "ink": "^6.6.0",
     "ink-gradient": "^3.0.0",
     "ink-select-input": "^6.0.0",
     "ink-spinner": "^5.0.0",
     "ink-text-input": "^6.0.0",
     "localtunnel": "^2.0.2",
     "node-notifier": "^10.0.1",
-    "open": "^10.0.0",
-    "react": "^18.3.1",
+    "open": "^11.0.0",
+    "react": "^19.2.4",
     "tsx": "^4.21.0",
-    "uuid": "^11.0.0",
+    "uuid": "^13.0.0",
     "ws": "^8.19.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.13",
     "@types/localtunnel": "^2.0.4",
-    "@types/node": "^22.0.0",
+    "@types/node": "^25.1.0",
     "@types/node-notifier": "^8.0.5",
-    "@types/react": "^18.3.0",
-    "@types/uuid": "^10.0.0",
+    "@types/react": "^19.2.10",
+    "@types/uuid": "^11.0.0",
     "@types/ws": "^8.18.1",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^4.0.18",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.8"
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=22"
