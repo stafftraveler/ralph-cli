@@ -685,6 +685,7 @@ function SummaryView({
       timestamp: string;
     }>
   >([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
     async function loadSummaryData() {
@@ -694,20 +695,23 @@ function SummaryView({
       ]);
       setFilesChanged(diffStats);
       setCommits(commitList);
+      setIsDataLoaded(true);
     }
     void loadSummaryData();
   }, [session.startCommit]);
 
-  // Auto-exit after showing summary when interrupted
+  // Auto-exit after showing summary
   useEffect(() => {
-    if (isInterrupted && filesChanged.length > 0 && commits.length >= 0) {
-      // Data is loaded, give user a moment to see the summary (1 second)
-      const timer = setTimeout(() => {
-        onExit();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isInterrupted, filesChanged.length, commits.length, onExit]);
+    if (!isDataLoaded) return;
+
+    // Give user time to see the summary before exiting
+    // Shorter delay when interrupted (1s), longer for normal completion (3s)
+    const delay = isInterrupted ? 1000 : 3000;
+    const timer = setTimeout(() => {
+      onExit();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [isDataLoaded, isInterrupted, onExit]);
 
   const summary = createSummary({
     iterations: session.iterations,
