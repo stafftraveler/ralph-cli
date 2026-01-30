@@ -18,4 +18,4 @@ Start with this empty PRD template.
 
 ## Tasks
 
-[ ]
+[x] You're done!
