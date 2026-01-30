@@ -910,3 +910,61 @@ Notes:
 - Provides valuable predictive information to users
 - Helps manage expectations during long iterations
 
+
+## Iteration 23
+
+Task: Make iteration items expandable to show more details (Phase 6 - Final Task)
+
+Changes:
+- Added inputTokens, outputTokens, and status fields to DashboardData iterations
+- Updated getDashboardData() to include token counts and status from session iterations
+- Modified iteration-item CSS to support flex-direction: column for expandable layout
+- Added iteration-summary CSS class to wrap existing summary layout
+- Added iteration-details CSS class for hidden detail section (display: none by default)
+- Added .expanded class to show details when toggled
+- Added hover/active states for iteration items (cursor: pointer, background changes)
+- Implemented toggleIterationDetails() JavaScript function
+- Updated iteration HTML to include summary wrapper and details section
+- Details show input/output token counts and final status message
+- Dark mode support for expandable details
+
+Design decisions:
+- Click anywhere on iteration row to toggle details
+- Details slide into view below summary (no modal/overlay)
+- Light gray background (#f8f8f8) distinguishes details section
+- Monospace font for token values for consistent width
+- Only shows data that exists (tokens, status conditionally rendered)
+- Hover feedback indicates clickability
+- Touch-friendly on mobile (entire row is clickable)
+
+Expandable details display:
+- Input Tokens: formatted with commas (e.g., "15,234")
+- Output Tokens: formatted with commas (e.g., "8,567")
+- Status: final iteration status message if available
+- Shows "N/A" if token data missing
+
+Benefits:
+- Users can inspect detailed metrics per iteration
+- Non-intrusive (collapsed by default)
+- Quick access to token usage for cost analysis
+- Status messages help debug failed iterations
+- Mobile-friendly toggle interaction
+
+Technical approach:
+- CSS-only show/hide via .expanded class toggle
+- JavaScript toggles class on click
+- Details rendered server-side in initial HTML
+- No additional API calls needed
+- Maintains state only while page loaded (resets on refresh)
+
+Files changed:
+- src/lib/webserver.ts (interfaces, CSS, HTML, JavaScript)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 6 task complete (5 of 5 tasks done, 100%)
+- Phase 6 Iteration History Improvements now COMPLETE!
+- ALL PRD TASKS NOW COMPLETE! 🎉
+

@@ -23,6 +23,9 @@ export interface DashboardData {
     cost: number;
     durationSeconds: number;
     success: boolean;
+    inputTokens?: number;
+    outputTokens?: number;
+    status?: string;
   }>;
 }
 
@@ -186,6 +189,9 @@ function getDashboardData(): DashboardData {
       cost: iter.usage?.totalCostUsd ?? 0,
       durationSeconds: iter.durationSeconds,
       success: iter.success,
+      inputTokens: iter.usage?.inputTokens,
+      outputTokens: iter.usage?.outputTokens,
+      status: iter.status,
     })),
   };
 }
@@ -215,14 +221,42 @@ function getDashboardHtml(data: DashboardData): string {
   const iterationsHtml = data.iterations
     .map(
       (iter) => `
-      <div class="iteration-item">
-        <span class="iteration-status ${iter.success ? "success" : "failure"}">${iter.success ? "✓" : "✗"}</span>
-        <div class="iteration-info">
-          <span class="iteration-number">Iteration ${iter.number}</span>
-          <span class="iteration-timestamp" data-timestamp="${iter.timestamp}"></span>
+      <div class="iteration-item" onclick="toggleIterationDetails(${iter.number})">
+        <div class="iteration-summary">
+          <span class="iteration-status ${iter.success ? "success" : "failure"}">${iter.success ? "✓" : "✗"}</span>
+          <div class="iteration-info">
+            <span class="iteration-number">Iteration ${iter.number}</span>
+            <span class="iteration-timestamp" data-timestamp="${iter.timestamp}"></span>
+          </div>
+          <span class="iteration-duration">${formatDuration(iter.durationSeconds)}</span>
+          <span class="iteration-cost">$${iter.cost.toFixed(4)}</span>
         </div>
-        <span class="iteration-duration">${formatDuration(iter.durationSeconds)}</span>
-        <span class="iteration-cost">$${iter.cost.toFixed(4)}</span>
+        <div class="iteration-details" id="iteration-details-${iter.number}">
+          ${
+            iter.inputTokens || iter.outputTokens
+              ? `
+          <div class="iteration-details-row">
+            <span class="iteration-details-label">Input Tokens:</span>
+            <span class="iteration-details-value">${iter.inputTokens?.toLocaleString() || "N/A"}</span>
+          </div>
+          <div class="iteration-details-row">
+            <span class="iteration-details-label">Output Tokens:</span>
+            <span class="iteration-details-value">${iter.outputTokens?.toLocaleString() || "N/A"}</span>
+          </div>
+          `
+              : ""
+          }
+          ${
+            iter.status
+              ? `
+          <div class="iteration-details-row">
+            <span class="iteration-details-label">Status:</span>
+            <span class="iteration-details-value">${iter.status}</span>
+          </div>
+          `
+              : ""
+          }
+        </div>
       </div>
     `,
     )
@@ -436,11 +470,27 @@ function getDashboardHtml(data: DashboardData): string {
 
     .iteration-item {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      flex-direction: column;
+      gap: 0;
       padding: 8px 0;
       border-bottom: 1px solid #f0f0f0;
       font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .iteration-item:hover {
+      background: #fafafa;
+    }
+
+    .iteration-item:active {
+      background: #f5f5f5;
+    }
+
+    .iteration-summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .iteration-item:last-child {
@@ -497,6 +547,35 @@ function getDashboardHtml(data: DashboardData): string {
       font-weight: 500;
       font-family: 'Monaco', 'Courier New', monospace;
       text-align: right;
+    }
+
+    .iteration-details {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #f8f8f8;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .iteration-details.expanded {
+      display: block;
+    }
+
+    .iteration-details-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      color: #666666;
+    }
+
+    .iteration-details-label {
+      font-weight: 500;
+    }
+
+    .iteration-details-value {
+      font-family: 'Monaco', 'Courier New', monospace;
+      color: #000000;
     }
 
     .footer {
@@ -833,6 +912,26 @@ function getDashboardHtml(data: DashboardData): string {
 
       .iteration-item {
         border-bottom: 1px solid #1a1a1a;
+      }
+
+      .iteration-item:hover {
+        background: #1a1a1a;
+      }
+
+      .iteration-item:active {
+        background: #262626;
+      }
+
+      .iteration-details {
+        background: #1a1a1a;
+      }
+
+      .iteration-details-row {
+        color: #999999;
+      }
+
+      .iteration-details-value {
+        color: #ffffff;
       }
 
       .iteration-status.success {
@@ -1175,6 +1274,14 @@ function getDashboardHtml(data: DashboardData): string {
 
       // Start polling
       setTimeout(refreshData, 2000);
+    }
+
+    // Toggle iteration details visibility
+    function toggleIterationDetails(iterationNumber) {
+      const detailsEl = document.getElementById('iteration-details-' + iterationNumber);
+      if (detailsEl) {
+        detailsEl.classList.toggle('expanded');
+      }
     }
 
     // Format elapsed time in seconds to human-readable string
