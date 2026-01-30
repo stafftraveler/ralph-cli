@@ -157,3 +157,38 @@ Notes:
 - Type checking passes
 - Completes 4 of 6 Phase 3 tasks
 - Next tasks: collapse/expand (already done via toggle!), localStorage persistence (done!)
+
+## Iteration 6
+
+Task: Add PWA meta tags for improved mobile experience
+
+Changes:
+- Added apple-mobile-web-app-capable meta tag (enables fullscreen mode on iOS)
+- Added apple-mobile-web-app-status-bar-style with black-translucent (iOS status bar)
+- Added apple-mobile-web-app-title for home screen name
+- Added theme-color meta tag (#000000 black for browser chrome)
+- Added description meta tag for SEO and app info
+- Enhanced viewport meta tag with user-scalable=no for app-like feel
+
+Design decisions:
+- Black theme color (#000000) matches dashboard color scheme
+- Black-translucent status bar style for immersive iOS experience
+- Disabled user scaling for app-like behavior (pinch-zoom not needed)
+- Short title "Ralph Dashboard" for home screen icon
+- These tags enable "Add to Home Screen" on iOS with proper app behavior
+
+PWA features enabled:
+- Fullscreen mode when launched from home screen (iOS)
+- Custom status bar styling (iOS)
+- Browser chrome color matches app design (Android)
+- Proper title when added to home screen
+- Prevents accidental zoom gestures
+
+Files changed:
+- src/lib/webserver.ts (added PWA meta tags to HTML head)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Dashboard now provides native app-like experience on mobile
+- No manifest.json needed for basic PWA features

@@ -65,7 +65,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 [ ] Increase touch target sizes to minimum 44px height for all interactive elements
 [ ] Add proper touch feedback states (`:active` visual feedback)
 [ ] Improve input field sizing for mobile keyboards
-[ ] Add `meta` tags for PWA support (apple-mobile-web-app-capable, theme-color)
+[x] Add `meta` tags for PWA support (apple-mobile-web-app-capable, theme-color)
 [ ] Support `prefers-color-scheme: dark` media query for automatic dark mode
 [ ] Add responsive breakpoints for different screen sizes
 
