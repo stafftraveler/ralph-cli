@@ -261,3 +261,23 @@
 **All checks passed**: format, lint, types ✓
 
 **Note**: One unused git function remains: getCommitCount. Can be cleaned up in next iteration.
+
+## Iteration 15
+
+**Task**: Remove unused getCommitCount export from use-git.ts (PRD cleanup task)
+
+**What was done**:
+- Deleted getCommitCount() function from src/hooks/use-git.ts (10 lines)
+- Function exported but never imported anywhere
+- Last unused git utility function removed
+
+**Files changed**:
+- src/hooks/use-git.ts (removed unused export)
+
+**Reasoning**: Function exported but never used. Written proactively for potential future use but never integrated into any workflow.
+
+**Impact**: Reduced API surface area by 1 function, removed 10 lines. Cleaner git utilities module. All unused git functions now removed.
+
+**All checks passed**: format, lint, types ✓
+
+**Note**: Code smell scan for unused git functions complete. All proactively-written but unused git utilities have been removed.

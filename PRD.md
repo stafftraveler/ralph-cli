@@ -25,4 +25,5 @@ Clean-up the codebase.
     - ✅ Iteration 12: Removed hasUncommittedChanges() from use-git.ts (19 lines) - exported but never imported
     - ✅ Iteration 13: Removed hasUntrackedFiles() from use-git.ts (13 lines) - exported but never imported
     - ✅ Iteration 14: Removed isOnMainBranch() from use-git.ts (6 lines) - exported but never imported
-    - Continue scanning for more issues (getCommitCount still unused)
+    - ✅ Iteration 15: Removed getCommitCount() from use-git.ts (10 lines) - exported but never imported. All unused git functions now cleaned up.
+    - Scan complete. Ready for next task.

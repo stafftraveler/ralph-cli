@@ -98,18 +98,6 @@ export async function getCommitsSince(sha: string): Promise<CommitInfo[]> {
 }
 
 /**
- * Get the number of commits between two SHAs
- */
-export async function getCommitCount(fromSha: string, toSha = "HEAD"): Promise<number> {
-  try {
-    const { stdout } = await execa("git", ["rev-list", "--count", `${fromSha}..${toSha}`]);
-    return Number.parseInt(stdout.trim(), 10) || 0;
-  } catch {
-    return 0;
-  }
-}
-
-/**
  * Get diff statistics between a commit and HEAD
  */
 export async function getDiffStats(fromCommit: string): Promise<DiffStat[]> {
