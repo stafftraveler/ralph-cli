@@ -24,4 +24,5 @@ Clean-up the codebase.
     - ✅ Iteration 11: Made 2 interface exports private in use-claude.ts - UseClaudeActions, RunIterationOptions only used internally (kept UseClaudeState exported as it's used by IterationRunner)
     - ✅ Iteration 12: Removed hasUncommittedChanges() from use-git.ts (19 lines) - exported but never imported
     - ✅ Iteration 13: Removed hasUntrackedFiles() from use-git.ts (13 lines) - exported but never imported
-    - Continue scanning for more issues (isOnMainBranch, getCommitCount still unused)
+    - ✅ Iteration 14: Removed isOnMainBranch() from use-git.ts (6 lines) - exported but never imported
+    - Continue scanning for more issues (getCommitCount still unused)

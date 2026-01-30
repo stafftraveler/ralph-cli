@@ -241,3 +241,23 @@
 **All checks passed**: format, lint, types ✓
 
 **Note**: Other unused git functions remain: isOnMainBranch, getCommitCount. Can be cleaned up in future iterations.
+
+## Iteration 14
+
+**Task**: Remove unused isOnMainBranch export from use-git.ts (PRD cleanup task)
+
+**What was done**:
+- Deleted isOnMainBranch() function from src/hooks/use-git.ts (6 lines)
+- Function exported but never imported anywhere
+- Proactively written git utility that was never integrated
+
+**Files changed**:
+- src/hooks/use-git.ts (removed unused export)
+
+**Reasoning**: Function exported but never used. Written proactively for potential future use but never integrated into any workflow.
+
+**Impact**: Reduced API surface area by 1 function, removed 6 lines. Cleaner git utilities module.
+
+**All checks passed**: format, lint, types ✓
+
+**Note**: One unused git function remains: getCommitCount. Can be cleaned up in next iteration.

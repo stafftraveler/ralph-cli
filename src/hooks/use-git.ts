@@ -159,11 +159,3 @@ export async function getDiffStats(fromCommit: string): Promise<DiffStat[]> {
     return [];
   }
 }
-
-/**
- * Check if currently on main or master branch
- */
-export async function isOnMainBranch(): Promise<boolean> {
-  const branch = await getCurrentBranch();
-  return branch === "main" || branch === "master";
-}
