@@ -554,3 +554,20 @@ Notes:
 - Linting passes
 - Phase 6 Iteration History now 3 of 5 tasks complete (60% done)
 - Timestamp data already available from IterationResult.startedAt
+
+## Iteration 16
+
+Task: Verify color-coding iterations by status task is complete (Phase 6)
+
+Changes:
+- No code changes needed - task already completed in Iteration 14
+- Status indicators already use color-coded backgrounds:
+  - Success: Green (#e8f5e9 light mode, #1b5e20 dark mode)
+  - Failure: Red (#ffebee light mode, #b71c1c dark mode)
+- Yellow for "running" iterations not applicable (history only shows completed)
+- Marked task as complete in PRD
+
+Notes:
+- Phase 6 Iteration History now 4 of 5 tasks complete (80% done)
+- Only remaining task: Make iteration items expandable
+- Color-coding was implemented as part of status indicator feature
