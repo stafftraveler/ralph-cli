@@ -419,3 +419,37 @@ Notes:
 - File not found errors now include full paths and actionable suggestions
 - Examples: "Run 'npx ralph init'" for PRD.md, template errors mention installation check
 - Next: Improve API key errors (Task 4.3)
+
+## Iteration 14: Improve API key errors
+
+Task: PRD Task 4.3 - Improve API key errors with clear messages and troubleshooting
+
+Decisions:
+- Enhanced API key error messages throughout user-facing components
+- Distinguished missing vs invalid key with context-specific suggestions
+- Added direct links to console.anthropic.com/settings/keys in all API key errors
+- Improved keychain failure messages with troubleshooting commands
+- Added detection for authentication errors from SDK with helpful formatting
+
+Files changed:
+- src/hooks/use-preflight.ts: Enhanced API key check failure message with link to console
+- src/components/ApiKeyPrompt.tsx: Added console link to empty key and format validation errors, added keychain troubleshooting command
+- src/commands/init.ts: Clarified API key not found message (env var vs keychain)
+- src/lib/claude.ts: Added authentication error detection in SDK catch block, imported createApiKeyError
+- src/lib/keychain.ts: Enhanced debug error messages with troubleshooting tips
+
+Implementation details:
+- Preflight check: "ANTHROPIC_API_KEY not found in environment or keychain. Get your key at: https://console.anthropic.com/settings/keys"
+- ApiKeyPrompt empty: "API key cannot be empty. Get your key at: https://console.anthropic.com/settings/keys"
+- ApiKeyPrompt invalid format: "Invalid API key format. Keys should start with 'sk-ant-'. Verify your key at: https://console.anthropic.com/settings/keys"
+- Keychain failure: Added tip "Check keychain access with: security find-generic-password -s ralph-cli"
+- SDK auth errors: Auto-detect authentication/401 errors and format with createApiKeyError(isInvalid=true)
+- Init command: "Key not found in environment variable or macOS Keychain" for clarity
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- API key errors now clearly distinguish missing vs invalid with specific guidance
+- All error messages include direct link to console.anthropic.com/settings/keys
+- Keychain troubleshooting commands provided for debugging
+- Next: Improve config parsing errors (Task 4.4)

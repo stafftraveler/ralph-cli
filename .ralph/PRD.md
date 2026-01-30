@@ -94,7 +94,7 @@ Already implemented. Verify that these have been implemented correctly.
     - Add actionable suggestion (e.g., "Run 'npx ralph init'")
     - Example: "Failed to read PRD.md at /path/.ralph/PRD.md - run 'npx ralph init'"
 
-[ ] Improve API key errors
+[x] Improve API key errors
     - Clear message when key is missing vs invalid
     - Link to API key creation page
 

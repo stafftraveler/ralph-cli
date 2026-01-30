@@ -3,7 +3,7 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 import { execa } from "execa";
 import type { RalphConfig, UsageInfo } from "../types.js";
 import { getApiKeyFromKeychain, saveApiKeyToKeychain } from "./keychain.js";
-import { createFileNotFoundError, wrapError } from "./utils.js";
+import { createApiKeyError, createFileNotFoundError, wrapError } from "./utils.js";
 
 /**
  * Content block with text from assistant messages
@@ -308,7 +308,25 @@ If all tasks in the PRD are complete, include <promise>COMPLETE</promise> in you
       sessionId,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    let errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+    // Detect authentication/API key errors and provide better messages
+    if (error instanceof Error) {
+      const msg = error.message.toLowerCase();
+      if (
+        msg.includes("authentication") ||
+        msg.includes("api key") ||
+        msg.includes("unauthorized") ||
+        msg.includes("invalid_api_key") ||
+        msg.includes("401")
+      ) {
+        const apiKeyError = createApiKeyError(
+          "API key authentication failed",
+          true, // isInvalid = true
+        );
+        errorMessage = apiKeyError.format();
+      }
+    }
 
     if (options.debug) {
       console.log(`[DEBUG] SDK error: ${errorMessage}`);

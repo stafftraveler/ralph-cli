@@ -45,9 +45,13 @@ export async function saveApiKeyToKeychain(apiKey: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    // Log error in debug mode but don't expose to user
+    // Log error in debug mode with helpful context
     if (process.env.DEBUG) {
       console.error("[keychain] Failed to save API key:", error);
+      console.error(
+        "[keychain] Tip: Check keychain access with: security find-generic-password -s ralph-cli",
+      );
+      console.error("[keychain] Or manually set: export ANTHROPIC_API_KEY='your-key'");
     }
     return false;
   }

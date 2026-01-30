@@ -110,7 +110,10 @@ async function checkApiKey(): Promise<PreflightCheck> {
   if (hasKey) {
     return createPassedCheck("API Key", "ANTHROPIC_API_KEY is set");
   }
-  return createFailedCheck("API Key", "ANTHROPIC_API_KEY not found. Enter it when prompted.");
+  return createFailedCheck(
+    "API Key",
+    "ANTHROPIC_API_KEY not found in environment or keychain. Get your key at: https://console.anthropic.com/settings/keys",
+  );
 }
 
 /**

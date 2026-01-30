@@ -42,12 +42,16 @@ export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
     const trimmed = inputValue.trim();
 
     if (!trimmed) {
-      setError("API key cannot be empty");
+      setError(
+        "API key cannot be empty. Get your key at: https://console.anthropic.com/settings/keys",
+      );
       return;
     }
 
     if (!trimmed.startsWith("sk-ant-")) {
-      setError("Invalid API key format. Expected: sk-ant-...");
+      setError(
+        "Invalid API key format. Keys should start with 'sk-ant-'. Verify your key at: https://console.anthropic.com/settings/keys",
+      );
       return;
     }
 
@@ -81,9 +85,16 @@ export function ApiKeyPrompt({ onSubmit, onSkip }: ApiKeyPromptProps) {
         ) : (
           <Box flexDirection="column" marginTop={1}>
             <Text color="yellow">⚠ Could not save to Keychain - key set for this session only</Text>
-            <Text color="gray">To persist manually, add to ~/.zshrc or ~/.bashrc:</Text>
-            <Box marginLeft={2}>
-              <Text color="gray">export ANTHROPIC_API_KEY={value.slice(0, 15)}...</Text>
+            <Text color="gray">
+              To persist manually, add to your shell profile (~/.zshrc or ~/.bashrc):
+            </Text>
+            <Box marginLeft={2} marginTop={1}>
+              <Text color="gray">export ANTHROPIC_API_KEY="{value.slice(0, 15)}..."</Text>
+            </Box>
+            <Box marginTop={1}>
+              <Text color="gray" dimColor>
+                Tip: Check keychain access with: security find-generic-password -s ralph-cli
+              </Text>
             </Box>
           </Box>
         )}

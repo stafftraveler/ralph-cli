@@ -277,6 +277,7 @@ OUTPUT_DIR=logs
   let hasKey = await hasApiKey();
   if (!hasKey) {
     console.log(chalk.yellow("\nANTHROPIC_API_KEY is not set."));
+    console.log(chalk.dim("Key not found in environment variable or macOS Keychain."));
     const providedKey = await promptForApiKey();
     hasKey = !!providedKey;
   } else {
