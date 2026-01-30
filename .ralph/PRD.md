@@ -90,7 +90,7 @@ Moved to phase 7
 [x] Fall back to polling if WebSocket connection fails
 [x] Add pulsing/animated indicator when iteration is actively running
 [x] Show elapsed time for current iteration
-[ ] Display estimated time remaining based on average iteration duration
+[x] Display estimated time remaining based on average iteration duration
 [x] Add connection status indicator (connected/reconnecting)
 
 ### When done
