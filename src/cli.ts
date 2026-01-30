@@ -19,7 +19,10 @@ async function getVersion(): Promise<string> {
     const pkgPath = join(__dirname, "..", "package.json");
     const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
     return pkg.version || "1.0.0";
-  } catch {
+  } catch (error) {
+    if (process.env.DEBUG) {
+      console.error("[cli] Failed to read package version:", error);
+    }
     return "1.0.0";
   }
 }
@@ -92,7 +95,10 @@ async function showDryRunInfo(ralphDir: string, options: CliOptions): Promise<vo
         console.log(`    ... and ${matches.length - 3} more`);
       }
     }
-  } catch {
+  } catch (error) {
+    if (process.env.DEBUG) {
+      console.error("[cli] Failed to read PRD for task count:", error);
+    }
     console.log(`  Task Count:     ${chalk.red("(unable to read PRD)")}`);
   }
   console.log("");
@@ -107,7 +113,10 @@ async function showDryRunInfo(ralphDir: string, options: CliOptions): Promise<vo
     if (promptContent.length > 200) {
       console.log(chalk.dim(`... (${promptContent.length} chars total)`));
     }
-  } catch {
+  } catch (error) {
+    if (process.env.DEBUG) {
+      console.error("[cli] Failed to read prompt file:", error);
+    }
     console.log(chalk.red(`  Prompt file not found: ${promptPath}`));
   }
   console.log("");

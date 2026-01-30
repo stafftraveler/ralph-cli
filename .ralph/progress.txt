@@ -120,3 +120,22 @@ Reasoning: CLAUDE.md specifies "Use function keyword for pure functions" and "Us
 Tests: All 86 tests passing (no code changes)
 Type check: Clean
 Lint: Clean
+
+## Iteration 7
+
+Task: Review and add debug logging to empty catch blocks in cli.ts
+
+Completed:
+- Added DEBUG-guarded error logging to 3 catch blocks in cli.ts
+- Line 22 (getVersion): Logs error when package.json read fails, returns default version
+- Line 95 (showDryRunInfo): Logs error when PRD.md read fails for task count
+- Line 110 (showDryRunInfo): Logs error when prompt.md read fails for preview
+
+Files changed:
+- src/cli.ts: Enhanced 3 catch blocks with debug logging
+
+Reasoning: Empty catch blocks hide errors during development. Debug logging (guarded by process.env.DEBUG) helps diagnose issues without cluttering normal output. All three cases have user-facing fallback messages already.
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean
