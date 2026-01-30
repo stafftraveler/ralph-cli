@@ -35,3 +35,23 @@ Reasoning: utils.ts is the single source of truth for shared utilities. Client-s
 Tests: All 86 tests passing
 Type check: Clean
 Lint: Clean
+
+## Iteration 3
+
+Task: Fix error handling in use-claude.ts catch block - add debug logging
+
+Completed:
+- Changed catch block parameter from _error to error (line 169)
+- Added DEBUG-guarded error logging with detailed information (name, message, stack)
+- Improved status message to differentiate "Cancelled" vs "Failed" based on error type
+- Detects AbortError by checking error.name and message for abort signals
+
+Files changed:
+- src/hooks/use-claude.ts: Enhanced catch block with debug logging and better status
+
+Reasoning: Swallowed errors reduce debuggability. Debug logging follows codebase pattern (process.env.DEBUG). Distinguishing cancellation from failure improves UX.
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean
+Format: Applied (1 file formatted)
