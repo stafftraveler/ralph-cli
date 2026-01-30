@@ -471,3 +471,41 @@ Notes:
 - Linting passes
 - Phase 6 Iteration History now 1 of 5 tasks complete (20% done)
 - Duration data already available from IterationResult.durationSeconds
+
+## Iteration 14
+
+Task: Add success/failure status indicator per iteration (Phase 6)
+
+Changes:
+- Added success boolean field to DashboardData iterations array
+- Added visual status indicator (✓/✗) at start of each iteration row
+- Created iteration-status CSS class with circular badge design
+- Status displays as colored circle with checkmark (success) or X (failure)
+
+Visual design:
+- Success: ✓ on light green background (#e8f5e9 light, #1b5e20 dark)
+- Failure: ✗ on light red background (#ffebee light, #b71c1c dark)
+- 16px circular badge with centered icon
+- Positioned at start of iteration row before number
+
+Layout:
+- Status: 16px circle, flex-shrink: 0 (fixed width)
+- Number: flex: 1 (takes available space)
+- Duration: monospace, subtle color
+- Cost: right-aligned, bold
+- Reduced gap from 16px to 12px for tighter layout with 4 columns
+
+Dark mode:
+- Success: white text on dark green (#1b5e20)
+- Failure: white text on dark red (#b71c1c)
+- Higher contrast colors for better visibility
+
+Files changed:
+- src/lib/webserver.ts (added success field, status indicator HTML, CSS)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 6 Iteration History now 2 of 5 tasks complete (40% done)
+- Success data already available from IterationResult.success

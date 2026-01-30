@@ -19,6 +19,7 @@ export interface DashboardData {
     timestamp: string;
     cost: number;
     durationSeconds: number;
+    success: boolean;
   }>;
 }
 
@@ -89,6 +90,7 @@ function getDashboardData(): DashboardData {
       timestamp: iter.startedAt,
       cost: iter.usage?.totalCostUsd ?? 0,
       durationSeconds: iter.durationSeconds,
+      success: iter.success,
     })),
   };
 }
@@ -119,6 +121,7 @@ function getDashboardHtml(data: DashboardData): string {
     .map(
       (iter) => `
       <div class="iteration-item">
+        <span class="iteration-status ${iter.success ? "success" : "failure"}">${iter.success ? "✓" : "✗"}</span>
         <span class="iteration-number">Iteration ${iter.number}</span>
         <span class="iteration-duration">${formatDuration(iter.durationSeconds)}</span>
         <span class="iteration-cost">$${iter.cost.toFixed(4)}</span>
@@ -265,7 +268,7 @@ function getDashboardHtml(data: DashboardData): string {
     .iteration-item {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       padding: 8px 0;
       border-bottom: 1px solid #f0f0f0;
       font-size: 13px;
@@ -273,6 +276,28 @@ function getDashboardHtml(data: DashboardData): string {
 
     .iteration-item:last-child {
       border-bottom: none;
+    }
+
+    .iteration-status {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .iteration-status.success {
+      color: #000000;
+      background: #e8f5e9;
+    }
+
+    .iteration-status.failure {
+      color: #000000;
+      background: #ffebee;
     }
 
     .iteration-number {
@@ -615,6 +640,16 @@ function getDashboardHtml(data: DashboardData): string {
 
       .iteration-item {
         border-bottom: 1px solid #1a1a1a;
+      }
+
+      .iteration-status.success {
+        color: #ffffff;
+        background: #1b5e20;
+      }
+
+      .iteration-status.failure {
+        color: #ffffff;
+        background: #b71c1c;
       }
 
       .iteration-number {
