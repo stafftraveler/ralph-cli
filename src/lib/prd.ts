@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import type { PrdTemplate } from "../types.js";
+import { wrapError } from "./utils.js";
 
 /**
  * Check if a PRD file has actual tasks (not just template placeholders).
@@ -13,7 +14,13 @@ export async function prdHasTasks(prdPath: string): Promise<boolean> {
   let content: string;
   try {
     content = await readFile(prdPath, "utf-8");
-  } catch {
+  } catch (error) {
+    // For prdHasTasks, file not existing is a valid state (means no tasks)
+    // Only throw if it's not ENOENT (e.g., permission error)
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      const ralphError = wrapError(error, `Failed to read PRD file at ${prdPath}`);
+      throw ralphError;
+    }
     return false;
   }
 

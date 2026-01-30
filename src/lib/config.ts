@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { RalphConfig } from "../types.js";
+import { createFileNotFoundError } from "./utils.js";
 
 /**
  * Default configuration values
@@ -123,8 +124,17 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
     }
   } catch (error) {
     // Config file doesn't exist or can't be read - use defaults
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      console.error(`Warning: Could not read config file at ${configPath}:`, error);
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === "ENOENT") {
+      // File not found is expected for fresh installations - silently use defaults
+      // User will get helpful message if they run 'ralph init'
+    } else {
+      // Other errors (permissions, etc.) should show helpful message
+      const ralphError = createFileNotFoundError(
+        configPath,
+        "Run 'npx ralph init' to create a default config file, or check file permissions",
+      );
+      console.error(`Warning: ${ralphError.format()}`);
     }
     // Fall through to return defaults
   }

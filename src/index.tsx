@@ -8,6 +8,8 @@ import { runInit } from "./commands/init.js";
 import { runCi } from "./commands/run-ci.js";
 import { App } from "./components/App.js";
 import { getRepoRoot } from "./hooks/use-git.js";
+import { createFileNotFoundError, wrapError } from "./lib/utils.js";
+import { RalphError } from "./types.js";
 
 /**
  * Load prompt from .ralph/prompt.md
@@ -16,8 +18,15 @@ async function loadPrompt(ralphDir: string): Promise<string> {
   const promptPath = join(ralphDir, "prompt.md");
   try {
     return await readFile(promptPath, "utf-8");
-  } catch {
-    throw new Error(`Could not read prompt file: ${promptPath}`);
+  } catch (error) {
+    const ralphError =
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+        ? createFileNotFoundError(
+            promptPath,
+            "Run 'npx ralph init' to create the prompt.md template file",
+          )
+        : wrapError(error, `Could not read prompt file at ${promptPath}`);
+    throw ralphError;
   }
 }
 
@@ -81,7 +90,14 @@ async function main() {
     // Explicitly exit to ensure clean termination
     process.exit(0);
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof RalphError) {
+      console.error(chalk.red("\nError occurred:"));
+      console.error(error.format());
+      if (process.env.DEBUG && error.context?.originalError) {
+        console.error(chalk.dim("\nOriginal error stack:"));
+        console.error(error.context.originalError.stack);
+      }
+    } else if (error instanceof Error) {
       console.error(chalk.red(`Error: ${error.message}`));
       if (process.env.DEBUG) {
         console.error(error.stack);

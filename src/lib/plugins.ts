@@ -2,6 +2,7 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { IterationContext, PluginContext, RalphPlugin } from "../types.js";
+import { createFileNotFoundError, wrapError } from "./utils.js";
 
 /**
  * Plugin hook names
@@ -118,7 +119,15 @@ async function loadPluginFromFile(filePath: string): Promise<RalphPlugin | null>
 
     return plugin;
   } catch (error) {
-    console.error(`Failed to load plugin from ${filePath}:`, error);
+    const ralphError =
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+        ? createFileNotFoundError(
+            filePath,
+            "Check that the plugin file exists and the path is correct",
+          )
+        : wrapError(error, `Failed to load plugin from ${filePath}`);
+    console.error("Failed to load plugin:");
+    console.error(ralphError.format());
     return null;
   }
 }

@@ -382,3 +382,40 @@ Notes:
 - Foundation for improved error messages in subsequent tasks
 - Provides consistent error handling across codebase
 - Next: Improve file not found errors (Task 4.2)
+
+## Iteration 13: Improve file not found errors
+
+Task: PRD Task 4.2 - Improve file not found errors
+
+Decisions:
+- Applied createFileNotFoundError() helper throughout codebase for ENOENT errors
+- Added contextual suggestions for each file type (PRD.md, prompt.md, config, templates, etc.)
+- Used wrapError() for non-ENOENT errors to preserve original error context
+- Enhanced error display in main catch block to format RalphError with suggestions
+- All file read operations now provide actionable guidance when files missing
+
+Files changed:
+- src/lib/claude.ts: Enhanced PRD.md read error with "run ralph init" suggestion
+- src/lib/config.ts: Added helpful message for config read errors (except ENOENT)
+- src/lib/prd.ts: Added error handling for non-ENOENT errors when reading PRD
+- src/lib/session.ts: Added warning for non-ENOENT session load errors
+- src/lib/plugins.ts: Enhanced plugin load errors with file path context
+- src/commands/init.ts: Improved package.json and template copy errors
+- src/index.tsx: Enhanced prompt.md read error and RalphError display in main catch
+- src/lib/claude.test.ts: Updated test to match new error format with code and suggestions
+
+Implementation details:
+- ENOENT errors converted to RalphErrorCode.ENOENT with createFileNotFoundError()
+- Each error includes full file path and specific actionable suggestion
+- Non-ENOENT errors use wrapError() to preserve stack traces
+- RalphError.format() produces structured output: [CODE] message + path + suggestion
+- Main error handler displays formatted errors with optional debug stack traces
+- Silent handling for expected missing files (e.g., progress.txt, session.json on first run)
+- Warnings for unexpected errors (permissions, corrupt data) to aid troubleshooting
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- File not found errors now include full paths and actionable suggestions
+- Examples: "Run 'npx ralph init'" for PRD.md, template errors mention installation check
+- Next: Improve API key errors (Task 4.3)

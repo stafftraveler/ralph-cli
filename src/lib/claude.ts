@@ -3,6 +3,7 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 import { execa } from "execa";
 import type { RalphConfig, UsageInfo } from "../types.js";
 import { getApiKeyFromKeychain, saveApiKeyToKeychain } from "./keychain.js";
+import { createFileNotFoundError, wrapError } from "./utils.js";
 
 /**
  * Content block with text from assistant messages
@@ -181,12 +182,20 @@ export async function runClaude(
 
   try {
     prdContent = await readFile(prdPath, "utf-8");
-  } catch {
+  } catch (error) {
+    const ralphError =
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+        ? createFileNotFoundError(
+            prdPath,
+            "Run 'npx ralph init' to initialize a Ralph session with a PRD template",
+          )
+        : wrapError(error, `Failed to read PRD.md at ${prdPath}`);
+
     return {
       success: false,
       output: "",
       prdComplete: false,
-      error: `Failed to read PRD.md at ${prdPath}`,
+      error: ralphError.format(),
     };
   }
 

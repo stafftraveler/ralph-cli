@@ -4,6 +4,7 @@ import path from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import { getCurrentBranch, getCurrentCommit } from "../hooks/use-git.js";
 import type { IterationResult, SessionCheckpoint, SessionState } from "../types.js";
+import { wrapError } from "./utils.js";
 
 const SESSION_FILE = "session.json";
 
@@ -35,7 +36,13 @@ export async function loadSession(ralphDir: string): Promise<SessionState | null
     }
 
     return session;
-  } catch {
+  } catch (error) {
+    // Session file not existing is normal for fresh sessions
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      // But other errors (permissions, corrupt JSON) should be reported
+      const ralphError = wrapError(error, `Failed to load session from ${sessionPath}`);
+      console.error(`Warning: ${ralphError.format()}`);
+    }
     return null;
   }
 }

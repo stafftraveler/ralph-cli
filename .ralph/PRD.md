@@ -89,7 +89,7 @@ Already implemented. Verify that these have been implemented correctly.
     - Create error code enum/constants in types.ts
     - Map errors to codes: ENOENT, EAUTH, ERATE, ECONFIG, etc.
 
-[ ] Improve file not found errors
+[x] Improve file not found errors
     - Include full path in error message
     - Add actionable suggestion (e.g., "Run 'npx ralph init'")
     - Example: "Failed to read PRD.md at /path/.ralph/PRD.md - run 'npx ralph init'"
@@ -97,16 +97,11 @@ Already implemented. Verify that these have been implemented correctly.
 [ ] Improve API key errors
     - Clear message when key is missing vs invalid
     - Link to API key creation page
-    - Suggest keychain commands for debugging
 
 [ ] Improve config parsing errors
     - Show line number and problematic value
     - Suggest valid format/values
     - Continue with defaults where possible
-
-[ ] Add troubleshooting section to error output
-    - Link to relevant docs when available
-    - Suggest common fixes for known issues
 
 
 ## 5. Remote monitoring

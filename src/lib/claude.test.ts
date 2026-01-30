@@ -64,13 +64,17 @@ describe("claude", () => {
     };
 
     it("should return error if PRD.md cannot be read", async () => {
-      const error = new Error("ENOENT");
+      const error = new Error("ENOENT") as NodeJS.ErrnoException;
+      error.code = "ENOENT";
       vi.mocked(readFile).mockRejectedValue(error);
 
       const result = await runClaude(mockConfig, mockOptions);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("Failed to read PRD.md");
+      // New error format includes error code and suggestion
+      expect(result.error).toContain("ENOENT");
+      expect(result.error).toContain("/test/.ralph/PRD.md");
+      expect(result.error).toContain("ralph init");
       expect(result.prdComplete).toBe(false);
     });
 

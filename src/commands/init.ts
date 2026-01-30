@@ -5,6 +5,7 @@ import * as readline from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import { hasApiKey, isClaudeCodeInstalled, setApiKey } from "../lib/claude.js";
+import { createFileNotFoundError, wrapError } from "../lib/utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -41,7 +42,9 @@ async function addRalphScript(repoRoot: string): Promise<boolean> {
     console.log(chalk.green('Added "ralph" script to package.json'));
     return true;
   } catch (error) {
-    console.error(chalk.red("Failed to update package.json:"), error);
+    const ralphError = wrapError(error, `Failed to update package.json at ${pkgPath}`);
+    console.error(chalk.red("Failed to update package.json:"));
+    console.error(chalk.dim(ralphError.format()));
     return false;
   }
 }
@@ -83,7 +86,12 @@ async function copyTemplate(
     console.log(chalk.green(`${action} ${name}`));
     return true;
   } catch (error) {
-    console.error(chalk.red(`Failed to create ${name}:`), error);
+    const ralphError =
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+        ? createFileNotFoundError(src, `Ensure Ralph is properly installed with template files`)
+        : wrapError(error, `Failed to copy template to ${dest}`);
+    console.error(chalk.red(`Failed to create ${name}:`));
+    console.error(chalk.dim(ralphError.format()));
     return false;
   }
 }
