@@ -11,7 +11,7 @@
 
 ONLY WORK ON A SINGLE TASK.
 
-If all PRD tasks are complete, create a PR and output <promise>COMPLETE</promise>
+Only when ALL tasks in the PRD file are complete, create a PR (if not on the default branch) and output <promise>COMPLETE</promise>.
 
 Rules:
 
@@ -50,6 +50,7 @@ Examples:
 - `<status>Reading PRD and progress files</status>`
 - `<status>Implementing user authentication hook</status>`
 - `<status>Running type checks</status>`
+- `<status>Linting</status>`
 - `<status>Fixing lint errors in api/routes.ts</status>`
 - `<status>Writing tests for validation logic</status>`
 - `<status>Committing changes</status>`
