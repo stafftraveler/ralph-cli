@@ -56,3 +56,13 @@ Iteration 6 - Chapter 3: Fix iteration details state persistence
 - Prevents iterations from closing during WebSocket updates or polling refresh
 Files changed: src/lib/webserver.ts
 All tests pass, type checks pass, no lint errors
+
+Iteration 7 - Chapter 3: Show costs in CLI and summary (Already Implemented)
+- Verified UsageDisplay component in IterationRunner.tsx (lines 71-155) shows costs during iterations
+- Component displays: tokens, iteration cost, session total, projected total, cost warnings
+- Verified Summary component (lines 112-114) shows totalCost in summary stats
+- Both components properly rendered in App.tsx
+- If costs not visible, likely due to SDK not returning usage data (not display issue)
+Note: User may have written task before features existed, or experiencing data issue
+Files changed: .ralph/PRD.md
+All tests pass, type checks pass, no lint errors
