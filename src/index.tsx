@@ -8,6 +8,7 @@ import { runInit } from "./commands/init.js";
 import { runCi } from "./commands/run-ci.js";
 import { App } from "./components/App.js";
 import { getRepoRoot } from "./hooks/use-git.js";
+import { startCaffeinate, stopCaffeinate } from "./lib/caffeinate.js";
 import { createFileNotFoundError, wrapError } from "./lib/utils.js";
 import { RalphError } from "./types.js";
 
@@ -68,6 +69,9 @@ async function main() {
       process.exit(0);
     }
 
+    // Start caffeinate to prevent system sleep while running
+    startCaffeinate(options.debug);
+
     // Load the prompt
     const prompt = await loadPrompt(ralphDir);
 
@@ -78,6 +82,7 @@ async function main() {
     // Use CI mode if requested or if stdin is not a TTY
     if (options.ci || !process.stdin.isTTY) {
       await runCi(ralphDir, prompt, resolvedOptions);
+      stopCaffeinate(options.debug);
       return;
     }
 
@@ -87,9 +92,12 @@ async function main() {
     // Wait for the app to finish
     await waitUntilExit();
 
-    // Explicitly exit to ensure clean termination
+    // Stop caffeinate and exit cleanly
+    stopCaffeinate(options.debug);
     process.exit(0);
   } catch (error) {
+    // Ensure caffeinate is stopped on error
+    stopCaffeinate();
     if (error instanceof RalphError) {
       console.error(chalk.red("\nError occurred:"));
       console.error(error.format());
