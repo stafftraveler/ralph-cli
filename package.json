@@ -48,7 +48,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.23",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.25",
     "@inkjs/ui": "^2.0.0",
     "@linear/sdk": "^72.0.0",
     "chalk": "^5.4.0",

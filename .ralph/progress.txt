@@ -1,144 +1,20 @@
-## Iteration 1 - Fix linting errors
+## Iteration 1
 
-**Task**: Fix linting errors (PRD line 21)
-
-**Changes**:
-- Fixed unused parameter in use-tunnel.ts error handler (prefixed with `_err`)
-- Fixed circular dependency issue between startTunnel and scheduleReconnect by using ref pattern
-- Removed unnecessary `port` dependency from useEffect (outer scope value)
-
-**Files changed**:
-- src/hooks/use-tunnel.ts
-
-**Key decisions**:
-- Used ref pattern (scheduleReconnectRef) to break circular dependency between useCallback hooks
-- This maintains proper React hooks dependencies while avoiding circular references
-
-**Status**: ✅ Complete - all linting errors fixed, tests pass
-
-## Iteration 2 - Remove unused exports
-
-**Task**: Scan for code smells and fix ONE issue (PRD line 22)
+**Task**: Updated @anthropic-ai/claude-agent-sdk from 0.2.23 to 0.2.25
 
 **Changes**:
-- Removed unused standalone functions: startTunnel() and stopTunnel()
-- Both exports were never imported or used anywhere in codebase
-- The useTunnel() hook is the main API; standalone functions were dead code
+- 0.2.25: Parity with Claude Code v2.1.25
+- 0.2.24: Not documented in changelog
+- 0.2.23→0.2.25: Bug fixes for structured output validation errors
 
-**Files changed**:
-- src/hooks/use-tunnel.ts
+**Impact**: No breaking changes, no code modifications needed
 
-**Key decisions**:
-- Removed both functions together as they're tightly related utilities
-- Verified with ts-prune and grep that no imports exist
+**Files Changed**:
+- package.json (dependency version)
+- pnpm-lock.yaml (auto-updated)
 
-**Status**: ✅ Complete - dead code removed, all checks pass
+**Tests**: All 86 tests passing ✓
+**Types**: No errors ✓
+**Lint**: No issues ✓
 
-## Iteration 3 - Remove unused isCaffeinateRunning
-
-**Task**: Scan for code smells and fix ONE issue (PRD line 22)
-
-**Changes**:
-- Removed unused function: isCaffeinateRunning()
-- Function was never imported or called anywhere in codebase
-- Simple getter for internal state that wasn't needed externally
-
-**Files changed**:
-- src/lib/caffeinate.ts
-
-**Key decisions**:
-- startCaffeinate() and stopCaffeinate() are the only public API needed
-- Internal state check not required by consumers
-
-**Status**: ✅ Complete - unused export removed, all checks pass
-
-## Iteration 4 - Remove unused deleteLinearTokenFromKeychain
-
-**Task**: Scan for code smells and fix ONE issue (PRD line 22)
-
-**Changes**:
-- Removed unused function: deleteLinearTokenFromKeychain()
-- Function was never imported or called anywhere
-- Save/get functions are used, but delete was unimplemented feature
-
-**Files changed**:
-- src/lib/keychain.ts
-
-**Key decisions**:
-- Keep only actively used keychain operations (save/get)
-- Remove planned-but-unused delete functionality
-
-**Status**: ✅ Complete - unused export removed, all checks pass
-
-## Iteration 5 - Remove unused createGitError
-
-**Task**: Scan for code smells and fix ONE issue (PRD line 22)
-
-**Changes**:
-- Removed unused function: createGitError()
-- Function was never imported or called anywhere
-- Utility for creating typed git errors that was planned but not used
-
-**Files changed**:
-- src/lib/utils.ts
-
-**Key decisions**:
-- Keep only actively used error creation utilities
-- Remove unused error helper that was never needed
-
-**Status**: ✅ Complete - unused export removed, all checks pass
-
-## Iteration 6 - Remove unused createCostLimitError
-
-**Task**: Scan for code smells and fix ONE issue (PRD line 22)
-
-**Changes**:
-- Removed unused function: createCostLimitError()
-- Function was never imported or called anywhere
-- Utility for creating cost limit errors that was planned but not used
-
-**Files changed**:
-- src/lib/utils.ts
-
-**Key decisions**:
-- Remove unused error creation utilities
-- Keep only actively used error helpers in the codebase
-
-**Status**: ✅ Complete - unused export removed, all checks pass
-
-## Iteration 7 - Remove unused useSession hook
-
-**Task**: Scan for code smells and fix ONE issue (PRD line 22)
-
-**Changes**:
-- Removed entire unused file: src/hooks/use-session.ts
-- 256-line React hook that was never imported or used
-- Components use session.ts library functions directly instead
-
-**Files changed**:
-- Deleted: src/hooks/use-session.ts
-
-**Key decisions**:
-- Hook was comprehensive wrapper around session library
-- Never adopted in actual components - direct imports used instead
-- Entire file was dead code, removed completely
-
-**Status**: ✅ Complete - unused hook removed, all checks pass
-
-## Summary - All Tasks Complete
-
-**Iterations completed**: 7
-**Total cleanup**:
-- Fixed 3 linting errors (unused param, circular deps, unnecessary deps)
-- Removed 6 unused exports/functions across 4 files
-- Deleted 1 entire unused file (256 lines)
-- Total lines removed: ~320 lines of dead code
-
-**Key achievements**:
-- Zero unused exports remaining (verified with ts-prune)
-- All lint checks passing
-- All type checks passing  
-- All 86 tests passing
-- Codebase significantly cleaner and more maintainable
-
-**Status**: ✅ ALL TASKS COMPLETE - Ready for PR
+**Next Task**: Update commander from 13.1.0 to 14.0.2
