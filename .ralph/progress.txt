@@ -220,3 +220,31 @@ Type check: Clean
 Lint: Clean
 Format: Applied (1 file formatted)
 
+## Iteration 10
+
+Task: Extract logic from components - SummaryView in App.tsx
+
+Completed:
+- Created useSummaryData hook in src/hooks/use-summary-data.ts
+  * Extracts data-loading logic for diff stats and commits
+  * Returns filesChanged, commits, and isLoaded state
+- Created useAutoExit hook in src/hooks/use-auto-exit.ts
+  * Extracts auto-exit timer logic
+  * Handles different delays for interrupted vs normal completion
+- Updated App.tsx SummaryView component to use new hooks
+  * Removed 47 lines of inline logic
+  * Now uses useSummaryData and useAutoExit hooks
+  * Cleaner, more focused component with separated concerns
+
+Files changed:
+- src/hooks/use-summary-data.ts: New hook for loading summary data
+- src/hooks/use-auto-exit.ts: New hook for auto-exit timer
+- src/components/App.tsx: Updated SummaryView to use hooks, removed imports
+
+Reasoning: SummaryView had two distinct responsibilities mixed in: data loading and auto-exit timing. Extracting these into separate hooks follows SRP, improves testability, and makes the component easier to understand. Hooks can now be reused if needed.
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean
+Format: Applied (1 file formatted)
+

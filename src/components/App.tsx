@@ -2,14 +2,10 @@ import type { Server } from "node:http";
 import { join } from "node:path";
 import { Box, Text, useApp } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  createBranch,
-  getCommitsSince,
-  getCurrentBranch,
-  getDiffStats,
-  getRepoRoot,
-} from "../hooks/use-git.js";
+import { createBranch, getCurrentBranch, getRepoRoot } from "../hooks/use-git.js";
+import { useAutoExit } from "../hooks/use-auto-exit.js";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard.js";
+import { useSummaryData } from "../hooks/use-summary-data.js";
 import { useTunnel } from "../hooks/use-tunnel.js";
 import { loadConfig } from "../lib/config.js";
 import { notify } from "../lib/notify.js";
@@ -42,7 +38,6 @@ import {
 import type {
   AppPhase,
   CliOptions,
-  DiffStat,
   IterationResult,
   PluginContext,
   RalphConfig,
@@ -747,43 +742,10 @@ function SummaryView({
   isInterrupted: boolean;
   onExit: () => void;
 }) {
-  const [filesChanged, setFilesChanged] = useState<DiffStat[]>([]);
-  const [commits, setCommits] = useState<
-    Array<{
-      sha: string;
-      shortSha: string;
-      message: string;
-      author: string;
-      timestamp: string;
-    }>
-  >([]);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
-
-  useEffect(() => {
-    async function loadSummaryData() {
-      const [diffStats, commitList] = await Promise.all([
-        getDiffStats(session.startCommit),
-        getCommitsSince(session.startCommit),
-      ]);
-      setFilesChanged(diffStats);
-      setCommits(commitList);
-      setIsDataLoaded(true);
-    }
-    void loadSummaryData();
-  }, [session.startCommit]);
+  const { filesChanged, commits, isLoaded } = useSummaryData(session.startCommit);
 
   // Auto-exit after showing summary
-  useEffect(() => {
-    if (!isDataLoaded) return;
-
-    // Give user time to see the summary before exiting
-    // Shorter delay when interrupted (1s), longer for normal completion (3s)
-    const delay = isInterrupted ? 1000 : 3000;
-    const timer = setTimeout(() => {
-      onExit();
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [isDataLoaded, isInterrupted, onExit]);
+  useAutoExit(isLoaded, isInterrupted, onExit);
 
   const summary = createSummary({
     iterations: session.iterations,
