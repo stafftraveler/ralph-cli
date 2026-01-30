@@ -28,7 +28,7 @@ Make Ralph CLI more robust, maintainable, and user-friendly through testing, bet
     - Create vitest.config.ts configuration file
     - Add test scripts to package.json (`test`, `test:watch`, `test:coverage`)
 
-[ ] Add unit tests for session management (src/lib/session.ts)
+[x] Add unit tests for session management (src/lib/session.ts)
     - Test session creation and loading
     - Test checkpoint save/restore functionality
     - Mock file system operations
@@ -52,6 +52,7 @@ Make Ralph CLI more robust, maintainable, and user-friendly through testing, bet
     - Add `pnpm test` step to .github/workflows/ci.yml
 
 ### 2. Add CI/CD Pipeline Enhancements
+Already implemented. Verify that these have been implemented correctly.
 
 [ ] Add format check to CI workflow
     - Add `pnpm format --check` step to ci.yml

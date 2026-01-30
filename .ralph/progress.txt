@@ -16,3 +16,31 @@ Files changed:
 Notes:
 - Test framework is ready, no test files exist yet (expected)
 - Next tasks will add actual test files for session, config, claude, and git modules
+
+## Iteration 2: Add unit tests for session management
+
+Task: PRD Task 1.2 - Add unit tests for session management (src/lib/session.ts)
+
+Decisions:
+- Created comprehensive test suite with 24 tests covering all session.ts functions
+- Mocked node:fs, node:fs/promises, and use-git hooks using vi.mock
+- Tested all public APIs: loadSession, saveSession, createSession, saveCheckpoint, resumeFromCheckpoint, addIterationResult, clearSession, canResumeSession
+- Used proper TypeScript types for mock data (SessionState, IterationResult)
+
+Files changed:
+- src/lib/session.test.ts: Created comprehensive test suite with 24 passing tests
+
+Test coverage:
+- loadSession: 5 tests (missing file, invalid JSON, missing fields, valid session, session with checkpoint)
+- saveSession: 2 tests (create directory, directory exists)
+- createSession: 4 tests (provided branch, current branch, git failures, unique IDs)
+- saveCheckpoint: 2 tests (with commit, without commit)
+- resumeFromCheckpoint: 3 tests (no session, no checkpoint, with checkpoint)
+- addIterationResult: 3 tests (cumulative cost, missing usage, initialize cost)
+- clearSession: 2 tests (file exists, file missing)
+- canResumeSession: 3 tests (no session, no checkpoint, with checkpoint)
+
+Notes:
+- All tests pass
+- Mocks ensure tests are isolated and don't touch filesystem
+- Next: Add tests for config.ts
