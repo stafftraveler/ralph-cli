@@ -45,9 +45,9 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 ### Phase 2: Task Display
 
 [x] Add API endpoint `GET /api/tasks` to return parsed PRD tasks
-[ ] Create a "Tasks" section showing all PRD tasks with their status
-[ ] Display completed tasks with strikethrough or checkmark styling
-[ ] Show task counts (e.g., "3 of 7 tasks complete")
+[x] Create a "Tasks" section showing all PRD tasks with their status
+[x] Display completed tasks with strikethrough or checkmark styling
+[x] Show task counts (e.g., "3 of 7 tasks complete")
 [ ] Add visual progress indicator for task completion percentage
 
 ### Phase 3: Verbose Mode

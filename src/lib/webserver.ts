@@ -317,6 +317,97 @@ function getDashboardHtml(data: DashboardData): string {
     .add-task-feedback.error {
       color: #000000;
     }
+
+    .tasks-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .tasks-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+    }
+
+    .tasks-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+    }
+
+    .tasks-count {
+      font-size: 12px;
+      color: #666666;
+    }
+
+    .tasks-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .phase-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #999999;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .phase-header:first-child {
+      margin-top: 0;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .task-item:last-child {
+      border-bottom: none;
+    }
+
+    .task-checkbox {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 3px;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .task-checkbox.completed {
+      background: #000000;
+      border-color: #000000;
+    }
+
+    .task-checkbox.completed::after {
+      content: '✓';
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .task-text {
+      flex: 1;
+      color: #333333;
+    }
+
+    .task-text.completed {
+      color: #999999;
+      text-decoration: line-through;
+    }
   </style>
   <script>
     // Track if user is actively typing to avoid refresh interruption
@@ -341,6 +432,18 @@ function getDashboardHtml(data: DashboardData): string {
       } catch (err) {
         // Silently fail on error
       }
+
+      // Also refresh tasks
+      try {
+        const tasksResponse = await fetch('/api/tasks');
+        if (tasksResponse.ok) {
+          const tasksData = await tasksResponse.json();
+          updateTasks(tasksData);
+        }
+      } catch (err) {
+        // Silently fail on error
+      }
+
       setTimeout(refreshData, 2000);
     }
 
@@ -368,6 +471,46 @@ function getDashboardHtml(data: DashboardData): string {
       if (costValue) {
         costValue.textContent = '$' + data.totalCost.toFixed(4);
       }
+    }
+
+    function updateTasks(data) {
+      const tasksCount = document.querySelector('.tasks-count');
+      if (tasksCount) {
+        tasksCount.textContent = data.completedCount + ' of ' + data.totalCount + ' complete';
+      }
+
+      const tasksList = document.querySelector('.tasks-list');
+      if (!tasksList) return;
+
+      // Group tasks by phase
+      const tasksByPhase = {};
+      for (const task of data.tasks) {
+        const phase = task.phase || 'Other';
+        if (!tasksByPhase[phase]) {
+          tasksByPhase[phase] = [];
+        }
+        tasksByPhase[phase].push(task);
+      }
+
+      // Rebuild the tasks list
+      let html = '';
+      for (const phase in tasksByPhase) {
+        html += '<div class="phase-header">' + escapeHtml(phase) + '</div>';
+        for (const task of tasksByPhase[phase]) {
+          const completedClass = task.completed ? ' completed' : '';
+          html += '<div class="task-item">';
+          html += '<div class="task-checkbox' + completedClass + '"></div>';
+          html += '<div class="task-text' + completedClass + '">' + escapeHtml(task.text) + '</div>';
+          html += '</div>';
+        }
+      }
+      tasksList.innerHTML = html;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     // Add task form handling
@@ -432,7 +575,21 @@ function getDashboardHtml(data: DashboardData): string {
       }, 1000);
     }
 
-    // Start auto-refresh
+    // Load tasks on page load
+    async function loadInitialTasks() {
+      try {
+        const response = await fetch('/api/tasks');
+        if (response.ok) {
+          const data = await response.json();
+          updateTasks(data);
+        }
+      } catch (err) {
+        // Silently fail on error
+      }
+    }
+
+    // Start auto-refresh and load initial tasks
+    loadInitialTasks();
     setTimeout(refreshData, 2000);
   </script>
 </head>
@@ -463,6 +620,16 @@ function getDashboardHtml(data: DashboardData): string {
     <div class="cost-section">
       <span class="cost-label">Total Cost</span>
       <span class="cost-value">$${data.totalCost.toFixed(4)}</span>
+    </div>
+
+    <div class="tasks-section">
+      <div class="tasks-header">
+        <div class="tasks-title">Tasks</div>
+        <div class="tasks-count">Loading...</div>
+      </div>
+      <div class="tasks-list">
+        <div style="text-align: center; color: #999999; padding: 16px;">Loading tasks...</div>
+      </div>
     </div>
 
     ${

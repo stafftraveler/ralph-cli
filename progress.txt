@@ -24,3 +24,34 @@ Notes:
 - No linting errors
 - API returns JSON with { tasks: PrdTask[], completedCount: number, totalCount: number }
 - Ready for UI implementation in next iteration
+
+## Iteration 2
+
+Task: Create a "Tasks" section showing all PRD tasks with their status
+
+Changes:
+- Added Tasks section to dashboard HTML with header showing task counts
+- Added CSS styles for tasks section with minimal design (matching dashboard aesthetic)
+- Implemented task list rendering grouped by phase
+- Added checkbox-style indicators for task completion status
+- Completed tasks show with strikethrough text styling
+- Added updateTasks() function to refresh task display via API
+- Added loadInitialTasks() to fetch tasks on page load
+- Integrated tasks refresh into existing auto-refresh cycle (every 2s)
+- Tasks count shows "X of Y complete" in header
+
+Design decisions:
+- Used checkbox UI pattern (empty/filled) instead of plain checkmarks for visual clarity
+- Grouped tasks by phase with uppercase phase headers for organization
+- Set max-height 400px with scroll for long task lists
+- Completed tasks shown in gray with strikethrough to de-emphasize
+- Matched existing minimal black/white/gray color scheme
+
+Files changed:
+- src/lib/webserver.ts (added Tasks section HTML, CSS, and JS)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Auto-refreshes every 2s alongside status updates
+- Next: Display completed tasks with strikethrough (already done!) and task counts (already done!)
