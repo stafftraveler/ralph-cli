@@ -59,3 +59,46 @@ Files changed:
 - README.md: Improved installation section, added detailed publishing guide
 
 Result: Package ready for release with user-friendly installation experience
+
+## Iteration 4 - PRD advisory document
+
+Task: Create PRD-advise.md with improvement suggestions and publishing guide
+Reference: PRD task 4
+
+Created comprehensive advisory document covering:
+
+High-priority improvements:
+- Add automated testing (Vitest)
+- Cross-platform credential storage (Linux/Windows support)
+- CI/CD pipeline with GitHub Actions
+- Cost limit enforcement before iterations
+
+Medium-priority improvements:
+- Telemetry/analytics (opt-in)
+- Better error messages with actionable tips
+- Progress indicators for long operations
+- Plugin marketplace/registry
+
+Low-priority polish:
+- Interactive TUI mode
+- Iteration templates
+- Web dashboard
+- Multiple Claude model support
+
+Publishing instructions:
+- Prerequisites and authentication
+- Version bumping workflow
+- Quality checks before publishing
+- Step-by-step publishing process
+- Troubleshooting common issues
+
+Integration guide:
+- Setup in new projects
+- Configuration examples
+- CI/CD integration (GitHub Actions example)
+- Team workflows and best practices
+
+Files changed:
+- PRD-advise.md: New comprehensive advisory document
+
+Result: Complete guide for future improvements and package distribution
