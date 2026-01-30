@@ -1,0 +1,18 @@
+## Iteration 1
+
+Task: Remove unused InitOptions type and _options parameter from init.ts
+
+Completed:
+- Scanned src/ codebase for code smells using ts-prune and manual analysis
+- Documented 14 issues in PRD.md (3 high, 5 medium, 4 low, 2 style)
+- Removed unused InitOptions type export (line 99)
+- Removed unused _options parameter from runInit function (line 151)
+- Verified call site in index.tsx only passes repoRoot
+
+Files changed:
+- src/commands/init.ts: Removed InitOptions type, simplified runInit signature
+- .ralph/PRD.md: Added comprehensive list of code smell tasks
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean
