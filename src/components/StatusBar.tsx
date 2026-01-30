@@ -41,8 +41,8 @@ export function StatusBar({
     return (
       <Box borderStyle="round" borderColor="yellow" paddingX={1} marginTop={1}>
         <Text color="yellow">
-          <Spinner type="dots" />{" "}
-          Reconnecting tunnel{reconnectAttempts ? ` (attempt ${reconnectAttempts}/5)` : ""}...
+          <Spinner type="dots" /> Reconnecting tunnel
+          {reconnectAttempts ? ` (attempt ${reconnectAttempts}/5)` : ""}...
         </Text>
       </Box>
     );

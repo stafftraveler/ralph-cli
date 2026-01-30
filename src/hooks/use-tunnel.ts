@@ -1,5 +1,5 @@
-import localtunnel from "localtunnel";
 import type { Tunnel } from "localtunnel";
+import localtunnel from "localtunnel";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
@@ -248,7 +248,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
       }
 
       // Calculate delay with exponential backoff: 2s, 4s, 8s, 16s, 32s
-      const delay = BASE_RECONNECT_DELAY * Math.pow(2, attempts - 1);
+      const delay = BASE_RECONNECT_DELAY * 2 ** (attempts - 1);
 
       setIsReconnecting(true);
       setUrl(null);

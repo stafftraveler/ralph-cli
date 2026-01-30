@@ -1,6 +1,6 @@
 import { Box, Text, useInput } from "ink";
-import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
+import TextInput from "ink-text-input";
 import { useCallback, useState } from "react";
 import { setLinearToken, testLinearConnection } from "../lib/linear.js";
 

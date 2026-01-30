@@ -2,8 +2,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import { join } from "node:path";
-import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 import type { SessionState } from "../types.js";
 import { parsePrdTasks } from "./prd.js";
 
