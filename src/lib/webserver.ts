@@ -418,7 +418,6 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .iterations-value {
-      font-family: 'Monaco', 'Courier New', monospace;
       font-weight: 500;
       color: #000000;
       min-width: 24px;
@@ -975,7 +974,6 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .iterations-value-inline {
-      font-family: 'Monaco', 'Courier New', monospace;
       font-weight: 500;
       color: #000000;
       min-width: 24px;
@@ -2136,7 +2134,7 @@ function getDashboardHtml(data: DashboardData): string {
       const pauseBtn = document.getElementById('pause-btn');
       const pauseBtnText = document.getElementById('pause-btn-text');
       const pauseBtnIcon = pauseBtn?.querySelector('.btn-icon');
-      
+
       if (pauseBtn) {
         if (paused) {
           pauseBtn.classList.add('active');
@@ -2432,7 +2430,7 @@ function getDashboardHtml(data: DashboardData): string {
 
     <div class="session-controls-section">
       <div class="session-controls-title">Session Controls</div>
-      
+
       <div class="iterations-adjust-row">
         <span class="iterations-adjust-label">Adjust Iterations</span>
         <div class="iterations-adjust-buttons">
