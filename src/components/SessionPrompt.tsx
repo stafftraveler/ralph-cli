@@ -2,10 +2,9 @@ import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import Spinner from "ink-spinner";
 import TextInput from "ink-text-input";
-import { useEffect, useState } from "react";
-import { canResumeSession, loadSession } from "../lib/session.js";
-import { clearProgress, formatDuration, progressHasContent } from "../lib/utils.js";
-import type { SessionState } from "../types.js";
+import { useState } from "react";
+import { useSessionCheck } from "../hooks/use-session-check.js";
+import { clearProgress, formatDuration } from "../lib/utils.js";
 
 /** Default branch names that trigger the branch prompt */
 const DEFAULT_BRANCHES = ["main", "master"];
@@ -37,8 +36,6 @@ export interface SessionPromptProps {
   skipBranchPrompt?: boolean;
 }
 
-type Phase = "loading" | "prompt" | "no-session" | "progress-prompt" | "branch-prompt";
-
 interface SelectItem {
   label: string;
   value: "resume" | "new" | "new-keep" | "new-clear";
@@ -59,9 +56,8 @@ export function SessionPrompt({
   forceResume,
   skipBranchPrompt,
 }: SessionPromptProps) {
-  const [phase, setPhase] = useState<Phase>("loading");
-  const [session, setSession] = useState<SessionState | null>(null);
-  const [hasProgress, setHasProgress] = useState(false);
+  // Local state for branch prompt phase
+  const [localPhase, setLocalPhase] = useState<"branch-prompt" | null>(null);
   const [branchName, setBranchName] = useState("");
   const [branchError, setBranchError] = useState<string | null>(null);
 
@@ -73,7 +69,7 @@ export function SessionPrompt({
     if (skipBranchPrompt || !isDefaultBranch(currentBranch)) {
       onNewSession();
     } else {
-      setPhase("branch-prompt");
+      setLocalPhase("branch-prompt");
     }
   };
 
@@ -99,68 +95,14 @@ export function SessionPrompt({
     onNewSession(trimmed);
   };
 
-  // Check for existing session on mount
-  useEffect(() => {
-    async function checkSession() {
-      // Check if progress.txt has content
-      const progressExists = await progressHasContent(ralphDir);
-      setHasProgress(progressExists);
-
-      // Handle forced options
-      if (forceNew) {
-        // When forcing new session, clear progress.txt if it has content
-        if (progressExists) {
-          await clearProgress(ralphDir);
-        }
-        onNewSession();
-        return;
-      }
-
-      const canResume = await canResumeSession(ralphDir);
-
-      if (!canResume) {
-        if (forceResume) {
-          // User requested resume but no session exists
-          setPhase("no-session");
-          return;
-        }
-
-        // No resumable session checkpoint
-        // But if progress.txt has content, offer to start fresh
-        if (progressExists) {
-          setPhase("progress-prompt");
-          return;
-        }
-
-        // No progress, no session - start new
-        onNewSession();
-        return;
-      }
-
-      // Load session to display info
-      const loaded = await loadSession(ralphDir);
-      if (!loaded?.checkpoint) {
-        // Session exists but no checkpoint
-        // Check if progress.txt has content
-        if (progressExists) {
-          setPhase("progress-prompt");
-          return;
-        }
-        onNewSession();
-        return;
-      }
-
-      if (forceResume) {
-        // Auto-resume
-        onResumeSession(loaded.checkpoint.iteration + 1);
-        return;
-      }
-
-      setSession(loaded);
-      setPhase("prompt");
-    }
-    void checkSession();
-  }, [ralphDir, forceNew, forceResume, onNewSession, onResumeSession]);
+  // Use the session check hook
+  const { phase, session, hasProgress } = useSessionCheck({
+    ralphDir,
+    forceNew,
+    forceResume,
+    onNewSession: proceedToNewSession,
+    onResumeSession,
+  });
 
   // Handle selection
   const handleSelect = async (item: SelectItem) => {
@@ -182,7 +124,34 @@ export function SessionPrompt({
     }
   };
 
-  // Render based on phase
+  // Render based on phase (prioritize local branch-prompt phase)
+  if (localPhase === "branch-prompt") {
+    return (
+      <Box flexDirection="column" marginY={1}>
+        <Box marginBottom={1}>
+          <Text bold>Branch name</Text>
+          <Text color="gray"> (Enter to stay on {currentBranch})</Text>
+        </Box>
+
+        <Box>
+          <Text color="cyan">❯ </Text>
+          <TextInput
+            value={branchName}
+            onChange={setBranchName}
+            onSubmit={handleBranchSubmit}
+            placeholder={currentBranch}
+          />
+        </Box>
+
+        {branchError && (
+          <Box marginTop={1}>
+            <Text color="red">{branchError}</Text>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
   if (phase === "loading") {
     return (
       <Box>
@@ -232,33 +201,6 @@ export function SessionPrompt({
         </Box>
 
         <SelectInput items={items} onSelect={handleSelect} />
-      </Box>
-    );
-  }
-
-  if (phase === "branch-prompt") {
-    return (
-      <Box flexDirection="column" marginY={1}>
-        <Box marginBottom={1}>
-          <Text bold>Branch name</Text>
-          <Text color="gray"> (Enter to stay on {currentBranch})</Text>
-        </Box>
-
-        <Box>
-          <Text color="cyan">❯ </Text>
-          <TextInput
-            value={branchName}
-            onChange={setBranchName}
-            onSubmit={handleBranchSubmit}
-            placeholder={currentBranch}
-          />
-        </Box>
-
-        {branchError && (
-          <Box marginTop={1}>
-            <Text color="red">{branchError}</Text>
-          </Box>
-        )}
       </Box>
     );
   }

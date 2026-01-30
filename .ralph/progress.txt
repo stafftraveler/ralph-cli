@@ -248,3 +248,30 @@ Type check: Clean
 Lint: Clean
 Format: Applied (1 file formatted)
 
+## Iteration 11
+
+Task: Extract logic from components - SessionPrompt session checking
+
+Completed:
+- Created useSessionCheck hook in src/hooks/use-session-check.ts
+  * Extracts complex session checking logic from SessionPrompt
+  * Handles session loading, progress checking, forced options
+  * Returns phase, session, hasProgress state
+  * Consolidates 60+ lines of useEffect logic into reusable hook
+- Updated SessionPrompt.tsx to use new hook
+  * Replaced local state and useEffect with hook call
+  * Split phase into hook-managed phase and local branch-prompt phase
+  * Removed duplicate branch-prompt rendering
+  * Removed unused imports (SessionState, canResumeSession, loadSession, progressHasContent)
+  * Cleaner, more focused component
+
+Files changed:
+- src/hooks/use-session-check.ts: New hook with session checking logic
+- src/components/SessionPrompt.tsx: Refactored to use hook, removed 60+ lines
+
+Reasoning: SessionPrompt had complex session checking logic mixed with UI rendering. Extracting to hook improves separation of concerns, testability, and enables potential reuse. Component now focuses on UI and user interactions.
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean
+Format: Applied (1 file formatted)
