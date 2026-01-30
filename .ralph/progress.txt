@@ -16,3 +16,22 @@ Files changed:
 Tests: All 86 tests passing
 Type check: Clean
 Lint: Clean
+
+## Iteration 2
+
+Task: Consolidate formatDuration - remove duplicate from webserver.ts
+
+Completed:
+- Identified 3 instances of formatDuration: utils.ts (canonical), webserver.ts server-side (duplicate), webserver.ts client-side JS (needed for browser)
+- Added import of formatDuration from utils.js to webserver.ts
+- Removed duplicate server-side formatDuration function (lines 226-241)
+- Kept client-side JavaScript version in HTML template (runs in browser, cannot import)
+
+Files changed:
+- src/lib/webserver.ts: Added import, removed duplicate function
+
+Reasoning: utils.ts is the single source of truth for shared utilities. Client-side JS in HTML template must remain separate as it executes in browser context.
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean
