@@ -66,3 +66,14 @@ Iteration 7 - Chapter 3: Show costs in CLI and summary (Already Implemented)
 Note: User may have written task before features existed, or experiencing data issue
 Files changed: .ralph/PRD.md
 All tests pass, type checks pass, no lint errors
+
+Iteration 8 - Chapter 4: Localtunnel alternatives research
+- Researched 7 tunneling solutions: ngrok, Cloudflare Tunnel, Tailscale Funnel, localhost.run, bore, tunnelmole, localtunnel
+- Key finding: Ralph already uses ngrok (not localtunnel), which has no password requirement
+- ngrok meets all requirements: no signup, secure, reliable, supports long connections
+- Evaluated trade-offs: ngrok free tier has 2hr limit but most reliable, Cloudflare unlimited but more complex
+- Recommendation: Keep ngrok, optionally add "approve connection" security pattern as suggested in PRD
+- Alternative: Add Cloudflare Tunnel as option for users needing unlimited free tier
+- Documented full analysis with pros/cons for each solution in LOCAL-TUNNEL.md
+Files changed: LOCAL-TUNNEL.md, .ralph/PRD.md
+All tests pass, type checks pass, no lint errors
