@@ -4,7 +4,7 @@
 4. Run pnpm lint:fix
 5. Run pnpm check:types, fix errors
 6. Run pnpm test, fix errors
-7. Append progress to progress.txt
+7. Append progress to .ralph/progress.txt
 8. Update the docs if needed (e.g. README.md or relevant documentation in the `/docs` folder)
 9. Update PRD with what was done (check off check boxes or add ✅ before the item that has been done if tasks are not formatted with checkboxes)
 10. Commit changes
@@ -24,7 +24,7 @@ Prioritization of tasks:
 4. Standard features and implementation
 5. Polish, cleanup, and quick wins
 
-After completing each task, append to progress.txt:
+After completing each task, append to .ralph/progress.txt:
 - Task completed and PRD item reference
 - Key decisions made and reasoning
 - Files changed
