@@ -1,10 +1,21 @@
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 import Spinner from "ink-spinner";
+import TextInput from "ink-text-input";
 import { useEffect, useState } from "react";
 import { canResumeSession, loadSession } from "../lib/session.js";
 import { clearProgress, formatDuration, progressHasContent } from "../lib/utils.js";
 import type { SessionState } from "../types.js";
+
+/** Default branch names that trigger the branch prompt */
+const DEFAULT_BRANCHES = ["main", "master"];
+
+/**
+ * Check if the given branch is a default branch (main/master)
+ */
+function isDefaultBranch(branch: string): boolean {
+  return DEFAULT_BRANCHES.includes(branch);
+}
 
 /**
  * Props for the SessionPrompt component
@@ -12,17 +23,21 @@ import type { SessionState } from "../types.js";
 export interface SessionPromptProps {
   /** Path to .ralph directory */
   ralphDir: string;
-  /** Called when user chooses to start a new session */
-  onNewSession: () => void;
+  /** Current git branch name */
+  currentBranch: string;
+  /** Called when user chooses to start a new session, optionally with a new branch name */
+  onNewSession: (branchName?: string) => void;
   /** Called when user chooses to resume, with iteration to resume from */
   onResumeSession: (resumeIteration: number) => void;
   /** Skip prompt and force new session */
   forceNew?: boolean;
   /** Skip prompt and force resume */
   forceResume?: boolean;
+  /** Skip branch prompt (e.g., when --branch CLI flag is used) */
+  skipBranchPrompt?: boolean;
 }
 
-type Phase = "loading" | "prompt" | "no-session" | "progress-prompt";
+type Phase = "loading" | "prompt" | "no-session" | "progress-prompt" | "branch-prompt";
 
 interface SelectItem {
   label: string;
@@ -37,14 +52,52 @@ interface SelectItem {
  */
 export function SessionPrompt({
   ralphDir,
+  currentBranch,
   onNewSession,
   onResumeSession,
   forceNew,
   forceResume,
+  skipBranchPrompt,
 }: SessionPromptProps) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [session, setSession] = useState<SessionState | null>(null);
   const [hasProgress, setHasProgress] = useState(false);
+  const [branchName, setBranchName] = useState("");
+  const [branchError, setBranchError] = useState<string | null>(null);
+
+  /**
+   * Proceed to new session, conditionally showing branch prompt if on default branch
+   */
+  const proceedToNewSession = () => {
+    // Skip branch prompt if CLI --branch is specified or not on default branch
+    if (skipBranchPrompt || !isDefaultBranch(currentBranch)) {
+      onNewSession();
+    } else {
+      setPhase("branch-prompt");
+    }
+  };
+
+  /**
+   * Handle branch name submission
+   */
+  const handleBranchSubmit = (input: string) => {
+    const trimmed = input.trim();
+
+    // Empty = stay on current branch
+    if (!trimmed) {
+      onNewSession();
+      return;
+    }
+
+    // Basic validation: no spaces, no special chars except / - _ .
+    if (!/^[\w.\-/]+$/.test(trimmed)) {
+      setBranchError("Invalid branch name");
+      return;
+    }
+
+    setBranchError(null);
+    onNewSession(trimmed);
+  };
 
   // Check for existing session on mount
   useEffect(() => {
@@ -116,16 +169,16 @@ export function SessionPrompt({
     } else if (item.value === "new-clear") {
       // Clear progress.txt and start new
       await clearProgress(ralphDir);
-      onNewSession();
+      proceedToNewSession();
     } else if (item.value === "new-keep") {
       // Keep progress.txt and start new
-      onNewSession();
+      proceedToNewSession();
     } else {
       // Default "new" - clear progress if it exists
       if (hasProgress) {
         await clearProgress(ralphDir);
       }
-      onNewSession();
+      proceedToNewSession();
     }
   };
 
@@ -179,6 +232,33 @@ export function SessionPrompt({
         </Box>
 
         <SelectInput items={items} onSelect={handleSelect} />
+      </Box>
+    );
+  }
+
+  if (phase === "branch-prompt") {
+    return (
+      <Box flexDirection="column" marginY={1}>
+        <Box marginBottom={1}>
+          <Text bold>Branch name</Text>
+          <Text color="gray"> (Enter to stay on {currentBranch})</Text>
+        </Box>
+
+        <Box>
+          <Text color="cyan">❯ </Text>
+          <TextInput
+            value={branchName}
+            onChange={setBranchName}
+            onSubmit={handleBranchSubmit}
+            placeholder={currentBranch}
+          />
+        </Box>
+
+        {branchError && (
+          <Box marginTop={1}>
+            <Text color="red">{branchError}</Text>
+          </Box>
+        )}
       </Box>
     );
   }

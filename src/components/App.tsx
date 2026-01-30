@@ -255,56 +255,61 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   }, [exit]);
 
   // Phase: New session
-  const handleNewSession = useCallback(async () => {
-    if (!config) return;
+  const handleNewSession = useCallback(
+    async (branchName?: string) => {
+      if (!config) return;
 
-    // Create new session
-    let targetBranch = branch;
+      // Create new session
+      let targetBranch = branch;
 
-    // Create branch if --branch specified
-    if (options.branch && options.branch !== branch) {
-      const created = await createBranch(options.branch);
-      if (created) {
-        targetBranch = options.branch;
-        setBranch(targetBranch);
+      // Priority: CLI --branch flag > prompt input > current branch
+      const requestedBranch = options.branch ?? branchName;
+
+      if (requestedBranch && requestedBranch !== branch) {
+        const created = await createBranch(requestedBranch);
+        if (created) {
+          targetBranch = requestedBranch;
+          setBranch(targetBranch);
+        }
       }
-    }
 
-    const newSession = await createSession(targetBranch);
-    setSession(newSession);
-    await saveSession(ralphDir, newSession);
+      const newSession = await createSession(targetBranch);
+      setSession(newSession);
+      await saveSession(ralphDir, newSession);
 
-    // Run beforeRun hook
-    const ctx = {
+      // Run beforeRun hook
+      const ctx = {
+        config,
+        session: newSession,
+        repoRoot,
+        branch: targetBranch,
+        verbose,
+        dryRun: options.dryRun,
+      };
+      await runBeforeRun(plugins, ctx);
+
+      // Run beforeIteration hook for the first iteration
+      const firstIterationCtx = {
+        ...ctx,
+        iteration: 1,
+        totalIterations,
+      };
+      await runBeforeIteration(plugins, firstIterationCtx);
+
+      setPhase("running");
+    },
+    [
       config,
-      session: newSession,
+      branch,
+      options.branch,
+      options.dryRun,
+      plugins,
+      ralphDir,
       repoRoot,
-      branch: targetBranch,
       verbose,
-      dryRun: options.dryRun,
-    };
-    await runBeforeRun(plugins, ctx);
-
-    // Run beforeIteration hook for the first iteration
-    const firstIterationCtx = {
-      ...ctx,
-      iteration: 1,
       totalIterations,
-    };
-    await runBeforeIteration(plugins, firstIterationCtx);
-
-    setPhase("running");
-  }, [
-    config,
-    branch,
-    options.branch,
-    options.dryRun,
-    plugins,
-    ralphDir,
-    repoRoot,
-    verbose,
-    totalIterations,
-  ]);
+    ],
+  );
 
   // Phase: Resume session
   const handleResumeSession = useCallback(
@@ -550,10 +555,12 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       {phase === "session-prompt" && (
         <SessionPrompt
           ralphDir={ralphDir}
+          currentBranch={branch}
           onNewSession={handleNewSession}
           onResumeSession={handleResumeSession}
           forceNew={options.reset}
           forceResume={options.resume}
+          skipBranchPrompt={!!options.branch}
         />
       )}
 
