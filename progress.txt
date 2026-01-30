@@ -224,3 +224,36 @@ Notes:
 - Type checking passes
 - Mobile UX significantly improved with easier tapping
 - Meets accessibility guidelines for touch targets
+
+## Iteration 8
+
+Task: Add proper touch feedback states for interactive elements
+
+Changes:
+- Added transform: scale(0.98) on :active state for buttons (subtle press effect)
+- Added background color change on input :focus (#fafafa) and :active (#f5f5f5)
+- Both buttons (add-task-button, verbose-toggle) now have visual press feedback
+- Input field provides subtle background feedback on interaction
+
+Design decisions:
+- Scale(0.98) provides subtle "press down" effect without being jarring
+- Combined with existing opacity change for multi-layered feedback
+- Light gray backgrounds on input (#fafafa focus, #f5f5f5 active) provide subtle visual cue
+- Maintains existing hover states (opacity 0.8) for desktop users
+- All transitions smooth and natural-feeling
+
+Touch feedback benefits:
+- Clear visual confirmation of tap registration on mobile
+- Reduces user uncertainty ("did my tap register?")
+- Follows mobile UI best practices (iOS/Android)
+- Enhances perceived responsiveness
+- Works on both touch and mouse interactions
+
+Files changed:
+- src/lib/webserver.ts (added :active states with transform and backgrounds)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Touch feedback now matches native app experience
+- Phase 4 Mobile UX nearly complete (3 of 4 tasks done)

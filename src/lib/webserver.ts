@@ -305,6 +305,11 @@ function getDashboardHtml(data: DashboardData): string {
     .add-task-input:focus {
       outline: none;
       border-color: #000000;
+      background: #fafafa;
+    }
+
+    .add-task-input:active {
+      background: #f5f5f5;
     }
 
     .add-task-input::placeholder {
@@ -330,6 +335,7 @@ function getDashboardHtml(data: DashboardData): string {
 
     .add-task-button:active {
       opacity: 0.6;
+      transform: scale(0.98);
     }
 
     .add-task-button:disabled {
@@ -495,6 +501,7 @@ function getDashboardHtml(data: DashboardData): string {
 
     .verbose-toggle:active {
       opacity: 0.6;
+      transform: scale(0.98);
     }
 
     .verbose-output {

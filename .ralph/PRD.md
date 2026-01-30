@@ -63,7 +63,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 ### Phase 4: Mobile UX Improvements
 
 [x] Increase touch target sizes to minimum 44px height for all interactive elements
-[ ] Add proper touch feedback states (`:active` visual feedback)
+[x] Add proper touch feedback states (`:active` visual feedback)
 [ ] Improve input field sizing for mobile keyboards
 [x] Add `meta` tags for PWA support (apple-mobile-web-app-capable, theme-color)
 [ ] Support `prefers-color-scheme: dark` media query for automatic dark mode
