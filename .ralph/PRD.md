@@ -43,7 +43,7 @@ Make Ralph CLI more robust, maintainable, and user-friendly through testing, bet
     - Test error handling and retries
     - Mock Claude Agent SDK
 
-[ ] Add unit tests for git operations (src/hooks/use-git.ts)
+[x] Add unit tests for git operations (src/hooks/use-git.ts)
     - Test commit creation
     - Test branch operations
     - Mock execa calls

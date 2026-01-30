@@ -111,3 +111,31 @@ Notes:
 - SDK streaming properly mocked with async iterables
 - Callback functions tested for stdout and status updates
 - Next: Add tests for git operations (use-git.ts)
+
+## Iteration 5: Add unit tests for git operations
+
+Task: PRD Task 1.5 - Add unit tests for git operations (src/hooks/use-git.ts)
+
+Decisions:
+- Created comprehensive test suite with 26 tests covering use-git.ts functions
+- Mocked execa using vi.mock for all git commands
+- Tested all public APIs: getRepoRoot, isGitRepo, getCurrentBranch, getCurrentCommit, createBranch, getCommitsSince, getDiffStats
+- Used Awaited<ReturnType<typeof execa>> for proper type casting
+
+Files changed:
+- src/hooks/use-git.test.ts: Created test suite with 26 passing tests
+
+Test coverage:
+- getRepoRoot: 3 tests (success, failure, whitespace trim)
+- isGitRepo: 2 tests (in repo, not in repo)
+- getCurrentBranch: 4 tests (success, failure, empty output, whitespace)
+- getCurrentCommit: 3 tests (success, failure, whitespace)
+- createBranch: 3 tests (new branch, existing branch fallback, both fail)
+- getCommitsSince: 5 tests (valid commits, empty, failure, pipe chars in message, missing fields)
+- getDiffStats: 6 tests (valid stats, empty, failure, binary files, empty nameStatus, tabs in filename)
+
+Notes:
+- All 93 tests pass (26 git + 25 claude + 18 config + 24 session)
+- Git operations properly mocked with execa
+- Edge cases covered: whitespace, empty outputs, binary files, special characters
+- Next: Update CI workflow to run tests
