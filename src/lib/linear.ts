@@ -1,9 +1,4 @@
-import {
-  LinearClient,
-  type Team,
-  type IssueLabel,
-  type IssueSearchResult,
-} from "@linear/sdk";
+import { LinearClient, type Team, type IssueLabel, type IssueSearchResult } from "@linear/sdk";
 import type { LinearIssue, LinearTeam } from "../types.js";
 import { getLinearTokenFromKeychain, saveLinearTokenToKeychain } from "./keychain.js";
 
@@ -191,9 +186,9 @@ export async function fetchIssues(
 }
 
 /**
- * Fetch the most recent issues for a team (any status).
+ * Fetch recent open issues for a team (not in progress or completed).
  * Used as the default view when no search query is entered.
- * Optimized for speed - skips fetching labels.
+ * Filters to only show issues in "backlog" or "unstarted" workflow states.
  */
 export async function fetchRecentIssues(teamId: string, limit = 5): Promise<LinearIssue[]> {
   const client = await createLinearClient();
@@ -204,30 +199,39 @@ export async function fetchRecentIssues(teamId: string, limit = 5): Promise<Line
   try {
     const team = await client.team(teamId);
 
-    // Fetch most recently updated issues for the team
-    const issuesResult = await team.issues({
+    // Get workflow states that are "backlog" or "unstarted" (not in progress or completed)
+    const states = await team.states();
+    const openStateIds = states.nodes
+      .filter((s) => s.type === "backlog" || s.type === "unstarted")
+      .map((s) => s.id);
+
+    if (openStateIds.length === 0) {
+      return [];
+    }
+
+    // Fetch issues in open states, ordered by updated date
+    const issuesResult = await client.issues({
       first: limit,
-      orderBy: { updatedAt: "Descending" } as never,
+      filter: {
+        team: { id: { eq: teamId } },
+        state: { id: { in: openStateIds } },
+      },
+      orderBy: "updatedAt" as never, // PaginationOrderBy enum
     });
 
-    // Map issues - fetch state in parallel for all issues
-    const mappedIssues: LinearIssue[] = await Promise.all(
-      issuesResult.nodes.map(async (issue) => {
-        const state = await issue.state;
-        return {
-          id: issue.id,
-          identifier: issue.identifier,
-          title: issue.title,
-          description: issue.description ?? undefined,
-          priority: issue.priority,
-          priorityLabel: PRIORITY_LABELS[issue.priority] ?? "Unknown",
-          stateName: state?.name ?? "",
-          labels: [], // Skip labels for speed - only needed for PRD generation
-          url: issue.url,
-          teamKey: team.key,
-        };
-      }),
-    );
+    // Map issues directly - skip state name for speed (we already know they're open)
+    const mappedIssues: LinearIssue[] = issuesResult.nodes.map((issue) => ({
+      id: issue.id,
+      identifier: issue.identifier,
+      title: issue.title,
+      description: issue.description ?? undefined,
+      priority: issue.priority,
+      priorityLabel: PRIORITY_LABELS[issue.priority] ?? "Unknown",
+      stateName: "", // Skip state name for speed
+      labels: [], // Skip labels for speed - only needed for PRD generation
+      url: issue.url,
+      teamKey: team.key,
+    }));
 
     return mappedIssues;
   } catch (error) {

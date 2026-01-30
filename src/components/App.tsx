@@ -207,9 +207,10 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         currentIteration,
         totalIterations,
         status: currentStatus,
+        ralphDir,
       });
     }
-  }, [phase, session, currentIteration, totalIterations, currentStatus]);
+  }, [phase, session, currentIteration, totalIterations, currentStatus, ralphDir]);
 
   // Handle SIGINT/SIGTERM
   useEffect(() => {
