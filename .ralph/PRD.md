@@ -48,14 +48,14 @@ Make Ralph CLI more robust, maintainable, and user-friendly through testing, bet
     - Test branch operations
     - Mock execa calls
 
-[ ] Update CI workflow to run tests
+[x] Update CI workflow to run tests
     - Add `pnpm test` step to .github/workflows/ci.yml
 
 ### 2. Add CI/CD Pipeline Enhancements
 Already implemented. Verify that these have been implemented correctly.
 
-[ ] Add format check to CI workflow
-    - Add `pnpm format --check` step to ci.yml
+[x] Add format check to CI workflow
+    - Add `pnpm format --check` step to ci.yml (already implemented)
 
 [ ] Add automated publishing on version tags
     - Create workflow that triggers on `v*` tag push

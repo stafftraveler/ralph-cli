@@ -139,3 +139,22 @@ Notes:
 - Git operations properly mocked with execa
 - Edge cases covered: whitespace, empty outputs, binary files, special characters
 - Next: Update CI workflow to run tests
+
+## Iteration 6: Update CI workflow to run tests
+
+Task: PRD Task 1.6 - Update CI workflow to run tests
+
+Decisions:
+- Added `pnpm test` step to .github/workflows/ci.yml after format check
+- Verified format check already exists (PRD Task 2.1 already complete)
+- Tests run after type check, lint, and format check in CI pipeline
+- Uses existing pnpm cache and Node 22 setup
+
+Files changed:
+- .github/workflows/ci.yml: Added test step to CI check job
+
+Notes:
+- CI workflow now runs all quality checks: types, lint, format, tests
+- All 93 tests pass locally
+- Format check was already implemented in CI (Task 2.1 complete)
+- Next: Implement cost limit enforcement or error message improvements
