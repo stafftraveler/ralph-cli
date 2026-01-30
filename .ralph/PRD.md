@@ -82,12 +82,12 @@ Moved to phase 7
 
 ### Phase 7: WebSocket Implementation
 
-[ ] Add WebSocket server alongside HTTP server
-[ ] Broadcast status updates to connected clients in real-time
-[ ] Replace polling with WebSocket connection on the client
-[ ] Add connection state handling (connecting, connected, disconnected, reconnecting)
-[ ] Implement automatic reconnection with exponential backoff
-[ ] Fall back to polling if WebSocket connection fails
+[x] Add WebSocket server alongside HTTP server
+[x] Broadcast status updates to connected clients in real-time
+[x] Replace polling with WebSocket connection on the client
+[x] Add connection state handling (connecting, connected, disconnected, reconnecting)
+[x] Implement automatic reconnection with exponential backoff
+[x] Fall back to polling if WebSocket connection fails
 [ ] Add pulsing/animated indicator when iteration is actively running
 [ ] Show elapsed time for current iteration
 [ ] Display estimated time remaining based on average iteration duration
