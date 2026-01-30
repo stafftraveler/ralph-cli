@@ -101,7 +101,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const isInterruptedRef = useRef(false);
   const hasRunDonePluginsRef = useRef(false);
 
-  // Web server and localtunnes state
+  // Web server and localtunnel state
   const serverRef = useRef<Server | null>(null);
   const [currentStatus, setCurrentStatus] = useState("Starting...");
   const WEB_SERVER_PORT = 3737;
