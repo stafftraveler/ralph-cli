@@ -76,7 +76,7 @@ Moved to phase 7
 
 [x] Show duration for each completed iteration
 [x] Add success/failure status indicator per iteration
-[ ] Display relative timestamps ("2m ago" instead of ISO dates)
+[x] Display relative timestamps ("2m ago" instead of ISO dates)
 [ ] Color-code iterations by status (green=success, red=failed, yellow=running)
 [ ] Make iteration items expandable to show more details (tokens, status messages)
 

@@ -509,3 +509,48 @@ Notes:
 - Linting passes
 - Phase 6 Iteration History now 2 of 5 tasks complete (40% done)
 - Success data already available from IterationResult.success
+
+## Iteration 15
+
+Task: Display relative timestamps for iterations (Phase 6)
+
+Changes:
+- Added iteration-info container to group iteration number and timestamp
+- Added iteration-timestamp element with data-timestamp attribute
+- Created formatRelativeTime() JavaScript function for relative time formatting
+- Added updateRelativeTimestamps() function to update all timestamps on page
+- Integrated timestamp updates into auto-refresh cycle (every 2s)
+
+Relative time formatting:
+- < 60s: "5s ago"
+- < 60m: "15m ago"
+- < 24h: "3h ago"
+- >= 24h: "2d ago"
+- Singular forms for 1: "1s ago", "1m ago", "1h ago", "1d ago"
+
+Layout changes:
+- Wrapped iteration number and timestamp in flex column container
+- Timestamp appears below iteration number in smaller, subtle font
+- Iteration info takes flex: 1 (available space)
+- Status/duration/cost remain unchanged
+
+Styling:
+- Timestamp: 11px font, #999 color (light), #666 (dark)
+- 4px gap between number and timestamp for tight vertical spacing
+- Monospace removed from timestamp (not needed for relative time)
+
+Auto-update behavior:
+- Initial timestamps rendered on page load
+- Updates every 2 seconds with refresh cycle
+- No page reload needed - timestamps update in place
+- Client-side calculation means always accurate relative to now
+
+Files changed:
+- src/lib/webserver.ts (HTML structure, CSS, JavaScript functions)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 6 Iteration History now 3 of 5 tasks complete (60% done)
+- Timestamp data already available from IterationResult.startedAt

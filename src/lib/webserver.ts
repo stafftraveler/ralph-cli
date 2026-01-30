@@ -122,7 +122,10 @@ function getDashboardHtml(data: DashboardData): string {
       (iter) => `
       <div class="iteration-item">
         <span class="iteration-status ${iter.success ? "success" : "failure"}">${iter.success ? "✓" : "✗"}</span>
-        <span class="iteration-number">Iteration ${iter.number}</span>
+        <div class="iteration-info">
+          <span class="iteration-number">Iteration ${iter.number}</span>
+          <span class="iteration-timestamp" data-timestamp="${iter.timestamp}"></span>
+        </div>
         <span class="iteration-duration">${formatDuration(iter.durationSeconds)}</span>
         <span class="iteration-cost">$${iter.cost.toFixed(4)}</span>
       </div>
@@ -300,9 +303,21 @@ function getDashboardHtml(data: DashboardData): string {
       background: #ffebee;
     }
 
-    .iteration-number {
+    .iteration-info {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .iteration-number {
       color: #666666;
+      font-size: 13px;
+    }
+
+    .iteration-timestamp {
+      color: #999999;
+      font-size: 11px;
     }
 
     .iteration-duration {
@@ -656,6 +671,10 @@ function getDashboardHtml(data: DashboardData): string {
         color: #999999;
       }
 
+      .iteration-timestamp {
+        color: #666666;
+      }
+
       .iteration-duration {
         color: #666666;
       }
@@ -833,6 +852,38 @@ function getDashboardHtml(data: DashboardData): string {
       saveVerbosePreference();
     }
 
+    // Format timestamp as relative time (e.g., "2m ago", "5h ago")
+    function formatRelativeTime(timestamp) {
+      const now = new Date();
+      const then = new Date(timestamp);
+      const diffMs = now - then;
+      const diffSeconds = Math.floor(diffMs / 1000);
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffSeconds < 60) {
+        return diffSeconds === 1 ? '1s ago' : diffSeconds + 's ago';
+      } else if (diffMinutes < 60) {
+        return diffMinutes === 1 ? '1m ago' : diffMinutes + 'm ago';
+      } else if (diffHours < 24) {
+        return diffHours === 1 ? '1h ago' : diffHours + 'h ago';
+      } else {
+        return diffDays === 1 ? '1d ago' : diffDays + 'd ago';
+      }
+    }
+
+    // Update all relative timestamps on the page
+    function updateRelativeTimestamps() {
+      const timestampElements = document.querySelectorAll('.iteration-timestamp');
+      for (const element of timestampElements) {
+        const timestamp = element.getAttribute('data-timestamp');
+        if (timestamp) {
+          element.textContent = formatRelativeTime(timestamp);
+        }
+      }
+    }
+
     // Fetch and update verbose output
     async function fetchVerboseOutput() {
       if (!verboseMode) return;
@@ -887,6 +938,9 @@ function getDashboardHtml(data: DashboardData): string {
       if (verboseMode) {
         await fetchVerboseOutput();
       }
+
+      // Update relative timestamps
+      updateRelativeTimestamps();
 
       setTimeout(refreshData, 2000);
     }
@@ -1042,6 +1096,7 @@ function getDashboardHtml(data: DashboardData): string {
     // Start auto-refresh and load initial data
     loadVerbosePreference();
     loadInitialTasks();
+    updateRelativeTimestamps(); // Initial update
     setTimeout(refreshData, 2000);
   </script>
 </head>
