@@ -182,20 +182,6 @@ export function createConfigError(message: string, details?: string): RalphError
 }
 
 /**
- * Create a cost limit error
- */
-export function createCostLimitError(current: number, limit: number): RalphError {
-  return new RalphError(
-    RalphErrorCode.ECOST,
-    `Cost limit exceeded: $${current.toFixed(4)} / $${limit.toFixed(4)}`,
-    {
-      suggestion: "Increase MAX_COST_PER_SESSION in .ralph/config or use --max-cost flag",
-      details: `Current session cost has reached the configured limit`,
-    },
-  );
-}
-
-/**
  * Wrap an unknown error in a RalphError
  */
 export function wrapError(

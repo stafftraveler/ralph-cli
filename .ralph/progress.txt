@@ -87,3 +87,21 @@
 - Remove unused error helper that was never needed
 
 **Status**: ✅ Complete - unused export removed, all checks pass
+
+## Iteration 6 - Remove unused createCostLimitError
+
+**Task**: Scan for code smells and fix ONE issue (PRD line 22)
+
+**Changes**:
+- Removed unused function: createCostLimitError()
+- Function was never imported or called anywhere
+- Utility for creating cost limit errors that was planned but not used
+
+**Files changed**:
+- src/lib/utils.ts
+
+**Key decisions**:
+- Remove unused error creation utilities
+- Keep only actively used error helpers in the codebase
+
+**Status**: ✅ Complete - unused export removed, all checks pass
