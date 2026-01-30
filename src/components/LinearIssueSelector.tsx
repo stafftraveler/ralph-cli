@@ -10,6 +10,13 @@ import {
 } from "../lib/linear.js";
 import type { LinearIssue } from "../types.js";
 
+/** Number of issues shown at once in the visible window */
+const VISIBLE_COUNT = 5;
+/** Extra issues to fetch beyond the visible window for smooth scrolling */
+const PREFETCH_BUFFER = 10;
+/** When highlight is within this many items of the end, fetch more */
+const FETCH_THRESHOLD = 3;
+
 /**
  * Props for the LinearIssueSelector component
  */
@@ -31,7 +38,8 @@ type Phase = "loading" | "select" | "searching" | "error";
  * - Search while typing (debounced)
  * - Paste Linear URL to add specific issue
  * - Multi-select with space to toggle
- * - Shows "Todo" issues by default when search is empty
+ * - Scrollable list with pre-fetching
+ * - Shows recent open issues by default when search is empty
  */
 export function LinearIssueSelector({ teamId, onSelect, onCancel }: LinearIssueSelectorProps) {
   const [phase, setPhase] = useState<Phase>("loading");
@@ -41,19 +49,44 @@ export function LinearIssueSelector({ teamId, onSelect, onCancel }: LinearIssueS
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [error, _setError] = useState<string | null>(null);
 
+  // Pagination state
+  const [hasMore, setHasMore] = useState(false);
+  const [endCursor, setEndCursor] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Visible window state - the starting index of the visible portion
+  const [visibleStart, setVisibleStart] = useState(0);
+
   // Debounce timer ref
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load initial recent issues
   useEffect(() => {
     async function loadInitial() {
-      const recentIssues = await fetchRecentIssues(teamId, 5);
-      setIssues(recentIssues);
+      const result = await fetchRecentIssues(teamId, VISIBLE_COUNT + PREFETCH_BUFFER);
+      setIssues(result.issues);
+      setHasMore(result.hasMore);
+      setEndCursor(result.endCursor);
       setPhase("select");
     }
 
     void loadInitial();
   }, [teamId]);
+
+  // Load more issues when approaching the end of the fetched list
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore || !endCursor) return;
+
+    setIsLoadingMore(true);
+    try {
+      const result = await fetchRecentIssues(teamId, VISIBLE_COUNT + PREFETCH_BUFFER, endCursor);
+      setIssues((prev) => [...prev, ...result.issues]);
+      setHasMore(result.hasMore);
+      setEndCursor(result.endCursor);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [teamId, hasMore, endCursor, isLoadingMore]);
 
   // Handle search query changes with debounce
   const handleQueryChange = useCallback(
@@ -82,6 +115,7 @@ export function LinearIssueSelector({ teamId, onSelect, onCancel }: LinearIssueS
             // Auto-select the pasted issue
             setSelectedIds((prev) => new Set([...prev, issue.id]));
             setHighlightIndex(0);
+            setVisibleStart(0);
           }
           setQuery("");
           setPhase("select");
@@ -94,16 +128,22 @@ export function LinearIssueSelector({ teamId, onSelect, onCancel }: LinearIssueS
         if (!value.trim()) {
           // Empty query - show recent issues
           setPhase("searching");
-          const recentIssues = await fetchRecentIssues(teamId, 5);
-          setIssues(recentIssues);
+          const result = await fetchRecentIssues(teamId, VISIBLE_COUNT + PREFETCH_BUFFER);
+          setIssues(result.issues);
+          setHasMore(result.hasMore);
+          setEndCursor(result.endCursor);
           setHighlightIndex(0);
+          setVisibleStart(0);
           setPhase("select");
         } else {
-          // Search for issues
+          // Search for issues - search doesn't support pagination yet, so disable it
           setPhase("searching");
-          const searchResults = await fetchIssues(teamId, { query: value, limit: 10 });
+          const searchResults = await fetchIssues(teamId, { query: value, limit: 20 });
           setIssues(searchResults);
+          setHasMore(false);
+          setEndCursor(null);
           setHighlightIndex(0);
+          setVisibleStart(0);
           setPhase("select");
         }
       }, 300);
@@ -117,9 +157,27 @@ export function LinearIssueSelector({ teamId, onSelect, onCancel }: LinearIssueS
       if (phase !== "select") return;
 
       if (key.upArrow) {
-        setHighlightIndex((prev) => Math.max(0, prev - 1));
+        setHighlightIndex((prev) => {
+          const newIndex = Math.max(0, prev - 1);
+          // Adjust visible window if needed
+          if (newIndex < visibleStart) {
+            setVisibleStart(newIndex);
+          }
+          return newIndex;
+        });
       } else if (key.downArrow) {
-        setHighlightIndex((prev) => Math.min(issues.length - 1, prev + 1));
+        setHighlightIndex((prev) => {
+          const newIndex = Math.min(issues.length - 1, prev + 1);
+          // Adjust visible window if needed
+          if (newIndex >= visibleStart + VISIBLE_COUNT) {
+            setVisibleStart(newIndex - VISIBLE_COUNT + 1);
+          }
+          // Fetch more if approaching the end of fetched list
+          if (issues.length - newIndex <= FETCH_THRESHOLD && hasMore && !isLoadingMore) {
+            void loadMore();
+          }
+          return newIndex;
+        });
       } else if (input === " " && issues.length > 0) {
         // Toggle selection
         const issue = issues[highlightIndex];
@@ -155,6 +213,11 @@ export function LinearIssueSelector({ teamId, onSelect, onCancel }: LinearIssueS
       }
     };
   }, []);
+
+  // Calculate visible issues
+  const visibleIssues = issues.slice(visibleStart, visibleStart + VISIBLE_COUNT);
+  const hasMoreAbove = visibleStart > 0;
+  const hasMoreBelow = visibleStart + VISIBLE_COUNT < issues.length || hasMore;
 
   if (phase === "loading") {
     return (
@@ -202,13 +265,21 @@ export function LinearIssueSelector({ teamId, onSelect, onCancel }: LinearIssueS
         )}
       </Box>
 
+      {/* Scroll indicator - more above */}
+      {hasMoreAbove && (
+        <Box>
+          <Text color="gray"> ↑ {visibleStart} more above</Text>
+        </Box>
+      )}
+
       {/* Issue list */}
       <Box flexDirection="column" marginBottom={1}>
         {issues.length === 0 ? (
           <Text color="gray">No issues found</Text>
         ) : (
-          issues.map((issue, index) => {
-            const isHighlighted = index === highlightIndex;
+          visibleIssues.map((issue, index) => {
+            const actualIndex = visibleStart + index;
+            const isHighlighted = actualIndex === highlightIndex;
             const isSelected = selectedIds.has(issue.id);
 
             return (
@@ -243,8 +314,27 @@ export function LinearIssueSelector({ teamId, onSelect, onCancel }: LinearIssueS
         )}
       </Box>
 
+      {/* Scroll indicator - more below */}
+      {hasMoreBelow && (
+        <Box>
+          <Text color="gray">
+            {"  "}↓{" "}
+            {issues.length - visibleStart - VISIBLE_COUNT > 0
+              ? `${issues.length - visibleStart - VISIBLE_COUNT} more`
+              : "more"}{" "}
+            below
+            {isLoadingMore && (
+              <>
+                {" "}
+                <Spinner type="dots" />
+              </>
+            )}
+          </Text>
+        </Box>
+      )}
+
       {/* Help text */}
-      <Box flexDirection="column">
+      <Box flexDirection="column" marginTop={1}>
         <Text color="gray">
           [↑/↓] Navigate • [Space] Toggle select • [Enter] Confirm{" "}
           {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}

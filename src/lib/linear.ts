@@ -1,5 +1,5 @@
 import { LinearClient, type Team, type IssueLabel, type IssueSearchResult } from "@linear/sdk";
-import type { LinearIssue, LinearTeam } from "../types.js";
+import type { FetchIssuesResult, LinearIssue, LinearTeam } from "../types.js";
 import { getLinearTokenFromKeychain, saveLinearTokenToKeychain } from "./keychain.js";
 
 /**
@@ -189,11 +189,20 @@ export async function fetchIssues(
  * Fetch recent open issues for a team (not in progress or completed).
  * Used as the default view when no search query is entered.
  * Filters to only show issues in "backlog" or "unstarted" workflow states.
+ *
+ * @param teamId - The team ID to fetch issues for
+ * @param limit - Maximum number of issues to fetch
+ * @param after - Cursor for pagination (fetch issues after this cursor)
+ * @returns Object containing issues, hasMore flag, and endCursor for pagination
  */
-export async function fetchRecentIssues(teamId: string, limit = 5): Promise<LinearIssue[]> {
+export async function fetchRecentIssues(
+  teamId: string,
+  limit = 5,
+  after?: string,
+): Promise<FetchIssuesResult> {
   const client = await createLinearClient();
   if (!client) {
-    return [];
+    return { issues: [], hasMore: false, endCursor: null };
   }
 
   try {
@@ -206,12 +215,13 @@ export async function fetchRecentIssues(teamId: string, limit = 5): Promise<Line
       .map((s) => s.id);
 
     if (openStateIds.length === 0) {
-      return [];
+      return { issues: [], hasMore: false, endCursor: null };
     }
 
     // Fetch issues in open states, ordered by updated date
     const issuesResult = await client.issues({
       first: limit,
+      after,
       filter: {
         team: { id: { eq: teamId } },
         state: { id: { in: openStateIds } },
@@ -233,12 +243,16 @@ export async function fetchRecentIssues(teamId: string, limit = 5): Promise<Line
       teamKey: team.key,
     }));
 
-    return mappedIssues;
+    return {
+      issues: mappedIssues,
+      hasMore: issuesResult.pageInfo.hasNextPage,
+      endCursor: issuesResult.pageInfo.endCursor ?? null,
+    };
   } catch (error) {
     if (process.env.DEBUG) {
       console.error("[linear] Failed to fetch recent issues:", error);
     }
-    return [];
+    return { issues: [], hasMore: false, endCursor: null };
   }
 }
 

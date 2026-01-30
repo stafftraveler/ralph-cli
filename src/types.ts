@@ -132,6 +132,18 @@ export interface LinearTeam {
 }
 
 /**
+ * Result of fetching Linear issues with pagination info
+ */
+export interface FetchIssuesResult {
+  /** The fetched issues */
+  issues: LinearIssue[];
+  /** Whether there are more issues to load */
+  hasMore: boolean;
+  /** Cursor for fetching the next page */
+  endCursor: string | null;
+}
+
+/**
  * Persisted session state stored in .ralph/session.json
  */
 export interface SessionState {
