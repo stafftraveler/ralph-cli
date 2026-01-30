@@ -24,7 +24,7 @@ interface ToolUseBlock {
 /**
  * Union type for all content block types in assistant messages
  */
-type ContentBlock = TextBlock | ToolUseBlock | { type: string; };
+type ContentBlock = TextBlock | ToolUseBlock | { type: string };
 
 /**
  * Type guard to check if a content block is a text block
@@ -185,9 +185,9 @@ export async function runClaude(
     const ralphError =
       (error as NodeJS.ErrnoException).code === "ENOENT"
         ? createFileNotFoundError(
-          prdPath,
-          "Run 'npx ralph init' to initialize a Ralph session with a PRD template",
-        )
+            prdPath,
+            "Run 'npx ralph init' to initialize a Ralph session with a PRD template",
+          )
         : wrapError(error, `Failed to read PRD.md at ${prdPath}`);
 
     return {

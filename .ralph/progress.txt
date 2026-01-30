@@ -1,60 +1,30 @@
-## Iteration 1: Fix ngrok dashboard connection error
+# Progress Log
 
-**Task**: Fix "Dashboard unavailable: connect ECONNREFUSED 127.0.0.1:4040" error (PRD Task 5)
+## Verification Pass - All Tasks Complete
 
-**Root cause**:
-- ngrok v5 beta requires NGROK_AUTHTOKEN env var to connect
-- Connection fails immediately when token not set
-- Error shows raw error message without helpful guidance
+**Summary**: Verified all PRD tasks implemented correctly. Ran format, lint, type check, tests - all passed.
 
-**Solution**:
-1. Added check for NGROK_AUTHTOKEN before connecting (use-ngrok.ts)
-2. Return early with clear error if token missing
-3. Updated StatusBar to show helpful message: "Set NGROK_AUTHTOKEN to enable remote monitoring"
-4. Changed error border color from red to yellow (warning, not critical error)
-5. Added fallback: always show local dashboard URL (http://localhost:3737) when ngrok unavailable
+**What was checked**:
+- Vitest framework setup ✓
+- All test files (session, config, claude, git) ✓
+- CI/CD workflows (ci.yml, release.yml) ✓
+- Cost limit enforcement (pre-iteration checks, warnings, projections) ✓
+- Error codes and improved error messages (RalphError, RalphErrorCode) ✓
+- Remote monitoring (localtunnel, webserver, dashboard) ✓
 
-**Files changed**:
-- src/hooks/use-ngrok.ts: Added NGROK_AUTHTOKEN check before connection
-- src/components/StatusBar.tsx: Better error messaging + fallback to local URL
+**Quality checks**:
+- pnpm format: Fixed 3 files ✓
+- pnpm lint:fix: No issues ✓
+- pnpm check:types: Passed ✓
+- pnpm test: 86 tests passed ✓
 
-**Key decisions**:
-- Make remote monitoring optional: app works fine with just local dashboard
-- Treat missing ngrok token as warning (yellow) not error (red)
-- Always show localhost fallback for convenience
+**Files verified**:
+- src/types.ts (error codes enum)
+- src/cli.ts (--max-cost flag)
+- src/components/IterationRunner.tsx (cost warnings, projections)
+- src/lib/webserver.ts (dashboard with purple gradient)
+- src/hooks/use-tunnel.ts (localtunnel integration)
+- .github/workflows/ci.yml (CI with tests)
+- .github/workflows/release.yml (automated publishing)
 
-**Tests**: All 86 tests pass
-
----
-
-## Iteration 2: Replace ngrok with localtunnel
-
-**Task**: Replace ngrok with modern alternative that doesn't need authentication (PRD Task 5)
-
-**Why localtunnel**:
-- No authentication required (main requirement)
-- Simple npm package with similar API to ngrok
-- Works out of box without account/token setup
-- Reliable enough for dev monitoring use case
-
-**Implementation**:
-1. Removed ngrok package dependency
-2. Added localtunnel + @types/localtunnel
-3. Created new use-tunnel.ts hook (renamed from use-ngrok.ts)
-4. Updated App.tsx to use useTunnel instead of useNgrok
-5. Updated StatusBar.tsx to remove ngrok-specific error handling
-6. Cleaned up NGROK_AUTHTOKEN check (no longer needed)
-
-**Files changed**:
-- package.json: Removed ngrok, added localtunnel + types
-- src/hooks/use-tunnel.ts: New file replacing use-ngrok.ts
-- src/hooks/use-ngrok.ts: Deleted
-- src/components/App.tsx: Import useTunnel instead of useNgrok
-- src/components/StatusBar.tsx: Simplified error messaging
-
-**Key decisions**:
-- Chose localtunnel over alternatives (bore, cloudflared) for simplicity
-- Renamed hook to use-tunnel.ts for generic naming (easier to swap tunneling libs later)
-- Maintained same hook interface for minimal changes
-
-**Tests**: All 86 tests pass
+**Ready to**: Create PR for all completed work.
