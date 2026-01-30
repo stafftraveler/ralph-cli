@@ -57,7 +57,7 @@ Already implemented. Verify that these have been implemented correctly.
 [x] Add format check to CI workflow
     - Add `pnpm format --check` step to ci.yml (already implemented)
 
-[ ] Add automated publishing on version tags
+[x] Add automated publishing on version tags
     - Create workflow that triggers on `v*` tag push
     - Run quality checks before publishing
     - Publish to GitHub Package Registry

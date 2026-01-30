@@ -158,3 +158,23 @@ Notes:
 - All 93 tests pass locally
 - Format check was already implemented in CI (Task 2.1 complete)
 - Next: Implement cost limit enforcement or error message improvements
+
+## Iteration 7: Add automated publishing on version tags
+
+Task: PRD Task 2.2 - Add automated publishing on version tags
+
+Decisions:
+- Release workflow already exists and triggers on v* tags
+- Added missing quality checks: format check and tests
+- Workflow now runs all checks before publishing: types, lint, format, tests
+- Uses GitHub Package Registry with GITHUB_TOKEN
+- Triggers on both GitHub releases and v* tag pushes
+
+Files changed:
+- .github/workflows/release.yml: Added format check and test steps before publish
+
+Notes:
+- Release workflow complete with comprehensive quality gates
+- Publishes to GitHub Package Registry (@stafftraveler scope)
+- All 93 tests pass, ensuring quality before any release
+- Next: Implement cost limit enforcement features
