@@ -44,3 +44,41 @@ Notes:
 - All tests pass
 - Mocks ensure tests are isolated and don't touch filesystem
 - Next: Add tests for config.ts
+
+## Iteration 3: Add unit tests for configuration loading
+
+Task: PRD Task 1.3 - Add unit tests for configuration loading (src/lib/config.ts)
+
+Decisions:
+- Created comprehensive test suite with 18 tests covering loadConfig function
+- Mocked node:fs/promises readFile using vi.mock
+- Tested all config parsing scenarios: defaults, quotes, booleans, numbers, errors
+- Verified proper handling of SCREAMING_SNAKE_CASE to camelCase conversion
+- Tested $SCRIPT_DIR variable expansion
+- Verified graceful error handling (missing file, permission errors)
+
+Files changed:
+- src/lib/config.test.ts: Created test suite with 18 passing tests
+
+Test coverage:
+- Default config when file missing (ENOENT)
+- Valid config file parsing with all fields
+- Comments and empty lines handling
+- Quote parsing (double and single)
+- $SCRIPT_DIR variable expansion
+- Boolean parsing (true/false, TRUE/False, 1/0)
+- Invalid numeric value handling (fallback to defaults)
+- Negative cost value rejection
+- Lines without equals sign (skip gracefully)
+- Empty string values (use defaults)
+- Case conversion (SCREAMING_SNAKE_CASE to camelCase)
+- Floating point cost values
+- Non-ENOENT errors (continue with defaults)
+- Partial config (merge with defaults)
+- Whitespace around keys/values
+- Unknown config keys (ignored)
+
+Notes:
+- All 42 tests pass (18 config + 24 session)
+- Config parsing is robust with proper fallbacks
+- Next: Add tests for claude.ts

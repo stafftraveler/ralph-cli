@@ -33,7 +33,7 @@ Make Ralph CLI more robust, maintainable, and user-friendly through testing, bet
     - Test checkpoint save/restore functionality
     - Mock file system operations
 
-[ ] Add unit tests for configuration loading (src/lib/config.ts)
+[x] Add unit tests for configuration loading (src/lib/config.ts)
     - Test default config values
     - Test parsing of config file with various formats
     - Test handling of missing or malformed config files
