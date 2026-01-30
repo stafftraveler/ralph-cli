@@ -95,7 +95,7 @@ Moved to phase 7
 
 ### When done
 
-[ ] Update README.md and AGENTS.md if needed
+[x] Update README.md and AGENTS.md if needed
 
 ---
 

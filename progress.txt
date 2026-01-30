@@ -571,3 +571,42 @@ Notes:
 - Phase 6 Iteration History now 4 of 5 tasks complete (80% done)
 - Only remaining task: Make iteration items expandable
 - Color-coding was implemented as part of status indicator feature
+
+## Iteration 17
+
+Task: Update documentation for new dashboard features
+
+Changes:
+- Updated README.md Remote Monitoring section with comprehensive feature list
+- Added detailed dashboard features including task management, iteration history, verbose mode
+- Documented mobile-optimized design features (dark mode, PWA, touch-friendly)
+- Updated AGENTS.md with expanded dashboard feature list
+- Added details about success/failure indicators, timestamps, and cost tracking
+
+Documentation improvements:
+- README: Expanded from 4 bullet points to comprehensive feature breakdown
+- Organized features into "Dashboard Features" and "Mobile-Optimized Design" sections
+- Listed all implemented features from Phases 1-4 and Phase 6
+- Made features more discoverable for users
+
+Features documented:
+- Real-time status updates and progress tracking
+- Task management with completion status and progress indicators
+- Iteration history with duration, success/failure, timestamps
+- Cost tracking visualization
+- Verbose mode toggle
+- Task submission from dashboard
+- Dark mode support (automatic)
+- PWA support for mobile
+- Touch-friendly UI with proper feedback
+
+Files changed:
+- README.md (expanded Remote Monitoring section)
+- AGENTS.md (updated dashboard features list)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Documentation now reflects all completed dashboard improvements
+- Ready for PR creation

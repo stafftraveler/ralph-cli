@@ -161,14 +161,26 @@ pnpm exec ralph --branch feature/api-update 3
 
 ## Remote Monitoring
 
-Ralph includes a web dashboard for monitoring iterations remotely:
+Ralph includes a mobile-optimized web dashboard for monitoring iterations remotely from any device:
 
-- Real-time status updates and progress tracking
-- Task management interface
-- Cost tracking visualization
-- Accessible via localtunnel (no authentication required)
+### Dashboard Features
 
-The dashboard automatically starts when running Ralph and provides a shareable URL for remote monitoring.
+- **Real-time Status Updates** - Progress bar, current status, and iteration history
+- **Task Management** - View PRD tasks with completion status and progress indicators
+- **Iteration History** - See duration, success/failure status, and relative timestamps for each iteration
+- **Cost Tracking** - Real-time cost visualization and tracking
+- **Verbose Mode** - Toggle to see Claude's full output in real-time
+- **Add Tasks** - Submit new tasks to the PRD directly from the dashboard
+- **Auto-Refresh** - Updates every 2 seconds without page reload
+
+### Mobile-Optimized Design
+
+- **Dark Mode Support** - Automatic dark mode based on system preferences
+- **Touch-Friendly** - 44px minimum touch targets and proper feedback states
+- **PWA Support** - Add to home screen for app-like experience on iOS/Android
+- **Responsive Layout** - Clean, minimal design that works on any screen size
+
+The dashboard automatically starts when running Ralph and provides a shareable URL via localtunnel for remote monitoring (no authentication required).
 
 ## Linear Integration
 
