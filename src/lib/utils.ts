@@ -2,6 +2,7 @@ import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { IterationResult } from "../types.js";
+import { RalphError, RalphErrorCode } from "../types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -142,4 +143,102 @@ export async function resetPrdAndProgress(ralphDir: string): Promise<void> {
 
   // Clear progress.txt
   await clearProgress(ralphDir);
+}
+
+/**
+ * Create a file not found error with helpful context
+ */
+export function createFileNotFoundError(filePath: string, suggestion?: string): RalphError {
+  return new RalphError(RalphErrorCode.ENOENT, `File not found: ${filePath}`, {
+    path: filePath,
+    suggestion: suggestion || "Check that the file exists and you have permission to read it",
+  });
+}
+
+/**
+ * Create an API key error with helpful troubleshooting
+ */
+export function createApiKeyError(message: string, isInvalid = false): RalphError {
+  const suggestion = isInvalid
+    ? "Verify your API key at https://console.anthropic.com/settings/keys"
+    : "Set your API key with: export ANTHROPIC_API_KEY='your-key' or use keychain storage";
+
+  return new RalphError(RalphErrorCode.EAUTH, message, {
+    suggestion,
+    details: isInvalid
+      ? "The API key may be expired, revoked, or malformed"
+      : "No API key found in environment or keychain",
+  });
+}
+
+/**
+ * Create a configuration parsing error
+ */
+export function createConfigError(message: string, details?: string): RalphError {
+  return new RalphError(RalphErrorCode.ECONFIG, message, {
+    suggestion: "Check your .ralph/config file syntax - use KEY=value format",
+    details,
+  });
+}
+
+/**
+ * Create a git operation error
+ */
+export function createGitError(operation: string, originalError?: Error): RalphError {
+  return new RalphError(RalphErrorCode.EGIT, `Git operation failed: ${operation}`, {
+    suggestion: "Ensure you're in a git repository and have necessary permissions",
+    details: originalError?.message,
+    originalError,
+  });
+}
+
+/**
+ * Create a cost limit error
+ */
+export function createCostLimitError(current: number, limit: number): RalphError {
+  return new RalphError(
+    RalphErrorCode.ECOST,
+    `Cost limit exceeded: $${current.toFixed(4)} / $${limit.toFixed(4)}`,
+    {
+      suggestion: "Increase MAX_COST_PER_SESSION in .ralph/config or use --max-cost flag",
+      details: `Current session cost has reached the configured limit`,
+    },
+  );
+}
+
+/**
+ * Wrap an unknown error in a RalphError
+ */
+export function wrapError(
+  error: unknown,
+  defaultMessage = "An unexpected error occurred",
+): RalphError {
+  if (error instanceof RalphError) {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    // Try to infer error code from Node.js error codes
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === "ENOENT") {
+      return new RalphError(RalphErrorCode.ENOENT, error.message, {
+        originalError: error,
+      });
+    }
+    if (nodeError.code === "EACCES") {
+      return new RalphError(RalphErrorCode.EACCES, error.message, {
+        suggestion: "Check file permissions",
+        originalError: error,
+      });
+    }
+
+    return new RalphError(RalphErrorCode.EUNKNOWN, error.message, {
+      details: error.stack,
+      originalError: error,
+    });
+  }
+
+  return new RalphError(RalphErrorCode.EUNKNOWN, defaultMessage, {
+    details: String(error),
+  });
 }

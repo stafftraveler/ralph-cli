@@ -338,3 +338,47 @@ Notes:
 - Based on actual iteration costs, not estimates
 - Complements existing 80% warning and hard limit enforcement
 - Next: Section 4 - Improve Error Messages (multiple tasks)
+
+## Iteration 12: Add error codes for common errors
+
+Task: PRD Task 4.1 - Add error codes enum and structured error handling
+
+Decisions:
+- Created RalphErrorCode enum with all common error types
+- Implemented RalphError class extending Error with code, context, and formatting
+- Added helper functions for creating specific error types with context
+- Included suggestions and troubleshooting in error context
+- Error codes: ENOENT, EAUTH, ERATE, ECONFIG, EGIT, ECOST, EINVAL, EACCES, ENETWORK, EAIAPI, EPLUGIN, EUNKNOWN
+
+Files changed:
+- src/types.ts:
+  - Added RalphErrorCode enum with 13 error codes
+  - Added RalphError class with code, message, and context
+  - Context includes path, suggestion, details, originalError
+  - Implemented format() method for user-friendly error display
+  - Format includes code, message, path, details, and suggestions
+
+- src/lib/utils.ts:
+  - Imported RalphError and RalphErrorCode
+  - Added createFileNotFoundError() with path and suggestion
+  - Added createApiKeyError() with invalid vs missing detection
+  - Added createConfigError() for config parsing errors
+  - Added createGitError() for git operation failures
+  - Added createCostLimitError() for cost limit violations
+  - Added wrapError() to convert unknown errors to RalphError
+  - Auto-detects Node.js error codes (ENOENT, EACCES)
+
+Implementation details:
+- RalphError.format() produces: "[CODE] message\n  Path: ...\n  Details: ...\n  Suggestion: ..."
+- Helper functions provide domain-specific suggestions
+- wrapError() preserves original error as context.originalError
+- Error.captureStackTrace preserves stack traces for debugging
+- createApiKeyError() differentiates missing vs invalid with isInvalid flag
+- Auto-inference from Node.js errors for seamless integration
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- Foundation for improved error messages in subsequent tasks
+- Provides consistent error handling across codebase
+- Next: Improve file not found errors (Task 4.2)

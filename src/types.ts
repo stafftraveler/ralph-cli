@@ -1,4 +1,78 @@
 /**
+ * Error codes for common Ralph CLI errors
+ */
+export enum RalphErrorCode {
+  /** File or directory not found */
+  ENOENT = "ENOENT",
+  /** Authentication error (API key issues) */
+  EAUTH = "EAUTH",
+  /** Rate limit exceeded */
+  ERATE = "ERATE",
+  /** Configuration file parsing error */
+  ECONFIG = "ECONFIG",
+  /** Git operation failed */
+  EGIT = "EGIT",
+  /** Cost limit exceeded */
+  ECOST = "ECOST",
+  /** Invalid input or arguments */
+  EINVAL = "EINVAL",
+  /** Permission denied */
+  EACCES = "EACCES",
+  /** Network or connection error */
+  ENETWORK = "ENETWORK",
+  /** Claude SDK or AI operation error */
+  EAIAPI = "EAIAPI",
+  /** Plugin error */
+  EPLUGIN = "EPLUGIN",
+  /** Unknown or unexpected error */
+  EUNKNOWN = "EUNKNOWN",
+}
+
+/**
+ * Structured error with code, message, and optional context
+ */
+export class RalphError extends Error {
+  constructor(
+    public code: RalphErrorCode,
+    message: string,
+    public context?: {
+      path?: string;
+      suggestion?: string;
+      details?: string;
+      originalError?: Error;
+    },
+  ) {
+    super(message);
+    this.name = "RalphError";
+    // Preserve stack trace
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, RalphError);
+    }
+  }
+
+  /**
+   * Format error for display with code, message, and suggestions
+   */
+  format(): string {
+    let output = `[${this.code}] ${this.message}`;
+
+    if (this.context?.path) {
+      output += `\n  Path: ${this.context.path}`;
+    }
+
+    if (this.context?.details) {
+      output += `\n  Details: ${this.context.details}`;
+    }
+
+    if (this.context?.suggestion) {
+      output += `\n  Suggestion: ${this.context.suggestion}`;
+    }
+
+    return output;
+  }
+}
+
+/**
  * Configuration loaded from .ralph/config file
  */
 export interface RalphConfig {

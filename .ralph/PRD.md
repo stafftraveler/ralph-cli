@@ -85,7 +85,7 @@ Already implemented. Verify that these have been implemented correctly.
 
 ### 4. Improve Error Messages
 
-[ ] Add error codes for common errors
+[x] Add error codes for common errors
     - Create error code enum/constants in types.ts
     - Map errors to codes: ENOENT, EAUTH, ERATE, ECONFIG, etc.
 
