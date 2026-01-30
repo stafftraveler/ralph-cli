@@ -2331,7 +2331,13 @@ function getDashboardHtml(data: DashboardData): string {
     updateRelativeTimestamps(); // Initial update
     updateElapsedTime(); // Initial update
     initWebSocket();
-    setupButtonListeners(); // Set up button event listeners
+
+    // Set up button event listeners after DOM is ready (backup for onclick handlers)
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupButtonListeners);
+    } else {
+      setupButtonListeners();
+    }
 
     // Update elapsed time and ETA every second
     setInterval(function() {
@@ -2430,21 +2436,21 @@ function getDashboardHtml(data: DashboardData): string {
       <div class="iterations-adjust-row">
         <span class="iterations-adjust-label">Adjust Iterations</span>
         <div class="iterations-adjust-buttons">
-          <button id="decrement-btn" class="iteration-adjust-btn" title="Decrease iterations">−</button>
+          <button id="decrement-btn" class="iteration-adjust-btn" onclick="decrementIterations(); return false;" title="Decrease iterations">−</button>
           <span class="iterations-value-inline" id="iterations-value-controls">${data.totalIterations}</span>
-          <button id="increment-btn" class="iteration-adjust-btn" title="Increase iterations">+</button>
+          <button id="increment-btn" class="iteration-adjust-btn" onclick="incrementIterations(); return false;" title="Increase iterations">+</button>
         </div>
       </div>
 
       <div class="session-control-row">
-        <button id="pause-btn" class="session-control-btn pause-btn ${data.isPausedAfterIteration ? "active" : ""}">
+        <button id="pause-btn" class="session-control-btn pause-btn ${data.isPausedAfterIteration ? "active" : ""}" onclick="togglePause(); return false;">
           <span class="btn-icon">${data.isPausedAfterIteration ? "▶︎" : "⏸︎"}</span>
           <span id="pause-btn-text">${data.isPausedAfterIteration ? "Resume" : "Pause After Iteration"}</span>
         </button>
       </div>
 
       <div class="session-control-row">
-        <button id="stop-btn" class="session-control-btn stop-btn">
+        <button id="stop-btn" class="session-control-btn stop-btn" onclick="showStopModal(); return false;">
           <span class="btn-icon">⏹︎</span>
           <span>Stop Session</span>
         </button>
@@ -2457,8 +2463,8 @@ function getDashboardHtml(data: DashboardData): string {
         <div class="modal-title">Stop Session?</div>
         <div class="modal-message">This will immediately stop the current session. Any work in progress will be saved.</div>
         <div class="modal-buttons">
-          <button id="modal-cancel-btn" class="modal-btn modal-btn-cancel">Cancel</button>
-          <button id="modal-confirm-btn" class="modal-btn modal-btn-confirm">Stop Session</button>
+          <button id="modal-cancel-btn" class="modal-btn modal-btn-cancel" onclick="hideStopModal(); return false;">Cancel</button>
+          <button id="modal-confirm-btn" class="modal-btn modal-btn-confirm" onclick="confirmStop(); return false;">Stop Session</button>
         </div>
       </div>
     </div>
