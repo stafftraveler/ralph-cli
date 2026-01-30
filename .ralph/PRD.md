@@ -98,7 +98,7 @@ Already implemented. Verify that these have been implemented correctly.
     - Clear message when key is missing vs invalid
     - Link to API key creation page
 
-[ ] Improve config parsing errors
+[x] Improve config parsing errors
     - Show line number and problematic value
     - Suggest valid format/values
     - Continue with defaults where possible

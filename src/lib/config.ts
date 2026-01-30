@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { RalphConfig } from "../types.js";
-import { createFileNotFoundError } from "./utils.js";
+import { createConfigError, createFileNotFoundError } from "./utils.js";
 
 /**
  * Default configuration values
@@ -65,7 +65,9 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
     const content = await readFile(configPath, "utf-8");
     const lines = content.split("\n");
 
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const lineNumber = i + 1;
       const trimmed = line.trim();
 
       // Skip empty lines and comments
@@ -76,18 +78,36 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
       // Parse key=value
       const eqIndex = trimmed.indexOf("=");
       if (eqIndex === -1) {
+        // Warn about lines without '=' but continue parsing
+        const configError = createConfigError(
+          `Invalid config line ${lineNumber}: missing '=' separator`,
+          `Line: "${trimmed.slice(0, 50)}${trimmed.length > 50 ? "..." : ""}"`,
+        );
+        console.warn(`Warning: ${configError.format()}`);
         continue;
       }
 
       const key = trimmed.slice(0, eqIndex).trim();
-      const value = parseConfigValue(trimmed.slice(eqIndex + 1));
+      const rawValue = trimmed.slice(eqIndex + 1);
+      const value = parseConfigValue(rawValue);
       const camelKey = toCamelCase(key);
 
       // Map to config properties
       switch (camelKey) {
-        case "maxRetries":
-          config.maxRetries = Number.parseInt(value, 10) || DEFAULT_CONFIG.maxRetries;
+        case "maxRetries": {
+          const parsed = Number.parseInt(value, 10);
+          if (Number.isNaN(parsed) || parsed < 0) {
+            const configError = createConfigError(
+              `Invalid value for MAX_RETRIES on line ${lineNumber}`,
+              `Value "${value}" is not a valid positive integer. Using default: ${DEFAULT_CONFIG.maxRetries}`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+            config.maxRetries = DEFAULT_CONFIG.maxRetries;
+          } else {
+            config.maxRetries = parsed;
+          }
           break;
+        }
         case "soundOnComplete":
           config.soundOnComplete = parseBoolean(value);
           break;
@@ -98,7 +118,16 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
           config.saveOutput = parseBoolean(value);
           break;
         case "outputDir":
-          config.outputDir = value || DEFAULT_CONFIG.outputDir;
+          if (!value) {
+            const configError = createConfigError(
+              `Empty value for OUTPUT_DIR on line ${lineNumber}`,
+              `Using default: "${DEFAULT_CONFIG.outputDir}"`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+            config.outputDir = DEFAULT_CONFIG.outputDir;
+          } else {
+            config.outputDir = value;
+          }
           break;
         case "prdTemplatesDir":
           config.prdTemplatesDir = value || DEFAULT_CONFIG.prdTemplatesDir;
@@ -108,18 +137,52 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
           break;
         case "maxCostPerIteration": {
           const parsed = Number.parseFloat(value);
-          if (!Number.isNaN(parsed) && parsed > 0) {
+          if (Number.isNaN(parsed)) {
+            const configError = createConfigError(
+              `Invalid value for MAX_COST_PER_ITERATION on line ${lineNumber}`,
+              `Value "${value}" is not a valid number. Expected format: 0.50 (USD)`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+          } else if (parsed <= 0) {
+            const configError = createConfigError(
+              `Invalid value for MAX_COST_PER_ITERATION on line ${lineNumber}`,
+              `Value "${value}" must be positive. Expected format: 0.50 (USD)`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+          } else {
             config.maxCostPerIteration = parsed;
           }
           break;
         }
         case "maxCostPerSession": {
           const parsed = Number.parseFloat(value);
-          if (!Number.isNaN(parsed) && parsed > 0) {
+          if (Number.isNaN(parsed)) {
+            const configError = createConfigError(
+              `Invalid value for MAX_COST_PER_SESSION on line ${lineNumber}`,
+              `Value "${value}" is not a valid number. Expected format: 5.00 (USD)`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+          } else if (parsed <= 0) {
+            const configError = createConfigError(
+              `Invalid value for MAX_COST_PER_SESSION on line ${lineNumber}`,
+              `Value "${value}" must be positive. Expected format: 5.00 (USD)`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+          } else {
             config.maxCostPerSession = parsed;
           }
           break;
         }
+        default:
+          // Unknown config key - warn but continue
+          if (key) {
+            const configError = createConfigError(
+              `Unknown config key on line ${lineNumber}: ${key}`,
+              `Valid keys: MAX_RETRIES, SOUND_ON_COMPLETE, NOTIFICATION_SOUND, SAVE_OUTPUT, OUTPUT_DIR, MAX_COST_PER_ITERATION, MAX_COST_PER_SESSION`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+          }
+          break;
       }
     }
   } catch (error) {

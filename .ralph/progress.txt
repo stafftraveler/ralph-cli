@@ -453,3 +453,49 @@ Notes:
 - All error messages include direct link to console.anthropic.com/settings/keys
 - Keychain troubleshooting commands provided for debugging
 - Next: Improve config parsing errors (Task 4.4)
+
+## Iteration 15: Improve config parsing errors
+
+Task: PRD Task 4.4 - Improve config parsing errors with line numbers and suggestions
+
+Decisions:
+- Added line number tracking to config parsing loop
+- Enhanced error messages for each config validation failure
+- Provide specific format suggestions for each config key type
+- Continue parsing after errors (use defaults for invalid values)
+- Warn about unknown config keys with list of valid options
+
+Files changed:
+- src/lib/config.ts: Complete rewrite of config parsing error handling
+  - Added line number tracking (i+1 for 1-indexed display)
+  - Enhanced MAX_RETRIES validation with detailed error messages
+  - Added OUTPUT_DIR empty value detection
+  - Enhanced MAX_COST_PER_ITERATION/SESSION with format hints
+  - Added unknown key detection with valid key list
+  - All errors use createConfigError() with line numbers and suggestions
+
+Implementation details:
+- Invalid line without '=': "Invalid config line N: missing '=' separator"
+- Invalid MAX_RETRIES: "Value 'X' is not a valid positive integer. Using default: 3"
+- Empty OUTPUT_DIR: "Empty value for OUTPUT_DIR on line N. Using default: 'logs'"
+- Invalid cost (NaN): "Value 'X' is not a valid number. Expected format: 0.50 (USD)"
+- Invalid cost (negative): "Value 'X' must be positive. Expected format: 0.50 (USD)"
+- Unknown key: Lists all valid keys for reference
+- All warnings show line number and problematic value
+- Parser continues with defaults after any error
+
+Error message format:
+```
+Warning: [ECONFIG] Invalid value for MAX_RETRIES on line 2
+  Details: Value "invalid" is not a valid positive integer. Using default: 3
+  Suggestion: Check your .ralph/config file syntax - use KEY=value format
+```
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- Existing tests now show improved warning messages in stderr
+- Config parsing continues with defaults for all error cases
+- Users get specific guidance on format and valid values
+- Line numbers help locate problematic config entries
+- Next: Section 5 Remote monitoring (if continuing PRD tasks)
