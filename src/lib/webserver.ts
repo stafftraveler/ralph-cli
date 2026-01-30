@@ -554,10 +554,10 @@ async function addTaskToPrd(task: string): Promise<void> {
 
   if (content.trimEnd().endsWith("[ ]")) {
     // Replace the empty task placeholder with the new task
-    updatedContent = content.trimEnd().slice(0, -3) + newTask + "\n";
+    updatedContent = `${content.trimEnd().slice(0, -3) + newTask}\n`;
   } else {
     // Append to the end
-    updatedContent = content.trimEnd() + "\n" + newTask + "\n";
+    updatedContent = `${content.trimEnd()}\n${newTask}\n`;
   }
 
   await writeFile(prdPath, updatedContent, "utf-8");

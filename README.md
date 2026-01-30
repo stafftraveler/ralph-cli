@@ -91,6 +91,8 @@ This will:
 | `--resume`              | Resume from last checkpoint                           |
 | `--debug`               | Show debug information                                |
 | `--no-plugins`          | Disable all plugins                                   |
+| `--max-cost <amount>`   | Override session cost limit (USD)                     |
+| `--ci`                  | Run in CI mode (non-interactive, plain text output)   |
 
 ### Examples
 
@@ -139,19 +141,49 @@ pnpm exec ralph --branch feature/api-update 3
 ## Features
 
 - **Interactive UI** - Real-time progress display with spinners and status updates
+- **Remote Monitoring** - Web dashboard with localtunnel for monitoring sessions remotely with task management
 - **Secure API key storage** - API key stored in macOS Keychain, enter once and forget
 - **Session management** - Resume a previous session or start fresh
 - **Auto-retry** - Configurable retries with exponential backoff on failures
 - **Auto-verbose on failure** - Shows full output when an iteration fails
 - **macOS notifications** - Get notified when iterations complete (with optional sound)
 - **Summary report** - Shows duration, commits, cost, and changes
+- **Cost management** - Cost projections, warnings at 80% threshold, and `--max-cost` flag
+- **Linear integration** - Connect with Linear for issue tracking
 - **Git branch support** - Create or switch to a branch before starting
 - **Dry-run mode** - Preview what would execute without running Claude
 - **Graceful cancellation** - Ctrl+C shows partial summary with completed iterations
 - **Output logging** - Optionally save each iteration's output to log files
 - **Session reset** - Use `--reset` flag to start fresh
+- **Sleep prevention** - Uses caffeinate to prevent system sleep during execution
 - **Plugin system** - Extend with custom lifecycle hooks
 - **Keyboard shortcuts** - Toggle verbose (`v`), debug (`d`), or quit (`q`) during execution
+
+## Remote Monitoring
+
+Ralph includes a web dashboard for monitoring iterations remotely:
+
+- Real-time status updates and progress tracking
+- Task management interface
+- Cost tracking visualization
+- Accessible via localtunnel (no authentication required)
+
+The dashboard automatically starts when running Ralph and provides a shareable URL for remote monitoring.
+
+## Linear Integration
+
+Connect Ralph to Linear for issue tracking:
+
+1. Get your Linear API key from [Linear Settings](https://linear.app/settings/api)
+2. Find your team ID in Linear
+3. Add to `.ralph/config`:
+
+```bash
+LINEAR_TEAM_ID=your-team-id
+LINEAR_API_KEY=lin_api_...
+```
+
+Ralph will automatically update Linear issues based on iteration progress.
 
 ## Configuration
 
@@ -159,13 +191,17 @@ Create a `config` file in the `.ralph/` directory to customize behavior:
 
 ### Available Options
 
-| Option               | Default       | Description                                  |
-| -------------------- | ------------- | -------------------------------------------- |
-| `MAX_RETRIES`        | `3`           | Maximum retry attempts for failed iterations |
-| `SOUND_ON_COMPLETE`  | `false`       | Play a sound when iterations complete        |
-| `NOTIFICATION_SOUND` | System Glass  | Path to custom notification sound file       |
-| `SAVE_OUTPUT`        | `false`       | Save Claude's output for each iteration      |
-| `OUTPUT_DIR`         | `.ralph/logs` | Directory for output log files               |
+| Option                   | Default       | Description                                  |
+| ------------------------ | ------------- | -------------------------------------------- |
+| `MAX_RETRIES`            | `3`           | Maximum retry attempts for failed iterations |
+| `SOUND_ON_COMPLETE`      | `false`       | Play a sound when iterations complete        |
+| `NOTIFICATION_SOUND`     | System Glass  | Path to custom notification sound file       |
+| `SAVE_OUTPUT`            | `false`       | Save Claude's output for each iteration      |
+| `OUTPUT_DIR`             | `.ralph/logs` | Directory for output log files               |
+| `MAX_COST_PER_ITERATION` | none          | USD limit per iteration                      |
+| `MAX_COST_PER_SESSION`   | none          | USD limit per session                        |
+| `LINEAR_TEAM_ID`         | none          | Linear team ID for issue integration         |
+| `LINEAR_API_KEY`         | none          | Linear API key for issue tracking            |
 
 Example config:
 

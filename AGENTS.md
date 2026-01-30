@@ -266,6 +266,8 @@ Configuration loaded from `.ralph/config`:
 | `OUTPUT_DIR`             | `.ralph/logs` | Log directory                        |
 | `MAX_COST_PER_ITERATION` | none          | USD limit per iteration              |
 | `MAX_COST_PER_SESSION`   | none          | USD limit per session                |
+| `LINEAR_TEAM_ID`         | none          | Linear team ID for issue integration |
+| `LINEAR_API_KEY`         | none          | Linear API key for issue tracking    |
 
 ## API Key Management
 
@@ -290,6 +292,30 @@ Key dependencies and their purposes:
 | `execa`                               | Process execution                    |
 | `chalk`                               | Terminal colors (for non-Ink output) |
 | `node-notifier`                       | macOS notifications                  |
+
+## Features
+
+### Remote Monitoring
+Ralph includes a web dashboard for remote monitoring of iterations:
+- Accessible via localtunnel (no auth required)
+- Real-time status updates
+- Task management interface
+- Cost tracking visualization
+
+### Linear Integration
+Integrate with Linear for issue tracking:
+- Configure `LINEAR_TEAM_ID` and `LINEAR_API_KEY` in `.ralph/config`
+- Automatically link iterations to Linear issues
+- Update issue status based on progress
+
+### Cost Management
+- Cost projections based on previous iterations
+- `--max-cost` flag to override session limits
+- Warnings at 80% of cost threshold
+- Per-iteration and per-session limits
+
+### System Sleep Prevention
+Ralph uses `caffeinate` to prevent macOS from sleeping during execution
 
 ## Debugging
 
