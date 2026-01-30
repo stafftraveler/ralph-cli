@@ -7,7 +7,7 @@ export interface StatusBarProps {
   isConnecting: boolean;
   /** Error message if any */
   error: string | null;
-  /** Tunnel password for bypassing reminder page */
+  /** Tunnel password (public IP) for accessing the tunnel */
   password?: string | null;
 }
 
@@ -35,24 +35,19 @@ export function StatusBar({ url, isConnecting, error, password }: StatusBarProps
 
   if (url) {
     return (
-      <Box
-        borderStyle="round"
-        borderColor="green"
-        paddingX={1}
-        marginTop={1}
-        flexDirection="column"
-      >
+      <Box borderStyle="round" borderColor="green" paddingX={1} marginTop={1}>
         <Text>
           <Text color="green" bold>
             Dashboard:
           </Text>{" "}
           <Text color="cyan">{url}</Text>
+          {password && (
+            <Text dimColor>
+              {" "}
+              (password: <Text color="yellow">{password}</Text>)
+            </Text>
+          )}
         </Text>
-        {password && (
-          <Text dimColor>
-            Tunnel password: <Text color="yellow">{password}</Text>
-          </Text>
-        )}
       </Box>
     );
   }

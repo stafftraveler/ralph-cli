@@ -12,8 +12,25 @@ export interface UseTunnelState {
   isConnecting: boolean;
   /** Error message if connection failed */
   error: string | null;
-  /** Tunnel password for bypassing the reminder page */
+  /** Tunnel password (public IP) for accessing the tunnel */
   password: string | null;
+}
+
+/**
+ * Fetch the tunnel password from loca.lt
+ * The password is the public IP of the machine running the tunnel
+ */
+async function fetchTunnelPassword(): Promise<string | null> {
+  try {
+    const response = await fetch("https://loca.lt/mytunnelpassword");
+    if (response.ok) {
+      const text = await response.text();
+      return text.trim();
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -45,16 +62,17 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
       setError(null);
 
       try {
-        tunnel = await localtunnel({
-          port,
-          // localtunnel doesn't require authentication
-        });
+        // Start tunnel and fetch password in parallel
+        const [tunnelResult, tunnelPassword] = await Promise.all([
+          localtunnel({ port }),
+          fetchTunnelPassword(),
+        ]);
+
+        tunnel = tunnelResult;
 
         if (isMounted) {
           setUrl(tunnel.url);
-          // Capture the tunnel password for bypassing the reminder page
-          // The password is available on the tunnel object from localtunnel
-          setPassword((tunnel as unknown as { password?: string }).password ?? null);
+          setPassword(tunnelPassword);
           setIsConnecting(false);
         }
 

@@ -329,7 +329,7 @@ function getDashboardHtml(data: DashboardData): string {
     let isTyping = false;
     let typingTimeout = null;
 
-    // Auto-refresh every 2 seconds using fetch with bypass header
+    // Auto-refresh every 2 seconds
     async function refreshData() {
       // Skip refresh if user is typing
       if (isTyping) {
@@ -338,11 +338,7 @@ function getDashboardHtml(data: DashboardData): string {
       }
 
       try {
-        const response = await fetch('/api/status', {
-          headers: {
-            'bypass-tunnel-reminder': 'true'
-          }
-        });
+        const response = await fetch('/api/status');
         if (response.ok) {
           const data = await response.json();
           // Update only the dynamic parts instead of reloading entire page
@@ -404,8 +400,7 @@ function getDashboardHtml(data: DashboardData): string {
         const response = await fetch('/api/task', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'bypass-tunnel-reminder': 'true'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ task })
         });
@@ -570,7 +565,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
   // CORS headers for API requests
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, bypass-tunnel-reminder");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   // Handle OPTIONS preflight
   if (req.method === "OPTIONS") {
