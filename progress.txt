@@ -848,3 +848,65 @@ Notes:
 - Simple, effective visual indicator with minimal code
 - Enhances user awareness of iteration activity
 
+
+## Iteration 22
+
+Task: Display estimated time remaining based on average iteration duration (Phase 7)
+
+Changes:
+- Added eta-time CSS class with monospace font, lighter color (12px, #999999)
+- Added dark mode styling for ETA (#666666)
+- Added ETA HTML element below elapsed time in status section
+- Implemented calculateAverageDuration() function to compute avg from completed iterations
+- Implemented updateEta() function to calculate and display remaining time
+- Added cachedIterations variable to store iteration history client-side
+- Updated updateDashboard() to cache iterations and call updateEta()
+- Added updateEta() to 1-second interval alongside updateElapsedTime()
+
+Design decisions:
+- Placed below elapsed time for logical grouping
+- Lighter color (#999999) than elapsed time to show it's estimated
+- Uses average of all successful iterations for calculation
+- Shows remaining time when ahead of schedule
+- Shows "+Xm Xs" format when running longer than expected
+- Only displays when iterations exist and iteration is active
+- Client-side calculation from cached data (no server load)
+
+Display format:
+- Ahead of schedule: "ETA: 2m 15s" (time remaining)
+- Behind schedule: "ETA: +1m 30s" (time over estimate)
+- Hidden when no iteration running or no history
+
+Calculation approach:
+- Filters to successful iterations with valid durations
+- Calculates simple average of all durations
+- Subtracts elapsed time to get remaining time
+- Positive = time left, negative = over estimate
+- Updates every 1 second for real-time feedback
+
+Benefits:
+- Predictive information helps users plan
+- Shows if iteration taking longer than expected
+- Simple average is fast and sufficient for estimates
+- No complex ML or weighted averages needed
+- Clear visual feedback with +/- notation
+
+Technical approach:
+- Average calculated from all successful completed iterations
+- Client receives iterations via WebSocket/API
+- Cached locally for repeated calculations
+- ETA recalculated every second based on elapsed time
+- Format reuses existing formatElapsedTime() function
+
+Files changed:
+- src/lib/webserver.ts (CSS, HTML, JavaScript functions)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 7 task complete (10 of 10 tasks done, 100%)
+- Phase 7 WebSocket Implementation now COMPLETE!
+- Provides valuable predictive information to users
+- Helps manage expectations during long iterations
+

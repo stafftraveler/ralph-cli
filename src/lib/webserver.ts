@@ -389,6 +389,13 @@ function getDashboardHtml(data: DashboardData): string {
       font-family: 'Monaco', 'Courier New', monospace;
     }
 
+    .eta-time {
+      font-size: 12px;
+      color: #999999;
+      margin-top: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
     .cost-section {
       display: inline-flex;
       align-items: baseline;
@@ -804,6 +811,10 @@ function getDashboardHtml(data: DashboardData): string {
         color: #999999;
       }
 
+      .eta-time {
+        color: #666666;
+      }
+
       .cost-section {
         color: #999999;
       }
@@ -1202,6 +1213,50 @@ function getDashboardHtml(data: DashboardData): string {
       }
     }
 
+    // Calculate average duration of completed iterations
+    let cachedIterations = [];
+
+    function calculateAverageDuration(iterations) {
+      if (!iterations || iterations.length === 0) return null;
+
+      // Only use successful iterations for ETA calculation
+      const successfulIterations = iterations.filter(iter => iter.durationSeconds > 0);
+      if (successfulIterations.length === 0) return null;
+
+      const totalDuration = successfulIterations.reduce((sum, iter) => sum + iter.durationSeconds, 0);
+      return Math.floor(totalDuration / successfulIterations.length);
+    }
+
+    // Update ETA display
+    function updateEta() {
+      const etaEl = document.getElementById('eta-time');
+      if (!etaEl) return;
+
+      if (!currentIterationStartTime || cachedIterations.length === 0) {
+        etaEl.textContent = '';
+        return;
+      }
+
+      const avgDuration = calculateAverageDuration(cachedIterations);
+      if (!avgDuration) {
+        etaEl.textContent = '';
+        return;
+      }
+
+      const now = new Date();
+      const startTime = new Date(currentIterationStartTime);
+      const elapsedSeconds = Math.floor((now - startTime) / 1000);
+
+      const remainingSeconds = avgDuration - elapsedSeconds;
+
+      if (remainingSeconds > 0) {
+        etaEl.textContent = 'ETA: ' + formatElapsedTime(remainingSeconds);
+      } else {
+        // Show that we're past the expected time
+        etaEl.textContent = 'ETA: +' + formatElapsedTime(Math.abs(remainingSeconds));
+      }
+    }
+
     // Update connection status indicator
     function updateConnectionStatus(status) {
       const dot = document.getElementById('connection-dot');
@@ -1327,6 +1382,12 @@ function getDashboardHtml(data: DashboardData): string {
       if (data.currentIterationStartedAt !== currentIterationStartTime) {
         currentIterationStartTime = data.currentIterationStartedAt;
         updateElapsedTime();
+      }
+
+      // Cache iterations for ETA calculation
+      if (data.iterations && data.iterations.length > 0) {
+        cachedIterations = data.iterations;
+        updateEta();
       }
 
       // Update cost
@@ -1465,8 +1526,11 @@ function getDashboardHtml(data: DashboardData): string {
     updateElapsedTime(); // Initial update
     initWebSocket();
 
-    // Update elapsed time every second
-    setInterval(updateElapsedTime, 1000);
+    // Update elapsed time and ETA every second
+    setInterval(function() {
+      updateElapsedTime();
+      updateEta();
+    }, 1000);
 
     // Update relative timestamps every 2 seconds
     setInterval(updateRelativeTimestamps, 2000);
@@ -1499,6 +1563,7 @@ function getDashboardHtml(data: DashboardData): string {
       <div class="status-label">Current Status</div>
       <div class="status-text">${data.status}</div>
       <div class="elapsed-time" id="elapsed-time"></div>
+      <div class="eta-time" id="eta-time"></div>
     </div>
 
     <div class="cost-section">
