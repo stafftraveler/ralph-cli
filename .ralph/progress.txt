@@ -40,3 +40,19 @@
 - src/lib/webserver.ts (line 1989 regex pattern)
 
 **Notes**: This bug would prevent expanded iteration details from staying expanded after updates. The backslash escape is required for digit matching.
+
+## Iteration 4: Standardize error handling patterns
+
+**Task**: Make error handling consistent across server and client code
+
+**Decisions**:
+- Server-side WebSocket errors → console.error (important for debugging)
+- Client-side fetch failures → console.error (helps troubleshooting)
+- Non-critical broadcast failures → silent with clarifying comments
+- Fixed missed WebSocket.OPEN constant in broadcastTaskUpdate
+- Clarified all "Silently fail" comments with context
+
+**Files changed**:
+- src/lib/webserver.ts (error handling in 5 locations)
+
+**Notes**: Pattern now clear: log errors that indicate problems, silently handle expected failures (client disconnects). Linter keeps reverting regex fix - may need .biome config adjustment.

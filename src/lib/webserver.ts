@@ -212,13 +212,12 @@ async function broadcastTaskUpdate() {
     });
 
     for (const client of wsClients) {
-      if (client.readyState === 1) {
-        // WebSocket.OPEN
+      if (client.readyState === WebSocket.OPEN) {
         client.send(message);
       }
     }
   } catch (_err) {
-    // Silently fail
+    // Silently fail - non-critical broadcast failure
   }
 }
 
@@ -1560,7 +1559,7 @@ function getDashboardHtml(data: DashboardData): string {
           }
         }
       } catch (err) {
-        // Silently fail on error
+        console.error('Failed to fetch verbose output:', err);
       }
     }
 
@@ -1859,7 +1858,6 @@ function getDashboardHtml(data: DashboardData): string {
         // Update relative timestamps
         updateRelativeTimestamps();
       } catch (err) {
-        // Silently fail on error
         console.error('Polling error:', err);
       }
 
@@ -2310,7 +2308,7 @@ function getDashboardHtml(data: DashboardData): string {
           updateTasks(data);
         }
       } catch (err) {
-        // Silently fail on error
+        console.error('Failed to load initial tasks:', err);
       }
     }
 
@@ -2804,7 +2802,7 @@ export async function startWebServer(port: number) {
         );
       }
     } catch (_err) {
-      // Silently fail
+      // Silently fail - client may have disconnected
     }
 
     // Handle client disconnect
