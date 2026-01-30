@@ -348,6 +348,19 @@ function getDashboardHtml(data: DashboardData): string {
       transition: width 0.5s ease;
     }
 
+    .progress-fill.active {
+      animation: progress-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes progress-pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
     .status-section {
       margin-bottom: 24px; /* 3 × 8px grid */
       padding: 16px 0; /* 2 × 8px grid */
@@ -1292,6 +1305,13 @@ function getDashboardHtml(data: DashboardData): string {
       if (progressFill) {
         progressFill.style.width = progressPercent + '%';
         progressFill.textContent = progressPercent.toFixed(0) + '%';
+
+        // Add pulsing animation when iteration is actively running
+        if (data.currentIterationStartedAt) {
+          progressFill.classList.add('active');
+        } else {
+          progressFill.classList.remove('active');
+        }
       }
       if (progressLabel) {
         progressLabel.textContent = 'Iteration ' + data.currentIteration + ' of ' + data.totalIterations;

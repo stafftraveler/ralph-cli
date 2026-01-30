@@ -797,3 +797,54 @@ Notes:
 - Provides real-time feedback on iteration progress
 - Helps users gauge if iteration is taking longer than expected
 
+
+## Iteration 21
+
+Task: Add pulsing/animated indicator when iteration is actively running (Phase 7)
+
+Changes:
+- Added .progress-fill.active CSS class with pulsing animation
+- Added @keyframes progress-pulse animation (2s ease-in-out infinite)
+- Animation pulses opacity between 1.0 and 0.7
+- Updated updateDashboard() to add/remove 'active' class based on currentIterationStartedAt
+- Progress bar pulses when iteration is running, static when idle
+
+Design decisions:
+- 2-second animation cycle is noticeable but not distracting
+- Opacity pulse (1.0 → 0.7 → 1.0) provides subtle visual feedback
+- ease-in-out timing creates smooth, natural pulsing effect
+- Applied to existing progress bar (no new UI elements needed)
+- Automatically starts when iteration begins, stops when completed
+- Works with existing progress bar styling and dark mode
+
+Animation behavior:
+- Active: Progress bar pulses smoothly every 2 seconds
+- Idle: Progress bar remains static (no animation)
+- Triggered by: currentIterationStartedAt being non-null
+- Removed when: currentIterationStartedAt becomes null
+
+Benefits:
+- Immediate visual feedback that iteration is running
+- Helps users distinguish active vs idle states at a glance
+- Minimal implementation (CSS animation only)
+- No performance impact (hardware-accelerated opacity)
+- Works seamlessly with real-time WebSocket updates
+
+Technical approach:
+- CSS-only animation using @keyframes
+- Toggled via class application in updateDashboard()
+- Tied to existing iteration state tracking
+- No JavaScript animation timers needed
+- Compatible with all modern browsers
+
+Files changed:
+- src/lib/webserver.ts (CSS animation, JavaScript class toggle)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 7 task complete (9 of 10 tasks done, 90%)
+- Simple, effective visual indicator with minimal code
+- Enhances user awareness of iteration activity
+
