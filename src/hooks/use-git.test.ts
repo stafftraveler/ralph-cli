@@ -2,9 +2,9 @@ import { execa } from "execa";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createBranch,
+  getCommitsSince,
   getCurrentBranch,
   getCurrentCommit,
-  getCommitsSince,
   getDiffStats,
   getRepoRoot,
   isGitRepo,

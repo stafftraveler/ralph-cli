@@ -3,6 +3,7 @@ import Spinner from "ink-spinner";
 import { useEffect, useRef } from "react";
 import { type UseClaudeState, useClaude } from "../hooks/use-claude.js";
 import { formatCost, formatDuration } from "../lib/utils.js";
+import { clearOutput } from "../lib/webserver.js";
 import type { IterationResult, RalphConfig } from "../types.js";
 
 /**
@@ -200,6 +201,9 @@ export function IterationRunner({
   useEffect(() => {
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
+
+    // Clear output buffer at start of new iteration
+    clearOutput();
 
     void actions
       .runIteration(config, {

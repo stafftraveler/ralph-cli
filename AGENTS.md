@@ -296,11 +296,16 @@ Key dependencies and their purposes:
 ## Features
 
 ### Remote Monitoring
-Ralph includes a web dashboard for remote monitoring of iterations:
+Ralph includes a mobile-optimized web dashboard for remote monitoring:
 - Accessible via localtunnel (no auth required)
-- Real-time status updates
-- Task management interface
+- Real-time status updates with iteration history
+- Task management with progress tracking
+- Verbose mode toggle for Claude output
+- Success/failure indicators with color coding
+- Duration and relative timestamps for iterations
 - Cost tracking visualization
+- Dark mode support (automatic)
+- PWA-enabled for mobile devices
 
 ### Linear Integration
 Integrate with Linear for issue tracking:

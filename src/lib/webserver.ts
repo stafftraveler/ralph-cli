@@ -2,7 +2,10 @@ import { readFile, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import { join } from "node:path";
+import type { WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 import type { SessionState } from "../types.js";
+import { parsePrdTasks } from "./prd.js";
 
 /**
  * Dashboard data that gets sent to the web UI
@@ -13,10 +16,16 @@ export interface DashboardData {
   totalIterations: number;
   status: string;
   totalCost: number;
+  currentIterationStartedAt: string | null;
   iterations: Array<{
     number: number;
     timestamp: string;
     cost: number;
+    durationSeconds: number;
+    success: boolean;
+    inputTokens?: number;
+    outputTokens?: number;
+    status?: string;
   }>;
 }
 
@@ -29,6 +38,8 @@ interface WebServerState {
   totalIterations: number;
   status: string;
   ralphDir: string;
+  outputBuffer: string;
+  currentIterationStartedAt: string | null;
 }
 
 let serverState: WebServerState = {
@@ -37,13 +48,129 @@ let serverState: WebServerState = {
   totalIterations: 5,
   status: "Starting...",
   ralphDir: "",
+  outputBuffer: "",
+  currentIterationStartedAt: null,
 };
+
+/**
+ * WebSocket server instance
+ */
+let wss: WebSocketServer | null = null;
+
+/**
+ * Set of connected WebSocket clients
+ */
+const wsClients = new Set<WebSocket>();
+
+/**
+ * Maximum size of output buffer in characters (100KB)
+ */
+const MAX_OUTPUT_BUFFER_SIZE = 100000;
 
 /**
  * Update the server state for the dashboard
  */
 export function updateServerState(state: Partial<WebServerState>) {
   serverState = { ...serverState, ...state };
+  // Broadcast update to all connected WebSocket clients
+  broadcastUpdate();
+}
+
+/**
+ * Append output to the buffer, keeping only the most recent data
+ */
+export function appendOutput(chunk: string) {
+  serverState.outputBuffer += chunk;
+
+  // Trim buffer if it exceeds max size (keep last N characters)
+  if (serverState.outputBuffer.length > MAX_OUTPUT_BUFFER_SIZE) {
+    serverState.outputBuffer = serverState.outputBuffer.slice(-MAX_OUTPUT_BUFFER_SIZE);
+  }
+
+  // Broadcast output update to WebSocket clients
+  broadcastOutputUpdate(chunk);
+}
+
+/**
+ * Clear the output buffer (useful at start of new iteration)
+ */
+export function clearOutput() {
+  serverState.outputBuffer = "";
+  broadcastOutputUpdate("");
+}
+
+/**
+ * Broadcast status update to all connected WebSocket clients
+ */
+function broadcastUpdate() {
+  if (wsClients.size === 0) return;
+
+  const data = getDashboardData();
+  const message = JSON.stringify({
+    type: "status",
+    data,
+  });
+
+  for (const client of wsClients) {
+    if (client.readyState === 1) {
+      // WebSocket.OPEN
+      client.send(message);
+    }
+  }
+}
+
+/**
+ * Broadcast output chunk to all connected WebSocket clients
+ */
+function broadcastOutputUpdate(chunk: string) {
+  if (wsClients.size === 0) return;
+
+  const message = JSON.stringify({
+    type: "output",
+    data: chunk,
+  });
+
+  for (const client of wsClients) {
+    if (client.readyState === 1) {
+      // WebSocket.OPEN
+      client.send(message);
+    }
+  }
+}
+
+/**
+ * Broadcast task update to all connected WebSocket clients
+ */
+async function broadcastTaskUpdate() {
+  if (wsClients.size === 0) return;
+
+  try {
+    if (!serverState.ralphDir) return;
+
+    const prdPath = join(serverState.ralphDir, "PRD.md");
+    const tasks = await parsePrdTasks(prdPath);
+
+    const completedCount = tasks.filter((t) => t.completed).length;
+    const totalCount = tasks.length;
+
+    const message = JSON.stringify({
+      type: "tasks",
+      data: {
+        tasks,
+        completedCount,
+        totalCount,
+      },
+    });
+
+    for (const client of wsClients) {
+      if (client.readyState === 1) {
+        // WebSocket.OPEN
+        client.send(message);
+      }
+    }
+  } catch (_err) {
+    // Silently fail
+  }
 }
 
 /**
@@ -56,12 +183,35 @@ function getDashboardData(): DashboardData {
     totalIterations: serverState.totalIterations,
     status: serverState.status,
     totalCost: serverState.session?.totalCostUsd ?? 0,
+    currentIterationStartedAt: serverState.currentIterationStartedAt,
     iterations: (serverState.session?.iterations ?? []).map((iter, idx) => ({
       number: idx + 1,
       timestamp: iter.startedAt,
       cost: iter.usage?.totalCostUsd ?? 0,
+      durationSeconds: iter.durationSeconds,
+      success: iter.success,
+      inputTokens: iter.usage?.inputTokens,
+      outputTokens: iter.usage?.outputTokens,
+      status: iter.status,
     })),
   };
+}
+
+/**
+ * Format duration in seconds to a human-readable string
+ */
+function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes < 60) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${remainingMinutes}m`;
 }
 
 /**
@@ -72,9 +222,42 @@ function getDashboardHtml(data: DashboardData): string {
   const iterationsHtml = data.iterations
     .map(
       (iter) => `
-      <div class="iteration-item">
-        <span class="iteration-number">Iteration ${iter.number}</span>
-        <span class="iteration-cost">$${iter.cost.toFixed(4)}</span>
+      <div class="iteration-item" onclick="toggleIterationDetails(${iter.number})">
+        <div class="iteration-summary">
+          <span class="iteration-status ${iter.success ? "success" : "failure"}">${iter.success ? "✓" : "✗"}</span>
+          <div class="iteration-info">
+            <span class="iteration-number">Iteration ${iter.number}</span>
+            <span class="iteration-timestamp" data-timestamp="${iter.timestamp}"></span>
+          </div>
+          <span class="iteration-duration">${formatDuration(iter.durationSeconds)}</span>
+          <span class="iteration-cost">$${iter.cost.toFixed(4)}</span>
+        </div>
+        <div class="iteration-details" id="iteration-details-${iter.number}">
+          ${
+            iter.inputTokens || iter.outputTokens
+              ? `
+          <div class="iteration-details-row">
+            <span class="iteration-details-label">Input Tokens:</span>
+            <span class="iteration-details-value">${iter.inputTokens?.toLocaleString() || "N/A"}</span>
+          </div>
+          <div class="iteration-details-row">
+            <span class="iteration-details-label">Output Tokens:</span>
+            <span class="iteration-details-value">${iter.outputTokens?.toLocaleString() || "N/A"}</span>
+          </div>
+          `
+              : ""
+          }
+          ${
+            iter.status
+              ? `
+          <div class="iteration-details-row">
+            <span class="iteration-details-label">Status:</span>
+            <span class="iteration-details-value">${iter.status}</span>
+          </div>
+          `
+              : ""
+          }
+        </div>
       </div>
     `,
     )
@@ -84,126 +267,190 @@ function getDashboardHtml(data: DashboardData): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ralph Dashboard">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Ralph CLI Dashboard - Monitor Claude Code iterations remotely">
   <title>Ralph CLI Dashboard</title>
   <style>
     * {
       margin: 0;
       padding: 0;
-      box-box-sizing: border-box;
+      box-sizing: border-box;
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #ffffff;
       min-height: 100vh;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 16px; /* 2 × 8px grid */
     }
 
     .container {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       max-width: 600px;
       width: 100%;
-      padding: 32px;
+      margin: 0 auto;
     }
 
     .header {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 32px; /* 4 × 8px grid */
     }
 
     .title {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1a202c;
+      font-size: 24px;
+      font-weight: 600;
+      color: #000000;
       margin-bottom: 8px;
     }
 
     .session-id {
-      font-size: 14px;
-      color: #718096;
+      font-size: 13px;
+      color: #666666;
       font-family: 'Monaco', 'Courier New', monospace;
     }
 
+    .connection-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #999999;
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #999999;
+      transition: background 0.3s ease;
+    }
+
+    .connection-dot.connected {
+      background: #4caf50;
+    }
+
+    .connection-dot.disconnected {
+      background: #f44336;
+    }
+
+    .connection-dot.reconnecting {
+      background: #ff9800;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .connection-dot.polling {
+      background: #2196f3;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.4;
+      }
+    }
+
     .progress-section {
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     .progress-label {
       display: flex;
       justify-content: space-between;
       margin-bottom: 8px;
-      font-size: 14px;
-      color: #4a5568;
+      font-size: 13px;
+      color: #666666;
     }
 
     .progress-bar {
-      height: 24px;
-      background: #e2e8f0;
-      border-radius: 12px;
+      height: 8px;
+      background: #e5e5e5;
+      border-radius: 4px;
       overflow: hidden;
       position: relative;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      background: #000000;
       transition: width 0.5s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 12px;
-      font-weight: 600;
+    }
+
+    .progress-fill.active {
+      animation: progress-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes progress-pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
     }
 
     .status-section {
-      background: #f7fafc;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 24px; /* 3 × 8px grid */
+      padding: 16px 0; /* 2 × 8px grid */
+      border-bottom: 1px solid #e5e5e5;
     }
 
     .status-label {
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #718096;
+      color: #999999;
       margin-bottom: 8px;
-      font-weight: 600;
+      font-weight: 500;
     }
 
     .status-text {
-      font-size: 16px;
-      color: #2d3748;
-      font-weight: 500;
+      font-size: 14px;
+      color: #000000;
+      font-weight: 400;
+    }
+
+    .elapsed-time {
+      font-size: 12px;
+      color: #666666;
+      margin-top: 8px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    .eta-time {
+      font-size: 12px;
+      color: #999999;
+      margin-top: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
     }
 
     .cost-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #edf2f7;
-      border-radius: 12px;
-      padding: 16px;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
       margin-bottom: 24px;
+      font-size: 13px;
+      color: #666666;
     }
 
     .cost-label {
-      font-size: 14px;
-      color: #4a5568;
-      font-weight: 500;
+      font-size: 13px;
+      color: #666666;
+      font-weight: 400;
     }
 
     .cost-value {
-      font-size: 24px;
-      color: #2d3748;
-      font-weight: 700;
+      font-size: 13px;
+      color: #000000;
+      font-weight: 500;
+      font-family: 'Monaco', 'Courier New', monospace;
     }
 
     .iterations-section {
@@ -211,10 +458,10 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .iterations-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #2d3748;
-      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+      margin-bottom: 8px;
     }
 
     .iterations-list {
@@ -224,41 +471,141 @@ function getDashboardHtml(data: DashboardData): string {
 
     .iteration-item {
       display: flex;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: #f7fafc;
-      margin-bottom: 4px;
-      border-radius: 6px;
-      font-size: 14px;
+      flex-direction: column;
+      gap: 0;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .iteration-item:hover {
+      background: #fafafa;
+    }
+
+    .iteration-item:active {
+      background: #f5f5f5;
+    }
+
+    .iteration-summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .iteration-item:last-child {
+      border-bottom: none;
+    }
+
+    .iteration-status {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .iteration-status.success {
+      color: #000000;
+      background: #e8f5e9;
+    }
+
+    .iteration-status.failure {
+      color: #000000;
+      background: #ffebee;
+    }
+
+    .iteration-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
     .iteration-number {
-      color: #4a5568;
+      color: #666666;
+      font-size: 13px;
+    }
+
+    .iteration-timestamp {
+      color: #999999;
+      font-size: 11px;
+    }
+
+    .iteration-duration {
+      color: #999999;
+      font-size: 12px;
+      font-family: 'Monaco', 'Courier New', monospace;
     }
 
     .iteration-cost {
-      color: #2d3748;
-      font-weight: 600;
+      color: #000000;
+      font-weight: 500;
+      font-family: 'Monaco', 'Courier New', monospace;
+      text-align: right;
+    }
+
+    .iteration-details {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #f8f8f8;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .iteration-details.expanded {
+      display: block;
+    }
+
+    .iteration-details-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      color: #666666;
+    }
+
+    .iteration-details-label {
+      font-weight: 500;
+    }
+
+    .iteration-details-value {
+      font-family: 'Monaco', 'Courier New', monospace;
+      color: #000000;
+    }
+
+    .no-iterations {
+      text-align: center;
+      color: #999999;
+      padding: 16px;
+      font-size: 13px;
     }
 
     .footer {
       text-align: center;
-      margin-top: 24px;
-      font-size: 12px;
-      color: #a0aec0;
+      margin-top: 32px; /* 4 × 8px grid */
+      padding-top: 24px; /* 3 × 8px grid */
+      border-top: 1px solid #e5e5e5;
+      font-size: 11px;
+      color: #999999;
     }
 
     .add-task-section {
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid #e2e8f0;
+      margin-top: 32px; /* 4 × 8px grid */
+      padding-top: 24px; /* 3 × 8px grid */
+      border-top: 1px solid #e5e5e5;
     }
 
     .add-task-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #2d3748;
-      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+      margin-bottom: 8px;
     }
 
     .add-task-form {
@@ -268,40 +615,48 @@ function getDashboardHtml(data: DashboardData): string {
 
     .add-task-input {
       flex: 1;
-      padding: 12px 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 14px;
+      padding: 12px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
       font-family: inherit;
       transition: border-color 0.2s;
+      min-height: 44px;
     }
 
     .add-task-input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #000000;
+      background: #fafafa;
+    }
+
+    .add-task-input:active {
+      background: #f5f5f5;
     }
 
     .add-task-input::placeholder {
-      color: #a0aec0;
+      color: #999999;
     }
 
     .add-task-button {
-      padding: 12px 20px;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      padding: 12px 16px;
+      background: #000000;
       color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
+      border-radius: 4px;
+      font-size: 16px; /* Match input font size */
+      font-weight: 500;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
+      transition: opacity 0.2s;
+      min-height: 44px;
     }
 
     .add-task-button:hover {
-      opacity: 0.9;
+      opacity: 0.8;
     }
 
     .add-task-button:active {
+      opacity: 0.6;
       transform: scale(0.98);
     }
 
@@ -312,16 +667,424 @@ function getDashboardHtml(data: DashboardData): string {
 
     .add-task-feedback {
       margin-top: 8px;
-      font-size: 13px;
-      min-height: 20px;
+      font-size: 12px;
+      min-height: 16px;
     }
 
     .add-task-feedback.success {
-      color: #38a169;
+      color: #000000;
     }
 
     .add-task-feedback.error {
-      color: #e53e3e;
+      color: #000000;
+    }
+
+    .tasks-section {
+      margin-top: 32px; /* 4 × 8px grid */
+      padding-top: 24px; /* 3 × 8px grid */
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .tasks-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px; /* 2 × 8px grid */
+    }
+
+    .tasks-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+    }
+
+    .tasks-count {
+      font-size: 12px;
+      color: #666666;
+    }
+
+    .tasks-progress-bar {
+      height: 4px;
+      background: #e5e5e5;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .tasks-progress-fill {
+      height: 100%;
+      background: #000000;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .tasks-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .phase-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #999999;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .phase-header:first-child {
+      margin-top: 0;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .task-item:last-child {
+      border-bottom: none;
+    }
+
+    .task-checkbox {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 3px;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .task-checkbox.completed {
+      background: #000000;
+      border-color: #000000;
+    }
+
+    .task-checkbox.completed::after {
+      content: '✓';
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .task-text {
+      flex: 1;
+      color: #333333;
+    }
+
+    .task-text.completed {
+      color: #999999;
+      text-decoration: line-through;
+    }
+
+    .verbose-section {
+      margin-top: 32px; /* 4 × 8px grid */
+      padding-top: 24px; /* 3 × 8px grid */
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .verbose-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px; /* 2 × 8px grid */
+    }
+
+    .verbose-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+    }
+
+    .verbose-toggle {
+      padding: 12px 16px;
+      background: #000000;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      min-height: 44px;
+    }
+
+    .verbose-toggle:hover {
+      opacity: 0.8;
+    }
+
+    .verbose-toggle:active {
+      opacity: 0.6;
+      transform: scale(0.98);
+    }
+
+    .verbose-output {
+      background: #f8f8f8;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      padding: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #333333;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .verbose-output.hidden {
+      display: none;
+    }
+
+    .verbose-output:empty::before {
+      content: 'No output yet...';
+      color: #999999;
+      font-style: italic;
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #000000;
+        color: #ffffff;
+      }
+
+      .title {
+        color: #ffffff;
+      }
+
+      .session-id {
+        color: #999999;
+      }
+
+      .connection-status {
+        color: #666666;
+      }
+
+      .progress-label {
+        color: #999999;
+      }
+
+      .progress-bar {
+        background: #333333;
+      }
+
+      .progress-fill {
+        background: #ffffff;
+      }
+
+      .status-section {
+        border-bottom: 1px solid #333333;
+      }
+
+      .status-label {
+        color: #666666;
+      }
+
+      .status-text {
+        color: #ffffff;
+      }
+
+      .elapsed-time {
+        color: #999999;
+      }
+
+      .eta-time {
+        color: #666666;
+      }
+
+      .cost-section {
+        color: #999999;
+      }
+
+      .cost-label {
+        color: #999999;
+      }
+
+      .cost-value {
+        color: #ffffff;
+      }
+
+      .iterations-title {
+        color: #ffffff;
+      }
+
+      .iteration-item {
+        border-bottom: 1px solid #1a1a1a;
+      }
+
+      .iteration-item:hover {
+        background: #1a1a1a;
+      }
+
+      .iteration-item:active {
+        background: #262626;
+      }
+
+      .iteration-details {
+        background: #1a1a1a;
+      }
+
+      .iteration-details-row {
+        color: #999999;
+      }
+
+      .iteration-details-value {
+        color: #ffffff;
+      }
+
+      .no-iterations {
+        color: #666666;
+      }
+
+      .iteration-status.success {
+        color: #ffffff;
+        background: #1b5e20;
+      }
+
+      .iteration-status.failure {
+        color: #ffffff;
+        background: #b71c1c;
+      }
+
+      .iteration-number {
+        color: #999999;
+      }
+
+      .iteration-timestamp {
+        color: #666666;
+      }
+
+      .iteration-duration {
+        color: #666666;
+      }
+
+      .iteration-cost {
+        color: #ffffff;
+      }
+
+      .footer {
+        border-top: 1px solid #333333;
+        color: #666666;
+      }
+
+      .add-task-section {
+        border-top: 1px solid #333333;
+      }
+
+      .add-task-title {
+        color: #ffffff;
+      }
+
+      .add-task-input {
+        background: #1a1a1a;
+        border: 1px solid #333333;
+        color: #ffffff;
+      }
+
+      .add-task-input:focus {
+        border-color: #ffffff;
+        background: #262626;
+      }
+
+      .add-task-input:active {
+        background: #333333;
+      }
+
+      .add-task-input::placeholder {
+        color: #666666;
+      }
+
+      .add-task-button {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      .add-task-feedback.success,
+      .add-task-feedback.error {
+        color: #ffffff;
+      }
+
+      .tasks-section {
+        border-top: 1px solid #333333;
+      }
+
+      .tasks-title {
+        color: #ffffff;
+      }
+
+      .tasks-count {
+        color: #999999;
+      }
+
+      .tasks-progress-bar {
+        background: #333333;
+      }
+
+      .tasks-progress-fill {
+        background: #ffffff;
+      }
+
+      .phase-header {
+        color: #666666;
+      }
+
+      .task-item {
+        border-bottom: 1px solid #1a1a1a;
+      }
+
+      .task-checkbox {
+        border: 1px solid #666666;
+      }
+
+      .task-checkbox.completed {
+        background: #ffffff;
+        border-color: #ffffff;
+      }
+
+      .task-checkbox.completed::after {
+        color: #000000;
+      }
+
+      .task-text {
+        color: #cccccc;
+      }
+
+      .task-text.completed {
+        color: #666666;
+      }
+
+      .verbose-section {
+        border-top: 1px solid #333333;
+      }
+
+      .verbose-title {
+        color: #ffffff;
+      }
+
+      .verbose-toggle {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      .verbose-output {
+        background: #1a1a1a;
+        border: 1px solid #333333;
+        color: #cccccc;
+      }
+
+      .verbose-output:empty::before {
+        color: #666666;
+      }
     }
   </style>
   <script>
@@ -329,8 +1092,363 @@ function getDashboardHtml(data: DashboardData): string {
     let isTyping = false;
     let typingTimeout = null;
 
-    // Auto-refresh every 2 seconds
+    // Track verbose mode state
+    let verboseMode = false;
+
+    // Current iteration start time
+    let currentIterationStartTime = null;
+
+    // WebSocket connection state
+    let ws = null;
+    let wsConnected = false;
+    let reconnectAttempt = 0;
+    let reconnectTimeout = null;
+    const MAX_RECONNECT_DELAY = 30000; // 30 seconds max
+    const BASE_RECONNECT_DELAY = 1000; // 1 second base
+    let useFallbackPolling = false;
+
+    // Load verbose mode preference from localStorage
+    function loadVerbosePreference() {
+      try {
+        const saved = localStorage.getItem('ralph-verbose-mode');
+        if (saved !== null) {
+          verboseMode = saved === 'true';
+          if (verboseMode) {
+            const output = document.getElementById('verbose-output');
+            const toggle = document.getElementById('verbose-toggle');
+            if (output) output.classList.remove('hidden');
+            if (toggle) toggle.textContent = 'Hide';
+          }
+        }
+      } catch (err) {
+        // localStorage not available, ignore
+      }
+    }
+
+    // Save verbose mode preference to localStorage
+    function saveVerbosePreference() {
+      try {
+        localStorage.setItem('ralph-verbose-mode', verboseMode.toString());
+      } catch (err) {
+        // localStorage not available, ignore
+      }
+    }
+
+    // Toggle verbose output visibility
+    function toggleVerbose() {
+      verboseMode = !verboseMode;
+      const output = document.getElementById('verbose-output');
+      const toggle = document.getElementById('verbose-toggle');
+
+      if (verboseMode) {
+        if (output) output.classList.remove('hidden');
+        if (toggle) toggle.textContent = 'Hide';
+        // Immediately fetch output when showing
+        fetchVerboseOutput();
+      } else {
+        if (output) output.classList.add('hidden');
+        if (toggle) toggle.textContent = 'Show';
+      }
+
+      saveVerbosePreference();
+    }
+
+    // Format timestamp as relative time (e.g., "2m ago", "5h ago")
+    function formatRelativeTime(timestamp) {
+      const now = new Date();
+      const then = new Date(timestamp);
+      const diffMs = now - then;
+      const diffSeconds = Math.floor(diffMs / 1000);
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffSeconds < 60) {
+        return diffSeconds === 1 ? '1s ago' : diffSeconds + 's ago';
+      } else if (diffMinutes < 60) {
+        return diffMinutes === 1 ? '1m ago' : diffMinutes + 'm ago';
+      } else if (diffHours < 24) {
+        return diffHours === 1 ? '1h ago' : diffHours + 'h ago';
+      } else {
+        return diffDays === 1 ? '1d ago' : diffDays + 'd ago';
+      }
+    }
+
+    // Update all relative timestamps on the page
+    function updateRelativeTimestamps() {
+      const timestampElements = document.querySelectorAll('.iteration-timestamp');
+      for (const element of timestampElements) {
+        const timestamp = element.getAttribute('data-timestamp');
+        if (timestamp) {
+          element.textContent = formatRelativeTime(timestamp);
+        }
+      }
+    }
+
+    // Fetch and update verbose output
+    async function fetchVerboseOutput() {
+      if (!verboseMode) return;
+
+      try {
+        const response = await fetch('/api/output');
+        if (response.ok) {
+          const data = await response.json();
+          const output = document.getElementById('verbose-output');
+          if (output) {
+            output.textContent = data.output ?? '';
+            // Auto-scroll to bottom
+            output.scrollTop = output.scrollHeight;
+          }
+        }
+      } catch (err) {
+        // Silently fail on error
+      }
+    }
+
+    // Initialize WebSocket connection
+    function initWebSocket() {
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = protocol + '//' + window.location.host;
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = function() {
+          wsConnected = true;
+          reconnectAttempt = 0;
+          useFallbackPolling = false;
+          updateConnectionStatus('connected');
+        };
+
+        ws.onmessage = function(event) {
+          try {
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'status') {
+              updateDashboard(message.data);
+              updateRelativeTimestamps();
+            } else if (message.type === 'output') {
+              appendVerboseOutput(message.data);
+            } else if (message.type === 'tasks') {
+              updateTasks(message.data);
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onerror = function(err) {
+          console.error('WebSocket error:', err);
+        };
+
+        ws.onclose = function() {
+          wsConnected = false;
+          updateConnectionStatus('disconnected');
+
+          // Attempt to reconnect with exponential backoff
+          reconnectWebSocket();
+        };
+      } catch (err) {
+        console.error('Failed to create WebSocket:', err);
+        fallbackToPolling();
+      }
+    }
+
+    // Reconnect WebSocket with exponential backoff
+    function reconnectWebSocket() {
+      if (useFallbackPolling) return;
+
+      reconnectAttempt++;
+
+      // Calculate delay with exponential backoff
+      const delay = Math.min(
+        BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempt - 1),
+        MAX_RECONNECT_DELAY
+      );
+
+      updateConnectionStatus('reconnecting');
+
+      // After 3 failed attempts, fall back to polling
+      if (reconnectAttempt > 3) {
+        fallbackToPolling();
+        return;
+      }
+
+      reconnectTimeout = setTimeout(() => {
+        initWebSocket();
+      }, delay);
+    }
+
+    // Fall back to polling if WebSocket fails
+    function fallbackToPolling() {
+      useFallbackPolling = true;
+      updateConnectionStatus('polling');
+
+      // Start polling
+      setTimeout(refreshData, 2000);
+    }
+
+    // Toggle iteration details visibility
+    function toggleIterationDetails(iterationNumber) {
+      const detailsEl = document.getElementById('iteration-details-' + iterationNumber);
+      if (detailsEl) {
+        detailsEl.classList.toggle('expanded');
+      }
+    }
+
+    // Format elapsed time in seconds to human-readable string
+    function formatElapsedTime(seconds) {
+      if (seconds < 60) {
+        return seconds + 's';
+      }
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      if (minutes < 60) {
+        return minutes + 'm ' + remainingSeconds + 's';
+      }
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return hours + 'h ' + remainingMinutes + 'm';
+    }
+
+    // Format duration for iteration display (matches server-side formatDuration)
+    function formatDuration(seconds) {
+      if (seconds < 60) return seconds + 's';
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      if (minutes < 60) return minutes + 'm ' + remainingSeconds + 's';
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return hours + 'h ' + remainingMinutes + 'm';
+    }
+
+    // Update elapsed time display
+    function updateElapsedTime() {
+      const elapsedTimeEl = document.getElementById('elapsed-time');
+      if (!elapsedTimeEl) return;
+
+      if (!currentIterationStartTime) {
+        elapsedTimeEl.textContent = '';
+        return;
+      }
+
+      const now = new Date();
+      const startTime = new Date(currentIterationStartTime);
+      const elapsedSeconds = Math.floor((now - startTime) / 1000);
+
+      if (elapsedSeconds >= 0) {
+        elapsedTimeEl.textContent = 'Elapsed: ' + formatElapsedTime(elapsedSeconds);
+      } else {
+        elapsedTimeEl.textContent = '';
+      }
+    }
+
+    // Calculate average duration of completed iterations
+    let cachedIterations = [];
+
+    function calculateAverageDuration(iterations) {
+      if (!iterations || iterations.length === 0) return null;
+
+      // Only use successful iterations for ETA calculation
+      const successfulIterations = iterations.filter(iter => iter.durationSeconds > 0);
+      if (successfulIterations.length === 0) return null;
+
+      const totalDuration = successfulIterations.reduce((sum, iter) => sum + iter.durationSeconds, 0);
+      return Math.floor(totalDuration / successfulIterations.length);
+    }
+
+    // Update ETA display
+    function updateEta() {
+      const etaEl = document.getElementById('eta-time');
+      if (!etaEl) return;
+
+      if (!currentIterationStartTime || cachedIterations.length === 0) {
+        etaEl.textContent = '';
+        return;
+      }
+
+      const avgDuration = calculateAverageDuration(cachedIterations);
+      if (!avgDuration) {
+        etaEl.textContent = '';
+        return;
+      }
+
+      const now = new Date();
+      const startTime = new Date(currentIterationStartTime);
+      const elapsedSeconds = Math.floor((now - startTime) / 1000);
+
+      const remainingSeconds = avgDuration - elapsedSeconds;
+
+      if (remainingSeconds > 0) {
+        etaEl.textContent = 'ETA: ' + formatElapsedTime(remainingSeconds);
+      } else {
+        // Show that we're past the expected time
+        etaEl.textContent = 'ETA: +' + formatElapsedTime(Math.abs(remainingSeconds));
+      }
+    }
+
+    // Update connection status indicator
+    function updateConnectionStatus(status) {
+      const dot = document.getElementById('connection-dot');
+      const text = document.getElementById('connection-text');
+
+      if (!dot || !text) return;
+
+      // Remove all status classes
+      dot.classList.remove('connected', 'disconnected', 'reconnecting', 'polling');
+
+      // Add appropriate class and update text
+      switch (status) {
+        case 'connected':
+          dot.classList.add('connected');
+          text.textContent = 'Connected';
+          break;
+        case 'disconnected':
+          dot.classList.add('disconnected');
+          text.textContent = 'Disconnected';
+          break;
+        case 'reconnecting':
+          dot.classList.add('reconnecting');
+          text.textContent = 'Reconnecting...';
+          break;
+        case 'polling':
+          dot.classList.add('polling');
+          text.textContent = 'HTTP Polling';
+          break;
+        default:
+          text.textContent = 'Unknown';
+      }
+    }
+
+    // Append output chunk to verbose display (for real-time streaming)
+    function appendVerboseOutput(chunk) {
+      if (!verboseMode) return;
+
+      const output = document.getElementById('verbose-output');
+      if (output) {
+        // Empty chunk signals a reset (from clearOutput)
+        if (chunk === '') {
+          output.textContent = '';
+          return;
+        }
+        output.textContent += chunk;
+        // Auto-scroll to bottom
+        output.scrollTop = output.scrollHeight;
+      }
+    }
+
+    // Auto-refresh every 2 seconds (fallback when WebSocket disconnected)
     async function refreshData() {
+      // Only poll if we're using fallback polling
+      if (!useFallbackPolling) {
+        return;
+      }
+
+      // Skip refresh if user is typing
+      if (isTyping) {
+        setTimeout(refreshData, 2000);
+        return;
+      }
       // Skip refresh if user is typing
       if (isTyping) {
         setTimeout(refreshData, 2000);
@@ -338,15 +1456,34 @@ function getDashboardHtml(data: DashboardData): string {
       }
 
       try {
+        // Fetch status
         const response = await fetch('/api/status');
         if (response.ok) {
           const data = await response.json();
           // Update only the dynamic parts instead of reloading entire page
           updateDashboard(data);
         }
+
+        // Also refresh tasks
+        const tasksResponse = await fetch('/api/tasks');
+        if (tasksResponse.ok) {
+          const tasksData = await tasksResponse.json();
+          updateTasks(tasksData);
+        }
+
+        // Refresh verbose output if visible
+        if (verboseMode) {
+          await fetchVerboseOutput();
+        }
+
+        // Update relative timestamps
+        updateRelativeTimestamps();
       } catch (err) {
         // Silently fail on error
+        console.error('Polling error:', err);
       }
+
+      // Continue polling
       setTimeout(refreshData, 2000);
     }
 
@@ -358,6 +1495,13 @@ function getDashboardHtml(data: DashboardData): string {
       if (progressFill) {
         progressFill.style.width = progressPercent + '%';
         progressFill.textContent = progressPercent.toFixed(0) + '%';
+
+        // Add pulsing animation when iteration is actively running
+        if (data.currentIterationStartedAt) {
+          progressFill.classList.add('active');
+        } else {
+          progressFill.classList.remove('active');
+        }
       }
       if (progressLabel) {
         progressLabel.textContent = 'Iteration ' + data.currentIteration + ' of ' + data.totalIterations;
@@ -369,11 +1513,135 @@ function getDashboardHtml(data: DashboardData): string {
         statusText.textContent = data.status;
       }
 
+      // Update current iteration start time
+      if (data.currentIterationStartedAt !== currentIterationStartTime) {
+        currentIterationStartTime = data.currentIterationStartedAt;
+        updateElapsedTime();
+      }
+
+      // Cache iterations for ETA calculation
+      if (data.iterations && data.iterations.length > 0) {
+        cachedIterations = data.iterations;
+      } else {
+        cachedIterations = [];
+      }
+      updateEta();
+
       // Update cost
       const costValue = document.querySelector('.cost-value');
       if (costValue) {
         costValue.textContent = '$' + data.totalCost.toFixed(4);
       }
+
+      // Update iterations list
+      if (data.iterations) {
+        updateIterations(data.iterations);
+      }
+    }
+
+    function updateTasks(data) {
+      const tasksCount = document.querySelector('.tasks-count');
+      if (tasksCount) {
+        tasksCount.textContent = data.completedCount + ' of ' + data.totalCount + ' complete';
+      }
+
+      // Update progress bar
+      const progressFill = document.querySelector('.tasks-progress-fill');
+      if (progressFill) {
+        const percentage = data.totalCount > 0
+          ? (data.completedCount / data.totalCount) * 100
+          : 0;
+        progressFill.style.width = percentage + '%';
+      }
+
+      const tasksList = document.querySelector('.tasks-list');
+      if (!tasksList) return;
+
+      // Group tasks by phase
+      const tasksByPhase = {};
+      for (const task of data.tasks) {
+        const phase = task.phase || 'Other';
+        if (!tasksByPhase[phase]) {
+          tasksByPhase[phase] = [];
+        }
+        tasksByPhase[phase].push(task);
+      }
+
+      // Rebuild the tasks list
+      let html = '';
+      for (const phase in tasksByPhase) {
+        html += '<div class="phase-header">' + escapeHtml(phase) + '</div>';
+        for (const task of tasksByPhase[phase]) {
+          const completedClass = task.completed ? ' completed' : '';
+          html += '<div class="task-item">';
+          html += '<div class="task-checkbox' + completedClass + '"></div>';
+          html += '<div class="task-text' + completedClass + '">' + escapeHtml(task.text) + '</div>';
+          html += '</div>';
+        }
+      }
+      tasksList.innerHTML = html;
+    }
+
+    function updateIterations(iterations) {
+      const iterationsList = document.getElementById('iterations-list');
+      if (!iterationsList) return;
+
+      if (!iterations || iterations.length === 0) {
+        iterationsList.innerHTML = '<div class="no-iterations">No completed iterations yet</div>';
+        return;
+      }
+
+      let html = '';
+      for (const iter of iterations) {
+        const statusClass = iter.success ? 'success' : 'failure';
+        const statusIcon = iter.success ? '✓' : '✗';
+        const duration = formatDuration(iter.durationSeconds || 0);
+        const cost = iter.cost ? iter.cost.toFixed(4) : '0.0000';
+        const inputTokens = iter.inputTokens ? iter.inputTokens.toLocaleString() : 'N/A';
+        const outputTokens = iter.outputTokens ? iter.outputTokens.toLocaleString() : 'N/A';
+
+        html += '<div class="iteration-item" onclick="toggleIterationDetails(' + iter.number + ')">';
+        html += '<div class="iteration-summary">';
+        html += '<span class="iteration-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<div class="iteration-info">';
+        html += '<span class="iteration-number">Iteration ' + iter.number + '</span>';
+        html += '<span class="iteration-timestamp" data-timestamp="' + iter.timestamp + '"></span>';
+        html += '</div>';
+        html += '<span class="iteration-duration">' + duration + '</span>';
+        html += '<span class="iteration-cost">$' + cost + '</span>';
+        html += '</div>';
+        html += '<div class="iteration-details" id="iteration-details-' + iter.number + '">';
+        
+        if (iter.inputTokens || iter.outputTokens) {
+          html += '<div class="iteration-details-row">';
+          html += '<span class="iteration-details-label">Input Tokens:</span>';
+          html += '<span class="iteration-details-value">' + inputTokens + '</span>';
+          html += '</div>';
+          html += '<div class="iteration-details-row">';
+          html += '<span class="iteration-details-label">Output Tokens:</span>';
+          html += '<span class="iteration-details-value">' + outputTokens + '</span>';
+          html += '</div>';
+        }
+        
+        if (iter.status) {
+          html += '<div class="iteration-details-row">';
+          html += '<span class="iteration-details-label">Status:</span>';
+          html += '<span class="iteration-details-value">' + escapeHtml(iter.status) + '</span>';
+          html += '</div>';
+        }
+        
+        html += '</div>';
+        html += '</div>';
+      }
+
+      iterationsList.innerHTML = html;
+      updateRelativeTimestamps();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     // Add task form handling
@@ -438,8 +1706,34 @@ function getDashboardHtml(data: DashboardData): string {
       }, 1000);
     }
 
-    // Start auto-refresh
-    setTimeout(refreshData, 2000);
+    // Load tasks on page load
+    async function loadInitialTasks() {
+      try {
+        const response = await fetch('/api/tasks');
+        if (response.ok) {
+          const data = await response.json();
+          updateTasks(data);
+        }
+      } catch (err) {
+        // Silently fail on error
+      }
+    }
+
+    // Start WebSocket connection and load initial data
+    loadVerbosePreference();
+    loadInitialTasks();
+    updateRelativeTimestamps(); // Initial update
+    updateElapsedTime(); // Initial update
+    initWebSocket();
+
+    // Update elapsed time and ETA every second
+    setInterval(function() {
+      updateElapsedTime();
+      updateEta();
+    }, 1000);
+
+    // Update relative timestamps every 2 seconds
+    setInterval(updateRelativeTimestamps, 2000);
   </script>
 </head>
 <body>
@@ -447,6 +1741,10 @@ function getDashboardHtml(data: DashboardData): string {
     <div class="header">
       <div class="title">Ralph CLI Dashboard</div>
       <div class="session-id">${data.sessionId}</div>
+      <div class="connection-status">
+        <div class="connection-dot" id="connection-dot"></div>
+        <span id="connection-text">Connecting...</span>
+      </div>
     </div>
 
     <div class="progress-section">
@@ -464,6 +1762,8 @@ function getDashboardHtml(data: DashboardData): string {
     <div class="status-section">
       <div class="status-label">Current Status</div>
       <div class="status-text">${data.status}</div>
+      <div class="elapsed-time" id="elapsed-time"></div>
+      <div class="eta-time" id="eta-time"></div>
     </div>
 
     <div class="cost-section">
@@ -471,18 +1771,33 @@ function getDashboardHtml(data: DashboardData): string {
       <span class="cost-value">$${data.totalCost.toFixed(4)}</span>
     </div>
 
-    ${
-      data.iterations.length > 0
-        ? `
-    <div class="iterations-section">
-      <div class="iterations-title">Iteration History</div>
-      <div class="iterations-list">
-        ${iterationsHtml}
+    <div class="tasks-section">
+      <div class="tasks-header">
+        <div class="tasks-title">Tasks</div>
+        <div class="tasks-count">Loading...</div>
+      </div>
+      <div class="tasks-progress-bar">
+        <div class="tasks-progress-fill"></div>
+      </div>
+      <div class="tasks-list">
+        <div style="text-align: center; color: #999999; padding: 16px;">Loading tasks...</div>
       </div>
     </div>
-    `
-        : ""
-    }
+
+    <div class="verbose-section">
+      <div class="verbose-header">
+        <div class="verbose-title">Verbose Output</div>
+        <button id="verbose-toggle" class="verbose-toggle" onclick="toggleVerbose()">Show</button>
+      </div>
+      <div id="verbose-output" class="verbose-output hidden"></div>
+    </div>
+
+    <div class="iterations-section">
+      <div class="iterations-title">Iteration History</div>
+      <div class="iterations-list" id="iterations-list">
+        ${data.iterations.length > 0 ? iterationsHtml : '<div class="no-iterations">No completed iterations yet</div>'}
+      </div>
+    </div>
 
     <div class="add-task-section">
       <div class="add-task-title">Add Task to PRD</div>
@@ -494,6 +1809,10 @@ function getDashboardHtml(data: DashboardData): string {
           placeholder="Enter a new task..."
           oninput="handleInput()"
           autocomplete="off"
+          autocorrect="off"
+          autocapitalize="sentences"
+          spellcheck="true"
+          enterkeyhint="done"
         />
         <button type="submit" id="task-button" class="add-task-button">Add</button>
       </form>
@@ -561,7 +1880,7 @@ async function addTaskToPrd(task: string): Promise<void> {
 /**
  * Request handler for the web server
  */
-function handleRequest(req: IncomingMessage, res: ServerResponse) {
+async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   // CORS headers for API requests
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -599,6 +1918,19 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // API endpoint for PRD tasks
+  if (req.url === "/api/tasks") {
+    await handleGetTasks(req, res);
+    return;
+  }
+
+  // API endpoint for Claude output
+  if (req.url === "/api/output") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ output: serverState.outputBuffer }));
+    return;
+  }
+
   // HTML dashboard (default route)
   if (req.url === "/" || req.url === "/index.html") {
     const data = getDashboardData();
@@ -611,6 +1943,38 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
   // 404 for other routes
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Not Found");
+}
+
+/**
+ * Handle GET /api/tasks - Get all tasks from PRD
+ */
+async function handleGetTasks(_req: IncomingMessage, res: ServerResponse) {
+  try {
+    if (!serverState.ralphDir) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Ralph directory not configured" }));
+      return;
+    }
+
+    const prdPath = join(serverState.ralphDir, "PRD.md");
+    const tasks = await parsePrdTasks(prdPath);
+
+    const completedCount = tasks.filter((t) => t.completed).length;
+    const totalCount = tasks.length;
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        tasks,
+        completedCount,
+        totalCount,
+      }),
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: message }));
+  }
 }
 
 /**
@@ -635,6 +1999,9 @@ async function handleAddTask(req: IncomingMessage, res: ServerResponse) {
 
     await addTaskToPrd(task);
 
+    // Broadcast task update to WebSocket clients
+    await broadcastTaskUpdate();
+
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ success: true, task }));
   } catch (err) {
@@ -653,6 +2020,58 @@ async function handleAddTask(req: IncomingMessage, res: ServerResponse) {
 export async function startWebServer(port: number) {
   const server = createServer(handleRequest);
 
+  // Create WebSocket server attached to HTTP server
+  wss = new WebSocketServer({ server });
+
+  // Handle WebSocket connections
+  wss.on("connection", async (ws: WebSocket) => {
+    // Add client to set
+    wsClients.add(ws);
+
+    // Send initial state to newly connected client
+    const data = getDashboardData();
+    ws.send(
+      JSON.stringify({
+        type: "status",
+        data,
+      }),
+    );
+
+    // Send initial tasks data
+    try {
+      if (serverState.ralphDir) {
+        const prdPath = join(serverState.ralphDir, "PRD.md");
+        const tasks = await parsePrdTasks(prdPath);
+        const completedCount = tasks.filter((t) => t.completed).length;
+        const totalCount = tasks.length;
+
+        ws.send(
+          JSON.stringify({
+            type: "tasks",
+            data: {
+              tasks,
+              completedCount,
+              totalCount,
+            },
+          }),
+        );
+      }
+    } catch (_err) {
+      // Silently fail
+    }
+
+    // Handle client disconnect
+    ws.on("close", () => {
+      wsClients.delete(ws);
+    });
+
+    // Handle errors
+    ws.on("error", (err) => {
+      console.error("WebSocket error:", err);
+      wsClients.delete(ws);
+    });
+  });
+
   return new Promise<typeof server>((resolve, reject) => {
     server.listen(port, () => {
       resolve(server);
@@ -668,6 +2087,18 @@ export async function startWebServer(port: number) {
  * Stop the web server
  */
 export async function stopWebServer(server: ReturnType<typeof createServer>) {
+  // Close all WebSocket connections
+  for (const client of wsClients) {
+    client.close();
+  }
+  wsClients.clear();
+
+  // Close WebSocket server
+  if (wss) {
+    wss.close();
+    wss = null;
+  }
+
   return new Promise<void>((resolve, reject) => {
     server.close((err) => {
       if (err) {

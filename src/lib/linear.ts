@@ -1,4 +1,4 @@
-import { LinearClient, type Team, type IssueLabel, type IssueSearchResult } from "@linear/sdk";
+import { type IssueLabel, type IssueSearchResult, LinearClient, type Team } from "@linear/sdk";
 import type { FetchIssuesResult, LinearIssue, LinearTeam } from "../types.js";
 import { getLinearTokenFromKeychain, saveLinearTokenToKeychain } from "./keychain.js";
 
