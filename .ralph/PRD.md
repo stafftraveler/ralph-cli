@@ -22,7 +22,7 @@ Clean-up the codebase.
 ### Medium Priority Issues
 
 [x] Export NotifyOptions interface in src/lib/notify.ts (line 9) or integrate into function signature
-[ ] Standardize function declarations - use function keyword for pure functions consistently (per CLAUDE.md)
+[x] Standardize function declarations - use function keyword for pure functions consistently (per CLAUDE.md) - Verified: already consistent
 [ ] Review and add debug logging to empty catch blocks in src/cli.ts (lines 22, 95, 110)
 [ ] Review and add debug logging to empty catch blocks in src/hooks/use-git.ts (multiple occurrences)
 
