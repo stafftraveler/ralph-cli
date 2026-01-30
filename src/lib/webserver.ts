@@ -139,6 +139,24 @@ function broadcastOutputUpdate(chunk: string) {
 }
 
 /**
+ * Broadcast completed message to all connected WebSocket clients
+ */
+function broadcastCompleted() {
+  if (wsClients.size === 0) return;
+
+  const message = JSON.stringify({
+    type: "completed",
+  });
+
+  for (const client of wsClients) {
+    if (client.readyState === 1) {
+      // WebSocket.OPEN
+      client.send(message);
+    }
+  }
+}
+
+/**
  * Broadcast task update to all connected WebSocket clients
  */
 async function broadcastTaskUpdate() {
@@ -346,6 +364,10 @@ function getDashboardHtml(data: DashboardData): string {
 
     .connection-dot.polling {
       background: #2196f3;
+    }
+
+    .connection-dot.completed {
+      background: #4caf50;
     }
 
     @keyframes pulse {
@@ -1106,6 +1128,7 @@ function getDashboardHtml(data: DashboardData): string {
     const MAX_RECONNECT_DELAY = 30000; // 30 seconds max
     const BASE_RECONNECT_DELAY = 1000; // 1 second base
     let useFallbackPolling = false;
+    let sessionCompleted = false;
 
     // Load verbose mode preference from localStorage
     function loadVerbosePreference() {
@@ -1231,6 +1254,9 @@ function getDashboardHtml(data: DashboardData): string {
               appendVerboseOutput(message.data);
             } else if (message.type === 'tasks') {
               updateTasks(message.data);
+            } else if (message.type === 'completed') {
+              sessionCompleted = true;
+              updateConnectionStatus('completed');
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -1243,6 +1269,13 @@ function getDashboardHtml(data: DashboardData): string {
 
         ws.onclose = function() {
           wsConnected = false;
+
+          // Don't reconnect if session is completed
+          if (sessionCompleted) {
+            updateConnectionStatus('completed');
+            return;
+          }
+
           updateConnectionStatus('disconnected');
 
           // Attempt to reconnect with exponential backoff
@@ -1281,6 +1314,12 @@ function getDashboardHtml(data: DashboardData): string {
 
     // Fall back to polling if WebSocket fails
     function fallbackToPolling() {
+      // Don't start polling if session is completed
+      if (sessionCompleted) {
+        updateConnectionStatus('completed');
+        return;
+      }
+
       useFallbackPolling = true;
       updateConnectionStatus('polling');
 
@@ -1395,7 +1434,7 @@ function getDashboardHtml(data: DashboardData): string {
       if (!dot || !text) return;
 
       // Remove all status classes
-      dot.classList.remove('connected', 'disconnected', 'reconnecting', 'polling');
+      dot.classList.remove('connected', 'disconnected', 'reconnecting', 'polling', 'completed');
 
       // Add appropriate class and update text
       switch (status) {
@@ -1414,6 +1453,10 @@ function getDashboardHtml(data: DashboardData): string {
         case 'polling':
           dot.classList.add('polling');
           text.textContent = 'HTTP Polling';
+          break;
+        case 'completed':
+          dot.classList.add('completed');
+          text.textContent = 'Completed';
           break;
         default:
           text.textContent = 'Unknown';
@@ -2087,6 +2130,12 @@ export async function startWebServer(port: number) {
  * Stop the web server
  */
 export async function stopWebServer(server: ReturnType<typeof createServer>) {
+  // Broadcast completed message before closing connections
+  broadcastCompleted();
+
+  // Give clients time to receive the completed message before closing
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
   // Close all WebSocket connections
   for (const client of wsClients) {
     client.close();

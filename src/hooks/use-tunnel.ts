@@ -108,6 +108,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scheduleReconnectRef = useRef<(() => void) | null>(null);
+  // Track tunnel instance to prevent stale event handlers from affecting new tunnels
+  const tunnelInstanceIdRef = useRef(0);
 
   /**
    * Clear all timers
@@ -148,6 +150,10 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
       closeTunnel();
       clearTimers();
 
+      // Increment instance ID to invalidate any pending events from old tunnels
+      tunnelInstanceIdRef.current += 1;
+      const currentInstanceId = tunnelInstanceIdRef.current;
+
       if (isReconnect) {
         setIsReconnecting(true);
       } else {
@@ -162,7 +168,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
           fetchTunnelPassword(),
         ]);
 
-        if (!isMountedRef.current) {
+        // Check if this tunnel instance is still current
+        if (!isMountedRef.current || currentInstanceId !== tunnelInstanceIdRef.current) {
           tunnel.close();
           return false;
         }
@@ -174,9 +181,9 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
         setIsReconnecting(false);
         setReconnectAttempts(0);
 
-        // Handle tunnel close event
+        // Handle tunnel close event - only act if this is still the current tunnel
         tunnel.on("close", () => {
-          if (isMountedRef.current) {
+          if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
             setUrl(null);
             setPassword(null);
             // Don't set error here - we'll try to reconnect first
@@ -184,9 +191,9 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
           }
         });
 
-        // Handle tunnel error event
+        // Handle tunnel error event - only act if this is still the current tunnel
         tunnel.on("error", (_err: Error) => {
-          if (isMountedRef.current) {
+          if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
             // Don't set error here - we'll try to reconnect first
             scheduleReconnectRef.current?.();
           }
@@ -194,12 +201,22 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
         // Start health check interval
         healthCheckIntervalRef.current = setInterval(async () => {
-          if (!isMountedRef.current || !tunnelRef.current) return;
+          // Check both mounted state and instance ID
+          if (
+            !isMountedRef.current ||
+            !tunnelRef.current ||
+            currentInstanceId !== tunnelInstanceIdRef.current
+          )
+            return;
 
           const currentUrl = tunnelRef.current.url;
           const isHealthy = await checkTunnelHealth(currentUrl);
 
-          if (!isHealthy && isMountedRef.current) {
+          if (
+            !isHealthy &&
+            isMountedRef.current &&
+            currentInstanceId === tunnelInstanceIdRef.current
+          ) {
             // Tunnel is dead, trigger reconnection
             scheduleReconnectRef.current?.();
           }
@@ -207,7 +224,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
         return true;
       } catch (err) {
-        if (isMountedRef.current) {
+        // Check if this instance is still current before handling error
+        if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
           const message = err instanceof Error ? err.message : String(err);
 
           if (isReconnect) {
@@ -278,6 +296,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
     return () => {
       isMountedRef.current = false;
+      // Increment instance ID to invalidate any pending async events from old tunnel
+      tunnelInstanceIdRef.current += 1;
       clearTimers();
       closeTunnel();
     };
