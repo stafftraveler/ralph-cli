@@ -56,3 +56,19 @@
 - src/lib/webserver.ts (error handling in 5 locations)
 
 **Notes**: Pattern now clear: log errors that indicate problems, silently handle expected failures (client disconnects). Linter keeps reverting regex fix - may need .biome config adjustment.
+
+## Iteration 5: Extract dashboard HTML template to separate module
+
+**Task**: Split monolithic webserver.ts by extracting getDashboardHtml to separate file
+
+**Decisions**:
+- Created src/dashboard/template.ts with 2224-line getDashboardHtml function
+- Reduced webserver.ts from 2873 to 646 lines (77% reduction)
+- Maintained runtime behavior - no build step needed
+- Removed unused formatDuration import from webserver.ts
+
+**Files changed**:
+- src/dashboard/template.ts (new file, 2226 lines)
+- src/lib/webserver.ts (removed getDashboardHtml, added import)
+
+**Notes**: Major architectural improvement. Webserver now focuses on server logic. Template module handles HTML generation. Further extraction possible: CSS and JS could be separated into their own files within src/dashboard/.
