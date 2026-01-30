@@ -41,7 +41,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 [ ] Make 'Total Cost' block smaller and more subtle (inline or smaller font)
 [ ] Use a more minimal color palette (monochrome with accent color)
 [ ] Reduce visual noise - simplify borders, shadows, and decorative elements
-[ ] Add proper spacing using consistent 8px grid system
+[x] Add proper spacing using consistent 8px grid system
 
 ### Phase 2: Task Display
 

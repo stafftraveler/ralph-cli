@@ -129,7 +129,7 @@ function getDashboardHtml(data: DashboardData): string {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background: #ffffff;
       min-height: 100vh;
-      padding: 16px;
+      padding: 16px; /* 2 × 8px grid */
     }
 
     .container {
@@ -141,7 +141,7 @@ function getDashboardHtml(data: DashboardData): string {
 
     .header {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 32px; /* 4 × 8px grid */
     }
 
     .title {
@@ -184,8 +184,8 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .status-section {
-      margin-bottom: 24px;
-      padding: 16px 0;
+      margin-bottom: 24px; /* 3 × 8px grid */
+      padding: 16px 0; /* 2 × 8px grid */
       border-bottom: 1px solid #e5e5e5;
     }
 
@@ -266,16 +266,16 @@ function getDashboardHtml(data: DashboardData): string {
 
     .footer {
       text-align: center;
-      margin-top: 32px;
-      padding-top: 24px;
+      margin-top: 32px; /* 4 × 8px grid */
+      padding-top: 24px; /* 3 × 8px grid */
       border-top: 1px solid #e5e5e5;
       font-size: 11px;
       color: #999999;
     }
 
     .add-task-section {
-      margin-top: 32px;
-      padding-top: 24px;
+      margin-top: 32px; /* 4 × 8px grid */
+      padding-top: 24px; /* 3 × 8px grid */
       border-top: 1px solid #e5e5e5;
     }
 
@@ -358,8 +358,8 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .tasks-section {
-      margin-top: 32px;
-      padding-top: 24px;
+      margin-top: 32px; /* 4 × 8px grid */
+      padding-top: 24px; /* 3 × 8px grid */
       border-top: 1px solid #e5e5e5;
     }
 
@@ -367,7 +367,7 @@ function getDashboardHtml(data: DashboardData): string {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 16px;
+      margin-bottom: 16px; /* 2 × 8px grid */
     }
 
     .tasks-title {
@@ -464,8 +464,8 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .verbose-section {
-      margin-top: 32px;
-      padding-top: 24px;
+      margin-top: 32px; /* 4 × 8px grid */
+      padding-top: 24px; /* 3 × 8px grid */
       border-top: 1px solid #e5e5e5;
     }
 
@@ -473,7 +473,7 @@ function getDashboardHtml(data: DashboardData): string {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 16px; /* 2 × 8px grid */
     }
 
     .verbose-title {
