@@ -1,0 +1,18 @@
+## Iteration 1: Set up Vitest testing framework
+
+Task: PRD Task 1.1 - Set up Vitest testing framework
+
+Decisions:
+- Used Vitest v2.1.9 with v8 coverage provider
+- Configured for Node environment with globals enabled
+- Set include pattern: src/**/*.{test,spec}.{ts,tsx}
+- Added @vitest/coverage-v8 for coverage reporting
+- Excluded standard files from coverage (tests, bin, d.ts files)
+
+Files changed:
+- package.json: Added vitest and @vitest/coverage-v8 devDeps, added test scripts (test, test:watch, test:coverage)
+- vitest.config.ts: Created config with Node env, coverage settings, and path alias
+
+Notes:
+- Test framework is ready, no test files exist yet (expected)
+- Next tasks will add actual test files for session, config, claude, and git modules

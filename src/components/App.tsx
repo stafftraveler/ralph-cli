@@ -288,7 +288,17 @@ export function App({ ralphDir, prompt, options }: AppProps) {
     await runBeforeIteration(plugins, firstIterationCtx);
 
     setPhase("running");
-  }, [config, branch, options.branch, options.dryRun, plugins, ralphDir, repoRoot, verbose, totalIterations]);
+  }, [
+    config,
+    branch,
+    options.branch,
+    options.dryRun,
+    plugins,
+    ralphDir,
+    repoRoot,
+    verbose,
+    totalIterations,
+  ]);
 
   // Phase: Resume session
   const handleResumeSession = useCallback(
@@ -330,7 +340,16 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
       setPhase("running");
     },
-    [config, ralphDir, repoRoot, verbose, options.dryRun, plugins, handleNewSession, totalIterations],
+    [
+      config,
+      ralphDir,
+      repoRoot,
+      verbose,
+      options.dryRun,
+      plugins,
+      handleNewSession,
+      totalIterations,
+    ],
   );
 
   // Handle iteration complete

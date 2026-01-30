@@ -23,7 +23,7 @@ Make Ralph CLI more robust, maintainable, and user-friendly through testing, bet
 
 ### 1. Add Automated Testing
 
-[ ] Set up Vitest testing framework
+[x] Set up Vitest testing framework
     - Add vitest and related dependencies to package.json
     - Create vitest.config.ts configuration file
     - Add test scripts to package.json (`test`, `test:watch`, `test:coverage`)
