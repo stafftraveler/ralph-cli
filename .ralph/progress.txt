@@ -77,3 +77,15 @@ Iteration 8 - Chapter 4: Localtunnel alternatives research
 - Documented full analysis with pros/cons for each solution in LOCAL-TUNNEL.md
 Files changed: LOCAL-TUNNEL.md, .ralph/PRD.md
 All tests pass, type checks pass, no lint errors
+
+Iteration 9 - Chapter 3: Implement client-side cost calculation
+- Root cause: SDK returns total_cost_usd = 0, causing dashboard to show "$0.0000"
+- Solution: Implement calculateCost() fallback based on Claude Opus 4.5 pricing
+- Pricing: Base input $5/MTok, Output $25/MTok, Cache write $6.25/MTok, Cache read $0.50/MTok
+- Calculate base input as total input minus cached tokens
+- Sum costs from all token types: base input + output + cache reads + cache writes
+- Applied fallback only when SDK returns 0 but has token data
+- Cost now accurately reflects actual API usage based on token counts
+Decision: Use SDK cost when available, calculate as fallback when SDK returns 0
+Files changed: src/lib/claude.ts
+All tests pass, type checks pass, no lint errors

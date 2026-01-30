@@ -41,7 +41,7 @@ Enhance the dashboard to show detailed status messages from Claude's tool use, i
 [x] Remove the % from the progress bar. The bar isn't high enough to show it anyway.
 [x] When I open an iteration on the dashboard, it closes after a while. I think the open state may get lost after a re-render.
 [x] The costs are only shown in the Dashboard, not in the CLI, even not in the summary. Please also show it in the CLI (live while running and in the summary).
-[ ] The costs in the dashboard always show "Total Cost $0.0000". Should we configure the actual costs per token somewhere? I'll list the costs below.
+[x] The costs in the dashboard always show "Total Cost $0.0000". Should we configure the actual costs per token somewhere? I'll list the costs below.
 
 ### Claude Code API costs
 
