@@ -38,7 +38,7 @@ Make Ralph CLI more robust, maintainable, and user-friendly through testing, bet
     - Test parsing of config file with various formats
     - Test handling of missing or malformed config files
 
-[ ] Add unit tests for Claude integration (src/lib/claude.ts)
+[x] Add unit tests for Claude integration (src/lib/claude.ts)
     - Test iteration execution flow
     - Test error handling and retries
     - Mock Claude Agent SDK
