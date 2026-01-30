@@ -49,6 +49,8 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.23",
+    "@inkjs/ui": "^2.0.0",
+    "@linear/sdk": "^72.0.0",
     "chalk": "^5.4.0",
     "commander": "^13.0.0",
     "execa": "^9.5.0",

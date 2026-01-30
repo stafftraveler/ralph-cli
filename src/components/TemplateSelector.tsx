@@ -5,7 +5,8 @@ import SelectInput from "ink-select-input";
 import Spinner from "ink-spinner";
 import { useCallback, useEffect, useState } from "react";
 import { listTemplates, prdHasTasks } from "../lib/prd.js";
-import type { PrdTemplate } from "../types.js";
+import type { PrdTemplate, RalphConfig } from "../types.js";
+import { LinearImport } from "./LinearImport.js";
 
 /**
  * Props for the TemplateSelector component
@@ -13,13 +14,23 @@ import type { PrdTemplate } from "../types.js";
 export interface TemplateSelectorProps {
   /** Path to .ralph directory */
   ralphDir: string;
+  /** Current config (for Linear defaults) */
+  config: RalphConfig;
   /** Called when template is selected and PRD is valid */
   onComplete: () => void;
   /** Called if user wants to cancel */
   onCancel?: () => void;
 }
 
-type Phase = "loading" | "select" | "copying" | "waiting-for-edit" | "validating" | "error";
+type Phase =
+  | "loading"
+  | "select-source"
+  | "select-template"
+  | "linear-import"
+  | "copying"
+  | "waiting-for-edit"
+  | "validating"
+  | "error";
 
 interface SelectItem {
   label: string;
@@ -28,36 +39,60 @@ interface SelectItem {
 }
 
 /**
- * TemplateSelector component for choosing a PRD template.
+ * TemplateSelector component for choosing a PRD template or importing from Linear.
  *
  * Flow:
- * 1. Select a template from the list
- * 2. Copy template to PRD.md
- * 3. Show PRD path and wait for user to edit and press Enter
- * 4. Validate PRD has tasks
+ * 1. Select source: "Pick template" or "Import from Linear"
+ * 2. If "Pick template": Show template list, copy selected to PRD.md, wait for edit, validate
+ * 3. If "Import from Linear": Delegate to LinearImport component
  */
-export function TemplateSelector({ ralphDir, onComplete, onCancel }: TemplateSelectorProps) {
+export function TemplateSelector({
+  ralphDir,
+  config,
+  onComplete,
+  onCancel,
+}: TemplateSelectorProps) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [templates, setTemplates] = useState<PrdTemplate[]>([]);
   const [_selectedTemplate, setSelectedTemplate] = useState<PrdTemplate | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const prdPath = join(ralphDir, "PRD.md");
-  const templatesDir = join(ralphDir, "prd");
+  const templatesDir = join(ralphDir, config.prdTemplatesDir);
 
   // Load templates on mount
   useEffect(() => {
     async function loadTemplates() {
       const loaded = await listTemplates(templatesDir);
       setTemplates(loaded);
-      setPhase("select");
+      setPhase("select-source");
     }
     void loadTemplates();
   }, [templatesDir]);
 
-  // Handle template selection
-  const handleSelect = useCallback(
+  // Handle source selection (first menu)
+  const handleSourceSelect = useCallback(
+    (item: { label: string; value: string }) => {
+      if (item.value === "template") {
+        setPhase("select-template");
+      } else if (item.value === "linear") {
+        setPhase("linear-import");
+      } else {
+        // "Cancel" option selected
+        onCancel?.();
+      }
+    },
+    [onCancel],
+  );
+
+  // Handle template selection (second menu)
+  const handleTemplateSelect = useCallback(
     async (item: SelectItem) => {
+      if (item.value === "back") {
+        setPhase("select-source");
+        return;
+      }
+
       if (!item.template) {
         // "Cancel" option selected
         onCancel?.();
@@ -115,18 +150,36 @@ export function TemplateSelector({ ralphDir, onComplete, onCancel }: TemplateSel
     { isActive: phase === "waiting-for-edit" || phase === "error" },
   );
 
-  // Build select items
-  const items: SelectItem[] = templates.map((t) => ({
-    label: `${t.name}${t.description ? ` - ${t.description}` : ""}`,
-    value: t.name,
-    template: t,
-  }));
+  // Build source selection items (first menu)
+  const sourceItems = [
+    {
+      label: "Pick template",
+      value: "template",
+    },
+    {
+      label: "Import from Linear",
+      value: "linear",
+    },
+    {
+      label: "Cancel",
+      value: "cancel",
+    },
+  ];
 
-  // Add cancel option
-  items.push({
-    label: "Cancel",
-    value: "cancel",
-  });
+  // Build template selection items (second menu)
+  const templateItems: SelectItem[] = [
+    // Template options
+    ...templates.map((t) => ({
+      label: `${t.name}${t.description ? ` - ${t.description}` : ""}`,
+      value: t.name,
+      template: t,
+    })),
+    // Back option at the bottom
+    {
+      label: "← Back",
+      value: "back",
+    },
+  ];
 
   // Render based on phase
   if (phase === "loading") {
@@ -140,21 +193,36 @@ export function TemplateSelector({ ralphDir, onComplete, onCancel }: TemplateSel
     );
   }
 
-  if (phase === "select") {
+  if (phase === "select-source") {
     return (
       <Box flexDirection="column" marginY={1}>
         <Box marginBottom={1}>
-          <Text bold>Select a PRD template:</Text>
+          <Text bold>Select a PRD source:</Text>
         </Box>
-        {templates.length === 0 ? (
-          <Box flexDirection="column">
-            <Text color="yellow">No templates found in {templatesDir}</Text>
-            <Text color="gray">Create template files in .ralph/prd/</Text>
-          </Box>
-        ) : (
-          <SelectInput items={items} onSelect={handleSelect} />
-        )}
+        <SelectInput items={sourceItems} onSelect={handleSourceSelect} />
       </Box>
+    );
+  }
+
+  if (phase === "select-template") {
+    return (
+      <Box flexDirection="column" marginY={1}>
+        <Box marginBottom={1}>
+          <Text bold>Select a template:</Text>
+        </Box>
+        <SelectInput items={templateItems} onSelect={handleTemplateSelect} />
+      </Box>
+    );
+  }
+
+  if (phase === "linear-import") {
+    return (
+      <LinearImport
+        ralphDir={ralphDir}
+        config={config}
+        onComplete={onComplete}
+        onCancel={() => setPhase("select-source")}
+      />
     );
   }
 

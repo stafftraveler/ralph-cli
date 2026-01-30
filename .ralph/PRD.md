@@ -2,7 +2,7 @@
 
 ## Overview
 
-Improve Ralph CLI with automated testing, CI/CD pipeline enhancements, cost limit enforcement, and better error handling.
+Start with this empty PRD template.
 
 ## Working directory
 
@@ -10,114 +10,12 @@ Improve Ralph CLI with automated testing, CI/CD pipeline enhancements, cost limi
 
 ## Reference
 
-- CLAUDE.md and AGENTS.md for project architecture
-- PRD-advise.md for detailed implementation suggestions
-- src/lib/config.ts for configuration loading
-- src/hooks/use-claude.ts for iteration execution
+...
 
 ## Purpose
 
-Make Ralph CLI more robust, maintainable, and user-friendly through testing, better error messages, and proper cost controls.
+...
 
 ## Tasks
 
-### 1. Add Automated Testing
-
-[x] Set up Vitest testing framework
-    - Add vitest and related dependencies to package.json
-    - Create vitest.config.ts configuration file
-    - Add test scripts to package.json (`test`, `test:watch`, `test:coverage`)
-
-[x] Add unit tests for session management (src/lib/session.ts)
-    - Test session creation and loading
-    - Test checkpoint save/restore functionality
-    - Mock file system operations
-
-[x] Add unit tests for configuration loading (src/lib/config.ts)
-    - Test default config values
-    - Test parsing of config file with various formats
-    - Test handling of missing or malformed config files
-
-[x] Add unit tests for Claude integration (src/lib/claude.ts)
-    - Test iteration execution flow
-    - Test error handling and retries
-    - Mock Claude Agent SDK
-
-[x] Add unit tests for git operations (src/hooks/use-git.ts)
-    - Test commit creation
-    - Test branch operations
-    - Mock execa calls
-
-[x] Update CI workflow to run tests
-    - Add `pnpm test` step to .github/workflows/ci.yml
-
-### 2. Add CI/CD Pipeline Enhancements
-Already implemented. Verify that these have been implemented correctly.
-
-[x] Add format check to CI workflow
-    - Add `pnpm format --check` step to ci.yml (already implemented)
-
-[x] Add automated publishing on version tags
-    - Create workflow that triggers on `v*` tag push
-    - Run quality checks before publishing
-    - Publish to GitHub Package Registry
-
-### 3. Add Cost Limit Enforcement
-
-[x] Implement pre-iteration cost limit check
-    - Check cumulative session cost BEFORE starting each iteration
-    - Compare against MAX_COST_PER_SESSION config value
-    - Stop execution gracefully if limit would be exceeded
-
-[x] Add cost warning threshold
-    - Warn user when approaching cost limit (e.g., 80% of MAX_COST_PER_SESSION)
-    - Display warning in UI with current/max cost values
-
-[x] Add --max-cost CLI flag
-    - Allow overriding config MAX_COST_PER_SESSION via CLI
-    - Add option to cli.ts and CliOptions type
-    - Pass through to iteration runner
-
-[x] Show cost projections
-    - Calculate average cost per iteration from previous iterations
-    - Display projected remaining cost before each iteration
-    - Warn if projected cost would exceed limit
-
-### 4. Improve Error Messages
-
-[x] Add error codes for common errors
-    - Create error code enum/constants in types.ts
-    - Map errors to codes: ENOENT, EAUTH, ERATE, ECONFIG, etc.
-
-[x] Improve file not found errors
-    - Include full path in error message
-    - Add actionable suggestion (e.g., "Run 'npx ralph init'")
-    - Example: "Failed to read PRD.md at /path/.ralph/PRD.md - run 'npx ralph init'"
-
-[x] Improve API key errors
-    - Clear message when key is missing vs invalid
-    - Link to API key creation page
-
-[x] Improve config parsing errors
-    - Show line number and problematic value
-    - Suggest valid format/values
-    - Continue with defaults where possible
-
-
-## 5. Remote monitoring
-
-[x] Install ngrok. Run ngrok when starting a session. Present the ngrok URL in a status bar on the bottom of the terminal while running the script.
-
-[x] Add a small, simple webserver that presents a mobile-friendly dashboard. The dashboard shows a progress bar indicating the progress (iteration x of y). It also shows the latest status messages (like in the CLI debug mode). Finally, it shows the current costs of the session. Uses inline CSS (no Tailwind) for styling. The UI is minimalistic and beautiful with gradient purple theme.
-
-[x] I'm getting this error message in the terminal when starting: "Dashboard unavailable: connect ECONNREFUSED 127.0.0.1:4040    " Please fix.
-    - Added check for NGROK_AUTHTOKEN before connecting
-    - Shows helpful error message: "Set NGROK_AUTHTOKEN to enable remote monitoring"
-    - Added fallback to show local dashboard URL (http://localhost:3737) when ngrok unavailable
-    - Changed error styling from red to yellow (warning, not critical error)
-
-[x] Replace ngrok with an more modern alternative that doesn't need authentication.
-    - Replaced ngrok with localtunnel (no authentication required)
-    - Renamed use-ngrok.ts to use-tunnel.ts for generic naming
-    - Updated all components to use new tunnel hook
-    - Remote dashboard now works out of the box without any token setup
+[ ]

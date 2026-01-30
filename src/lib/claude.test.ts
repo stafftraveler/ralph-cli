@@ -28,6 +28,7 @@ describe("claude", () => {
     outputDir: "logs",
     prdTemplatesDir: "templates",
     defaultTemplate: "empty",
+    defaultIterations: 10,
   };
 
   // Helper to create async iterable from array

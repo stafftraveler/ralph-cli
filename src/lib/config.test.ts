@@ -30,8 +30,10 @@ describe("config", () => {
         outputDir: "logs",
         prdTemplatesDir: "templates",
         defaultTemplate: "empty",
+        defaultIterations: 10,
         maxCostPerIteration: undefined,
         maxCostPerSession: undefined,
+        linearDefaultTeamId: undefined,
       });
     });
 
@@ -59,8 +61,10 @@ MAX_COST_PER_SESSION=10.00
         outputDir: "custom-logs",
         prdTemplatesDir: "my-templates",
         defaultTemplate: "new-feature",
+        defaultIterations: 10,
         maxCostPerIteration: 1.5,
         maxCostPerSession: 10.0,
+        linearDefaultTeamId: undefined,
       });
     });
 
@@ -255,8 +259,10 @@ WARN_COST_THRESHOLD=12.50
         outputDir: "logs",
         prdTemplatesDir: "templates",
         defaultTemplate: "empty",
+        defaultIterations: 10,
         maxCostPerIteration: undefined,
         maxCostPerSession: undefined,
+        linearDefaultTeamId: undefined,
       });
     });
 

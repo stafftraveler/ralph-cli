@@ -12,6 +12,8 @@ export interface UseTunnelState {
   isConnecting: boolean;
   /** Error message if connection failed */
   error: string | null;
+  /** Tunnel password for bypassing the reminder page */
+  password: string | null;
 }
 
 /**
@@ -28,6 +30,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [password, setPassword] = useState<string | null>(null);
 
   useEffect(() => {
     if (!enabled) {
@@ -49,6 +52,9 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
         if (isMounted) {
           setUrl(tunnel.url);
+          // Capture the tunnel password for bypassing the reminder page
+          // The password is available on the tunnel object from localtunnel
+          setPassword((tunnel as unknown as { password?: string }).password ?? null);
           setIsConnecting(false);
         }
 
@@ -56,6 +62,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
         tunnel.on("close", () => {
           if (isMounted) {
             setUrl(null);
+            setPassword(null);
             setError("Tunnel closed");
           }
         });
@@ -87,7 +94,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
     };
   }, [port, enabled]);
 
-  return { url, isConnecting, error };
+  return { url, isConnecting, error, password };
 }
 
 /**

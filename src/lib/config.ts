@@ -14,8 +14,10 @@ const DEFAULT_CONFIG: RalphConfig = {
   outputDir: "logs",
   prdTemplatesDir: "templates",
   defaultTemplate: "empty",
+  defaultIterations: 10,
   maxCostPerIteration: undefined,
   maxCostPerSession: undefined,
+  linearDefaultTeamId: undefined,
 };
 
 /**
@@ -135,6 +137,27 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
         case "defaultTemplate":
           config.defaultTemplate = value || DEFAULT_CONFIG.defaultTemplate;
           break;
+        case "defaultIterations": {
+          const parsed = Number.parseInt(value, 10);
+          if (Number.isNaN(parsed) || parsed < 1) {
+            const configError = createConfigError(
+              `Invalid value for DEFAULT_ITERATIONS on line ${lineNumber}`,
+              `Value "${value}" is not a valid positive integer. Using default: ${DEFAULT_CONFIG.defaultIterations}`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+            config.defaultIterations = DEFAULT_CONFIG.defaultIterations;
+          } else if (parsed > 100) {
+            const configError = createConfigError(
+              `Invalid value for DEFAULT_ITERATIONS on line ${lineNumber}`,
+              `Value "${value}" exceeds maximum of 100. Using default: ${DEFAULT_CONFIG.defaultIterations}`,
+            );
+            console.warn(`Warning: ${configError.format()}`);
+            config.defaultIterations = DEFAULT_CONFIG.defaultIterations;
+          } else {
+            config.defaultIterations = parsed;
+          }
+          break;
+        }
         case "maxCostPerIteration": {
           const parsed = Number.parseFloat(value);
           if (Number.isNaN(parsed)) {
@@ -173,12 +196,15 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
           }
           break;
         }
+        case "linearDefaultTeamId":
+          config.linearDefaultTeamId = value || undefined;
+          break;
         default:
           // Unknown config key - warn but continue
           if (key) {
             const configError = createConfigError(
               `Unknown config key on line ${lineNumber}: ${key}`,
-              `Valid keys: MAX_RETRIES, SOUND_ON_COMPLETE, NOTIFICATION_SOUND, SAVE_OUTPUT, OUTPUT_DIR, MAX_COST_PER_ITERATION, MAX_COST_PER_SESSION`,
+              `Valid keys: MAX_RETRIES, SOUND_ON_COMPLETE, NOTIFICATION_SOUND, SAVE_OUTPUT, OUTPUT_DIR, DEFAULT_ITERATIONS, MAX_COST_PER_ITERATION, MAX_COST_PER_SESSION, LINEAR_DEFAULT_TEAM_ID`,
             );
             console.warn(`Warning: ${configError.format()}`);
           }

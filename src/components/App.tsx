@@ -84,7 +84,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
   // Iteration state
   const [currentIteration, setCurrentIteration] = useState(1);
-  const [totalIterations, setTotalIterations] = useState(options.iterations ?? 5);
+  const [totalIterations, setTotalIterations] = useState(options.iterations ?? 10);
   const [prdComplete, setPrdComplete] = useState(false);
 
   // Error state
@@ -159,6 +159,11 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       setRepoRoot(root ?? "");
       setBranch(currentBranch ?? "");
 
+      // Sync default iterations from config if not provided via CLI
+      if (options.iterations === undefined) {
+        setTotalIterations(mergedConfig.defaultIterations);
+      }
+
       // Load plugins unless disabled
       if (!options.noPlugins) {
         const loadedPlugins = await loadPlugins(ralphDir);
@@ -166,7 +171,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       }
     }
     void initialize();
-  }, [ralphDir, options.noPlugins, options.reset, options.maxCost, exit]);
+  }, [ralphDir, options.noPlugins, options.reset, options.maxCost, options.iterations, exit]);
 
   // Start/stop web server based on phase
   useEffect(() => {
@@ -583,7 +588,10 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       {phase === "welcome" && <Welcome onComplete={handleWelcomeComplete} />}
 
       {phase === "iterations-prompt" && (
-        <IterationsPrompt onSubmit={handleIterationsSubmit} defaultValue={5} />
+        <IterationsPrompt
+          onSubmit={handleIterationsSubmit}
+          defaultValue={config.defaultIterations}
+        />
       )}
 
       {phase === "preflight" && (
@@ -597,6 +605,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       {phase === "template-select" && (
         <TemplateSelector
           ralphDir={ralphDir}
+          config={config}
           onComplete={handleTemplateComplete}
           onCancel={handleTemplateCancel}
         />
@@ -636,6 +645,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             url={tunnelState.url}
             isConnecting={tunnelState.isConnecting}
             error={tunnelState.error}
+            password={tunnelState.password}
           />
         </Box>
       )}

@@ -1,0 +1,25 @@
+# Ralph CLI Configuration
+# See README.md for all available options
+
+# Maximum retry attempts for failed iterations
+MAX_RETRIES=3
+
+# Default number of iterations when not specified via CLI (1-100)
+DEFAULT_ITERATIONS=10
+
+# Play sound when iterations complete
+SOUND_ON_COMPLETE=true
+
+# Save Claude's output for each iteration
+SAVE_OUTPUT=true
+
+# Directory for output log files (relative to .ralph/)
+OUTPUT_DIR=logs
+
+# Cost limits (optional, in USD)
+# MAX_COST_PER_ITERATION=0.50
+# MAX_COST_PER_SESSION=5.00
+# WARN_COST_THRESHOLD=4.00
+
+# Linear integration (optional)
+# LINEAR_DEFAULT_TEAM_ID=

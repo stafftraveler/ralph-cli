@@ -7,12 +7,14 @@ export interface StatusBarProps {
   isConnecting: boolean;
   /** Error message if any */
   error: string | null;
+  /** Tunnel password for bypassing reminder page */
+  password?: string | null;
 }
 
 /**
  * Status bar component that displays tunnel URL at the bottom of the terminal
  */
-export function StatusBar({ url, isConnecting, error }: StatusBarProps) {
+export function StatusBar({ url, isConnecting, error, password }: StatusBarProps) {
   if (error) {
     const message = `Dashboard unavailable: ${error}`;
 
@@ -33,13 +35,24 @@ export function StatusBar({ url, isConnecting, error }: StatusBarProps) {
 
   if (url) {
     return (
-      <Box borderStyle="round" borderColor="green" paddingX={1} marginTop={1}>
+      <Box
+        borderStyle="round"
+        borderColor="green"
+        paddingX={1}
+        marginTop={1}
+        flexDirection="column"
+      >
         <Text>
           <Text color="green" bold>
             Dashboard:
           </Text>{" "}
           <Text color="cyan">{url}</Text>
         </Text>
+        {password && (
+          <Text dimColor>
+            Tunnel password: <Text color="yellow">{password}</Text>
+          </Text>
+        )}
       </Box>
     );
   }

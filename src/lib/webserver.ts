@@ -245,10 +245,29 @@ function getDashboardHtml(data: DashboardData): string {
     }
   </style>
   <script>
-    // Auto-refresh every 2 seconds
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
+    // Auto-refresh every 2 seconds using fetch with bypass header
+    async function refreshData() {
+      try {
+        const response = await fetch(window.location.href, {
+          headers: {
+            'bypass-tunnel-reminder': 'true'
+          }
+        });
+        if (response.ok) {
+          const html = await response.text();
+          document.open();
+          document.write(html);
+          document.close();
+        } else {
+          // Fallback to regular reload if fetch fails
+          window.location.reload();
+        }
+      } catch (err) {
+        // Fallback to regular reload on error
+        window.location.reload();
+      }
+    }
+    setTimeout(refreshData, 2000);
   </script>
 </head>
 <body>

@@ -83,10 +83,52 @@ export interface RalphConfig {
   outputDir: string;
   prdTemplatesDir: string;
   defaultTemplate: string;
+  /** Default number of iterations when not specified via CLI */
+  defaultIterations: number;
   /** Maximum cost allowed per iteration in USD. Execution stops if exceeded. */
   maxCostPerIteration?: number;
   /** Maximum cumulative cost allowed per session in USD. Execution stops if exceeded. Warning shown at 80%. */
   maxCostPerSession?: number;
+  /** Default Linear team ID to use (remembered from last selection) */
+  linearDefaultTeamId?: string;
+}
+
+/**
+ * Linear issue data fetched from the Linear API
+ */
+export interface LinearIssue {
+  /** Unique identifier */
+  id: string;
+  /** Human-readable identifier (e.g., "ABC-123") */
+  identifier: string;
+  /** Issue title */
+  title: string;
+  /** Issue description (markdown) */
+  description?: string;
+  /** Priority (0 = none, 1 = urgent, 2 = high, 3 = medium, 4 = low) */
+  priority: number;
+  /** Priority label for display */
+  priorityLabel: string;
+  /** Current state name (e.g., "Todo", "In Progress") */
+  stateName: string;
+  /** Label names */
+  labels: string[];
+  /** URL to the issue in Linear */
+  url: string;
+  /** Team key (e.g., "ABC") */
+  teamKey: string;
+}
+
+/**
+ * Linear team data
+ */
+export interface LinearTeam {
+  /** Unique identifier */
+  id: string;
+  /** Team name */
+  name: string;
+  /** Team key (e.g., "ABC") */
+  key: string;
 }
 
 /**
