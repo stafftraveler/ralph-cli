@@ -2,13 +2,7 @@ import { readFile } from "node:fs/promises";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RalphConfig } from "../types.js";
-import {
-  type RunClaudeOptions,
-  hasApiKey,
-  hasApiKeySync,
-  runClaude,
-  setApiKey,
-} from "./claude.js";
+import { type RunClaudeOptions, hasApiKey, hasApiKeySync, runClaude, setApiKey } from "./claude.js";
 import * as keychain from "./keychain.js";
 
 // Mock dependencies

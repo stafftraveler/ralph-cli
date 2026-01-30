@@ -20,7 +20,7 @@ export interface PreflightProps {
 /**
  * Status indicator for a single check
  */
-function CheckStatus({ check }: { check: PreflightCheck }) {
+function CheckStatus({ check }: { check: PreflightCheck; }) {
   const statusIcon = {
     pending: "○",
     checking: null, // Will show spinner

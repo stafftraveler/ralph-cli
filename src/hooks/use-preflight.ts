@@ -62,7 +62,7 @@ async function checkGitRepo(): Promise<PreflightCheck> {
 /**
  * Check if PRD.md exists and has valid tasks
  */
-async function checkPrd(ralphDir: string): Promise<{ check: PreflightCheck; hasTasks: boolean }> {
+async function checkPrd(ralphDir: string): Promise<{ check: PreflightCheck; hasTasks: boolean; }> {
   const prdPath = join(ralphDir, "PRD.md");
 
   try {

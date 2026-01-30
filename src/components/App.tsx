@@ -10,7 +10,7 @@ import {
   getRepoRoot,
 } from "../hooks/use-git.js";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard.js";
-import { useNgrok } from "../hooks/use-ngrok.js";
+import { useTunnel } from "../hooks/use-tunnel.js";
 import { loadConfig } from "../lib/config.js";
 import { notify } from "../lib/notify.js";
 import {
@@ -101,8 +101,8 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const [currentStatus, setCurrentStatus] = useState("Starting...");
   const WEB_SERVER_PORT = 3737;
 
-  // Start ngrok tunnel for web dashboard (only when running)
-  const ngrokState = useNgrok(WEB_SERVER_PORT, phase === "running");
+  // Start tunnel for web dashboard (only when running)
+  const tunnelState = useTunnel(WEB_SERVER_PORT, phase === "running");
 
   // Keyboard shortcuts
   const [keyboardState] = useKeyboardShortcuts({
@@ -633,9 +633,9 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             <KeyboardShortcuts verbose={verbose} debug={debug} totalIterations={totalIterations} />
           </Box>
           <StatusBar
-            url={ngrokState.url}
-            isConnecting={ngrokState.isConnecting}
-            error={ngrokState.error}
+            url={tunnelState.url}
+            isConnecting={tunnelState.isConnecting}
+            error={tunnelState.error}
           />
         </Box>
       )}

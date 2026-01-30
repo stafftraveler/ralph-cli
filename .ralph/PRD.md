@@ -116,4 +116,8 @@ Already implemented. Verify that these have been implemented correctly.
     - Added fallback to show local dashboard URL (http://localhost:3737) when ngrok unavailable
     - Changed error styling from red to yellow (warning, not critical error)
 
-[ ] Replace ngrok with an more modern alternative that doesn't need authentication.
+[x] Replace ngrok with an more modern alternative that doesn't need authentication.
+    - Replaced ngrok with localtunnel (no authentication required)
+    - Renamed use-ngrok.ts to use-tunnel.ts for generic naming
+    - Updated all components to use new tunnel hook
+    - Remote dashboard now works out of the box without any token setup

@@ -24,3 +24,37 @@
 - Always show localhost fallback for convenience
 
 **Tests**: All 86 tests pass
+
+---
+
+## Iteration 2: Replace ngrok with localtunnel
+
+**Task**: Replace ngrok with modern alternative that doesn't need authentication (PRD Task 5)
+
+**Why localtunnel**:
+- No authentication required (main requirement)
+- Simple npm package with similar API to ngrok
+- Works out of box without account/token setup
+- Reliable enough for dev monitoring use case
+
+**Implementation**:
+1. Removed ngrok package dependency
+2. Added localtunnel + @types/localtunnel
+3. Created new use-tunnel.ts hook (renamed from use-ngrok.ts)
+4. Updated App.tsx to use useTunnel instead of useNgrok
+5. Updated StatusBar.tsx to remove ngrok-specific error handling
+6. Cleaned up NGROK_AUTHTOKEN check (no longer needed)
+
+**Files changed**:
+- package.json: Removed ngrok, added localtunnel + types
+- src/hooks/use-tunnel.ts: New file replacing use-ngrok.ts
+- src/hooks/use-ngrok.ts: Deleted
+- src/components/App.tsx: Import useTunnel instead of useNgrok
+- src/components/StatusBar.tsx: Simplified error messaging
+
+**Key decisions**:
+- Chose localtunnel over alternatives (bore, cloudflared) for simplicity
+- Renamed hook to use-tunnel.ts for generic naming (easier to swap tunneling libs later)
+- Maintained same hook interface for minimal changes
+
+**Tests**: All 86 tests pass
