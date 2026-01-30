@@ -105,3 +105,22 @@
 - Keep only actively used error helpers in the codebase
 
 **Status**: ✅ Complete - unused export removed, all checks pass
+
+## Iteration 7 - Remove unused useSession hook
+
+**Task**: Scan for code smells and fix ONE issue (PRD line 22)
+
+**Changes**:
+- Removed entire unused file: src/hooks/use-session.ts
+- 256-line React hook that was never imported or used
+- Components use session.ts library functions directly instead
+
+**Files changed**:
+- Deleted: src/hooks/use-session.ts
+
+**Key decisions**:
+- Hook was comprehensive wrapper around session library
+- Never adopted in actual components - direct imports used instead
+- Entire file was dead code, removed completely
+
+**Status**: ✅ Complete - unused hook removed, all checks pass
