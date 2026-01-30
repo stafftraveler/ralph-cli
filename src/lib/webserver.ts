@@ -1702,6 +1702,17 @@ function getDashboardHtml(data: DashboardData): string {
         return;
       }
 
+      // Track which iterations are currently expanded before updating DOM
+      const expandedIterations = new Set();
+      const existingDetails = iterationsList.querySelectorAll('.iteration-details.expanded');
+      for (const detail of existingDetails) {
+        const id = detail.id; // e.g., "iteration-details-1"
+        const match = id.match(/iteration-details-(d+)/);
+        if (match) {
+          expandedIterations.add(parseInt(match[1], 10));
+        }
+      }
+
       let html = '';
       for (const iter of iterations) {
         const statusClass = iter.success ? 'success' : 'failure';
@@ -1710,6 +1721,10 @@ function getDashboardHtml(data: DashboardData): string {
         const cost = iter.cost ? iter.cost.toFixed(4) : '0.0000';
         const inputTokens = iter.inputTokens ? iter.inputTokens.toLocaleString() : 'N/A';
         const outputTokens = iter.outputTokens ? iter.outputTokens.toLocaleString() : 'N/A';
+
+        // Check if this iteration was previously expanded
+        const isExpanded = expandedIterations.has(iter.number);
+        const expandedClass = isExpanded ? ' expanded' : '';
 
         html += '<div class="iteration-item" onclick="toggleIterationDetails(' + iter.number + ')">';
         html += '<div class="iteration-summary">';
@@ -1721,8 +1736,8 @@ function getDashboardHtml(data: DashboardData): string {
         html += '<span class="iteration-duration">' + duration + '</span>';
         html += '<span class="iteration-cost">$' + cost + '</span>';
         html += '</div>';
-        html += '<div class="iteration-details" id="iteration-details-' + iter.number + '">';
-        
+        html += '<div class="iteration-details' + expandedClass + '" id="iteration-details-' + iter.number + '">';
+
         if (iter.inputTokens || iter.outputTokens) {
           html += '<div class="iteration-details-row">';
           html += '<span class="iteration-details-label">Input Tokens:</span>';
@@ -1733,14 +1748,14 @@ function getDashboardHtml(data: DashboardData): string {
           html += '<span class="iteration-details-value">' + outputTokens + '</span>';
           html += '</div>';
         }
-        
+
         if (iter.status) {
           html += '<div class="iteration-details-row">';
           html += '<span class="iteration-details-label">Status:</span>';
           html += '<span class="iteration-details-value">' + escapeHtml(iter.status) + '</span>';
           html += '</div>';
         }
-        
+
         html += '</div>';
         html += '</div>';
       }

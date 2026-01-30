@@ -47,3 +47,12 @@ Iteration 5 - Chapter 3: Remove % from progress bar
 Reasoning: Bar too short to display percentage text legibly
 Files changed: src/lib/webserver.ts
 All tests pass, type checks pass, no lint errors
+
+Iteration 6 - Chapter 3: Fix iteration details state persistence
+- Root cause: updateIterations() rebuilds entire DOM, losing expanded class on re-render
+- Solution: Track expanded iterations before DOM update, restore state after
+- Query all .iteration-details.expanded elements, extract iteration numbers to Set
+- When rebuilding HTML, check Set and add expanded class if previously open
+- Prevents iterations from closing during WebSocket updates or polling refresh
+Files changed: src/lib/webserver.ts
+All tests pass, type checks pass, no lint errors
