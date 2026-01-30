@@ -159,20 +159,3 @@ export async function getLinearTokenFromKeychain(): Promise<string | null> {
     return null;
   }
 }
-
-/**
- * Deletes the Linear API key from the macOS Keychain
- *
- * @returns Promise resolving when complete (ignores errors)
- */
-export async function deleteLinearTokenFromKeychain(): Promise<void> {
-  await execa("security", [
-    "delete-generic-password",
-    "-a",
-    LINEAR_KEYCHAIN_ACCOUNT,
-    "-s",
-    KEYCHAIN_SERVICE,
-  ]).catch(() => {
-    // Ignore "item not found" errors
-  });
-}

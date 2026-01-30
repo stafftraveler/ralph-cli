@@ -51,3 +51,21 @@
 - Internal state check not required by consumers
 
 **Status**: ✅ Complete - unused export removed, all checks pass
+
+## Iteration 4 - Remove unused deleteLinearTokenFromKeychain
+
+**Task**: Scan for code smells and fix ONE issue (PRD line 22)
+
+**Changes**:
+- Removed unused function: deleteLinearTokenFromKeychain()
+- Function was never imported or called anywhere
+- Save/get functions are used, but delete was unimplemented feature
+
+**Files changed**:
+- src/lib/keychain.ts
+
+**Key decisions**:
+- Keep only actively used keychain operations (save/get)
+- Remove planned-but-unused delete functionality
+
+**Status**: ✅ Complete - unused export removed, all checks pass
