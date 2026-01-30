@@ -26,3 +26,17 @@
 - src/lib/webserver.ts (imports and 4 readyState checks)
 
 **Notes**: Using named constants improves code readability and prevents magic number errors.
+
+## Iteration 3: Fix broken regex pattern
+
+**Task**: Fix regex pattern in updateIterations function (line 1989)
+
+**Decisions**:
+- Changed `/iteration-details-(d+)/` to `/iteration-details-(\d+)/`
+- Pattern was matching literal "d+" instead of digits
+- Fix enables proper capture of iteration numbers from DOM element IDs
+
+**Files changed**:
+- src/lib/webserver.ts (line 1989 regex pattern)
+
+**Notes**: This bug would prevent expanded iteration details from staying expanded after updates. The backslash escape is required for digit matching.

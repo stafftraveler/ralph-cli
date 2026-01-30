@@ -1986,7 +1986,7 @@ function getDashboardHtml(data: DashboardData): string {
       const existingDetails = iterationsList.querySelectorAll('.iteration-details.expanded');
       for (const detail of existingDetails) {
         const id = detail.id; // e.g., "iteration-details-1"
-        const match = id.match(/iteration-details-(d+)/);
+        const match = id.match(/iteration-details-(\d+)/);
         if (match) {
           expandedIterations.add(parseInt(match[1], 10));
         }
