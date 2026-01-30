@@ -16,6 +16,7 @@ export interface DashboardData {
   totalIterations: number;
   status: string;
   totalCost: number;
+  currentIterationStartedAt: string | null;
   iterations: Array<{
     number: number;
     timestamp: string;
@@ -35,6 +36,7 @@ interface WebServerState {
   status: string;
   ralphDir: string;
   outputBuffer: string;
+  currentIterationStartedAt: string | null;
 }
 
 let serverState: WebServerState = {
@@ -44,6 +46,7 @@ let serverState: WebServerState = {
   status: "Starting...",
   ralphDir: "",
   outputBuffer: "",
+  currentIterationStartedAt: null,
 };
 
 /**
@@ -176,6 +179,7 @@ function getDashboardData(): DashboardData {
     totalIterations: serverState.totalIterations,
     status: serverState.status,
     totalCost: serverState.session?.totalCostUsd ?? 0,
+    currentIterationStartedAt: serverState.currentIterationStartedAt,
     iterations: (serverState.session?.iterations ?? []).map((iter, idx) => ({
       number: idx + 1,
       timestamp: iter.startedAt,
@@ -363,6 +367,13 @@ function getDashboardHtml(data: DashboardData): string {
       font-size: 14px;
       color: #000000;
       font-weight: 400;
+    }
+
+    .elapsed-time {
+      font-size: 12px;
+      color: #666666;
+      margin-top: 8px;
+      font-family: 'Monaco', 'Courier New', monospace;
     }
 
     .cost-section {
@@ -776,6 +787,10 @@ function getDashboardHtml(data: DashboardData): string {
         color: #ffffff;
       }
 
+      .elapsed-time {
+        color: #999999;
+      }
+
       .cost-section {
         color: #999999;
       }
@@ -944,6 +959,9 @@ function getDashboardHtml(data: DashboardData): string {
 
     // Track verbose mode state
     let verboseMode = false;
+
+    // Current iteration start time
+    let currentIterationStartTime = null;
 
     // WebSocket connection state
     let ws = null;
@@ -1135,6 +1153,42 @@ function getDashboardHtml(data: DashboardData): string {
       setTimeout(refreshData, 2000);
     }
 
+    // Format elapsed time in seconds to human-readable string
+    function formatElapsedTime(seconds) {
+      if (seconds < 60) {
+        return seconds + 's';
+      }
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      if (minutes < 60) {
+        return minutes + 'm ' + remainingSeconds + 's';
+      }
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return hours + 'h ' + remainingMinutes + 'm';
+    }
+
+    // Update elapsed time display
+    function updateElapsedTime() {
+      const elapsedTimeEl = document.getElementById('elapsed-time');
+      if (!elapsedTimeEl) return;
+
+      if (!currentIterationStartTime) {
+        elapsedTimeEl.textContent = '';
+        return;
+      }
+
+      const now = new Date();
+      const startTime = new Date(currentIterationStartTime);
+      const elapsedSeconds = Math.floor((now - startTime) / 1000);
+
+      if (elapsedSeconds >= 0) {
+        elapsedTimeEl.textContent = 'Elapsed: ' + formatElapsedTime(elapsedSeconds);
+      } else {
+        elapsedTimeEl.textContent = '';
+      }
+    }
+
     // Update connection status indicator
     function updateConnectionStatus(status) {
       const dot = document.getElementById('connection-dot');
@@ -1247,6 +1301,12 @@ function getDashboardHtml(data: DashboardData): string {
       const statusText = document.querySelector('.status-text');
       if (statusText) {
         statusText.textContent = data.status;
+      }
+
+      // Update current iteration start time
+      if (data.currentIterationStartedAt !== currentIterationStartTime) {
+        currentIterationStartTime = data.currentIterationStartedAt;
+        updateElapsedTime();
       }
 
       // Update cost
@@ -1382,7 +1442,14 @@ function getDashboardHtml(data: DashboardData): string {
     loadVerbosePreference();
     loadInitialTasks();
     updateRelativeTimestamps(); // Initial update
+    updateElapsedTime(); // Initial update
     initWebSocket();
+
+    // Update elapsed time every second
+    setInterval(updateElapsedTime, 1000);
+
+    // Update relative timestamps every 2 seconds
+    setInterval(updateRelativeTimestamps, 2000);
   </script>
 </head>
 <body>
@@ -1411,6 +1478,7 @@ function getDashboardHtml(data: DashboardData): string {
     <div class="status-section">
       <div class="status-label">Current Status</div>
       <div class="status-text">${data.status}</div>
+      <div class="elapsed-time" id="elapsed-time"></div>
     </div>
 
     <div class="cost-section">

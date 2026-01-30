@@ -746,3 +746,54 @@ Notes:
 - Provides real-time feedback on WebSocket connection health
 - Helps users understand if updates are real-time or polling-based
 
+
+## Iteration 20
+
+Task: Show elapsed time for current iteration (Phase 7)
+
+Changes:
+- Added currentIterationStartedAt field to DashboardData interface
+- Added currentIterationStartedAt field to WebServerState interface
+- Updated getDashboardData() to include current iteration start time
+- Added elapsed-time CSS class with monospace font, subtle color (12px, #666666)
+- Added dark mode styling for elapsed time (#999999)
+- Added elapsed time HTML element below status text
+- Implemented formatElapsedTime() function (Xs, Xm Xs, Xh Xm format)
+- Implemented updateElapsedTime() function to calculate and display elapsed time
+- Added currentIterationStartTime variable to track start time on client
+- Updated updateDashboard() to set currentIterationStartTime when it changes
+- Added setInterval to update elapsed time display every 1 second
+- Moved relative timestamps update to separate 2-second interval
+
+Design decisions:
+- Placed below status text for logical grouping
+- 12px monospace font matches iteration duration styling
+- Updates every 1 second for real-time feedback
+- Format matches existing duration display (Xs, Xm Xs, Xh Xm)
+- Only shows when iteration is active (currentIterationStartedAt is set)
+- Hidden when no active iteration (empty string)
+- Subtle #666666 color keeps it informational, not distracting
+
+Display format:
+- < 60s: "Elapsed: 42s"
+- < 60m: "Elapsed: 5m 23s"
+- >= 60m: "Elapsed: 2h 15m"
+
+Technical approach:
+- Server tracks currentIterationStartedAt in state
+- Client receives via WebSocket/API and stores locally
+- Client calculates elapsed time client-side (no server load)
+- Separate interval prevents timestamp updates interfering with elapsed time
+- Elapsed time updates every 1s, timestamps every 2s
+
+Files changed:
+- src/lib/webserver.ts (interfaces, CSS, HTML, JavaScript functions)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 7 task complete (8 of 10 tasks done, 80%)
+- Provides real-time feedback on iteration progress
+- Helps users gauge if iteration is taking longer than expected
+
