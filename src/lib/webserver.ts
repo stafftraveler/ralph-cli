@@ -449,11 +449,145 @@ function getDashboardHtml(data: DashboardData): string {
       color: #999999;
       text-decoration: line-through;
     }
+
+    .verbose-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .verbose-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .verbose-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+    }
+
+    .verbose-toggle {
+      padding: 6px 12px;
+      background: #000000;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      min-height: 32px;
+    }
+
+    .verbose-toggle:hover {
+      opacity: 0.8;
+    }
+
+    .verbose-toggle:active {
+      opacity: 0.6;
+    }
+
+    .verbose-output {
+      background: #f8f8f8;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      padding: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #333333;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .verbose-output.hidden {
+      display: none;
+    }
+
+    .verbose-output:empty::before {
+      content: 'No output yet...';
+      color: #999999;
+      font-style: italic;
+    }
   </style>
   <script>
     // Track if user is actively typing to avoid refresh interruption
     let isTyping = false;
     let typingTimeout = null;
+
+    // Track verbose mode state
+    let verboseMode = false;
+
+    // Load verbose mode preference from localStorage
+    function loadVerbosePreference() {
+      try {
+        const saved = localStorage.getItem('ralph-verbose-mode');
+        if (saved !== null) {
+          verboseMode = saved === 'true';
+          if (verboseMode) {
+            const output = document.getElementById('verbose-output');
+            const toggle = document.getElementById('verbose-toggle');
+            if (output) output.classList.remove('hidden');
+            if (toggle) toggle.textContent = 'Hide';
+          }
+        }
+      } catch (err) {
+        // localStorage not available, ignore
+      }
+    }
+
+    // Save verbose mode preference to localStorage
+    function saveVerbosePreference() {
+      try {
+        localStorage.setItem('ralph-verbose-mode', verboseMode.toString());
+      } catch (err) {
+        // localStorage not available, ignore
+      }
+    }
+
+    // Toggle verbose output visibility
+    function toggleVerbose() {
+      verboseMode = !verboseMode;
+      const output = document.getElementById('verbose-output');
+      const toggle = document.getElementById('verbose-toggle');
+
+      if (verboseMode) {
+        if (output) output.classList.remove('hidden');
+        if (toggle) toggle.textContent = 'Hide';
+        // Immediately fetch output when showing
+        fetchVerboseOutput();
+      } else {
+        if (output) output.classList.add('hidden');
+        if (toggle) toggle.textContent = 'Show';
+      }
+
+      saveVerbosePreference();
+    }
+
+    // Fetch and update verbose output
+    async function fetchVerboseOutput() {
+      if (!verboseMode) return;
+
+      try {
+        const response = await fetch('/api/output');
+        if (response.ok) {
+          const data = await response.json();
+          const output = document.getElementById('verbose-output');
+          if (output && data.output) {
+            output.textContent = data.output;
+            // Auto-scroll to bottom
+            output.scrollTop = output.scrollHeight;
+          }
+        }
+      } catch (err) {
+        // Silently fail on error
+      }
+    }
 
     // Auto-refresh every 2 seconds
     async function refreshData() {
@@ -483,6 +617,11 @@ function getDashboardHtml(data: DashboardData): string {
         }
       } catch (err) {
         // Silently fail on error
+      }
+
+      // Refresh verbose output if visible
+      if (verboseMode) {
+        await fetchVerboseOutput();
       }
 
       setTimeout(refreshData, 2000);
@@ -636,7 +775,8 @@ function getDashboardHtml(data: DashboardData): string {
       }
     }
 
-    // Start auto-refresh and load initial tasks
+    // Start auto-refresh and load initial data
+    loadVerbosePreference();
     loadInitialTasks();
     setTimeout(refreshData, 2000);
   </script>
@@ -681,6 +821,14 @@ function getDashboardHtml(data: DashboardData): string {
       <div class="tasks-list">
         <div style="text-align: center; color: #999999; padding: 16px;">Loading tasks...</div>
       </div>
+    </div>
+
+    <div class="verbose-section">
+      <div class="verbose-header">
+        <div class="verbose-title">Verbose Output</div>
+        <button id="verbose-toggle" class="verbose-toggle" onclick="toggleVerbose()">Show</button>
+      </div>
+      <div id="verbose-output" class="verbose-output hidden"></div>
     </div>
 
     ${

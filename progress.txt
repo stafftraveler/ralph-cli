@@ -117,3 +117,43 @@ Notes:
 - Type checking passes
 - API ready for UI consumption
 - Next: Add UI toggle and display components
+
+## Iteration 5
+
+Task: Add "Verbose mode" toggle button and display verbose output
+
+Changes:
+- Added Verbose Output section to dashboard with toggle button (Show/Hide)
+- Added CSS styles for verbose section (monospace font, scrollable container)
+- Implemented toggleVerbose() function to show/hide output container
+- Added fetchVerboseOutput() to fetch from /api/output endpoint
+- Integrated verbose refresh into auto-refresh cycle (only when visible)
+- Added localStorage persistence for verbose mode preference
+- Button shows "Show" when hidden, "Hide" when visible
+- Auto-scrolls to bottom when new output arrives
+- Output container max-height 400px with scroll
+
+Design decisions:
+- Toggle button in header for easy access (black bg, white text)
+- Monospace font for code-like appearance
+- Light gray background (#f8f8f8) for output container
+- Hidden by default, preference saved to localStorage
+- Only fetches output when visible (performance optimization)
+- Auto-scroll keeps latest output visible
+- Empty state shows "No output yet..." placeholder
+
+UI features:
+- Show/Hide toggle button with :hover and :active states
+- Scrollable output container (400px max height)
+- Monospace font family for readability
+- Pre-wrap white-space for proper line breaks
+- Loads preference on page load
+
+Files changed:
+- src/lib/webserver.ts (added verbose section HTML, CSS, JS)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Completes 4 of 6 Phase 3 tasks
+- Next tasks: collapse/expand (already done via toggle!), localStorage persistence (done!)

@@ -221,8 +221,7 @@ ${progressContent || "(No progress yet)"}
 
 ${options.prompt}
 
-After completing work, update the .ralph/progress.txt file with what you accomplished.
-If all tasks in the PRD are complete, include <promise>COMPLETE</promise> in your response.`;
+`;
 
   if (options.debug) {
     console.log("[DEBUG] Running Claude SDK with prompt:");

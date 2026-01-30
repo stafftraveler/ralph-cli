@@ -53,12 +53,12 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 
 ### Phase 3: Verbose Mode
 
-[ ] Add "Verbose mode" toggle button to the dashboard UI
+[x] Add "Verbose mode" toggle button to the dashboard UI
 [x] Create API endpoint `GET /api/output` to stream Claude's output
-[ ] Display verbose output in a scrollable, monospace font container
-[ ] Auto-scroll to bottom as new output arrives
-[ ] Add ability to collapse/expand verbose output section
-[ ] Persist verbose mode preference in localStorage
+[x] Display verbose output in a scrollable, monospace font container
+[x] Auto-scroll to bottom as new output arrives
+[x] Add ability to collapse/expand verbose output section
+[x] Persist verbose mode preference in localStorage
 
 ### Phase 4: Mobile UX Improvements
 
