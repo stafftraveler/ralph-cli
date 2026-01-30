@@ -93,7 +93,9 @@ describe("claude", () => {
           },
         },
       ];
-      vi.mocked(query).mockReturnValue(createAsyncIterable(mockResponse) as ReturnType<typeof query>);
+      vi.mocked(query).mockReturnValue(
+        createAsyncIterable(mockResponse) as ReturnType<typeof query>,
+      );
 
       const result = await runClaude(mockConfig, mockOptions);
 
@@ -135,7 +137,9 @@ describe("claude", () => {
           },
         },
       ];
-      vi.mocked(query).mockReturnValue(createAsyncIterable(mockResponse) as ReturnType<typeof query>);
+      vi.mocked(query).mockReturnValue(
+        createAsyncIterable(mockResponse) as ReturnType<typeof query>,
+      );
 
       const result = await runClaude(mockConfig, mockOptions);
 
@@ -176,7 +180,9 @@ describe("claude", () => {
           usage: { input_tokens: 100, output_tokens: 50, total_cost_usd: 0.01 },
         },
       ];
-      vi.mocked(query).mockReturnValue(createAsyncIterable(mockResponse) as ReturnType<typeof query>);
+      vi.mocked(query).mockReturnValue(
+        createAsyncIterable(mockResponse) as ReturnType<typeof query>,
+      );
 
       const result = await runClaude(mockConfig, mockOptions);
 
@@ -207,7 +213,9 @@ describe("claude", () => {
           usage: { input_tokens: 100, output_tokens: 50, total_cost_usd: 0.01 },
         },
       ];
-      vi.mocked(query).mockReturnValue(createAsyncIterable(mockResponse) as ReturnType<typeof query>);
+      vi.mocked(query).mockReturnValue(
+        createAsyncIterable(mockResponse) as ReturnType<typeof query>,
+      );
 
       await runClaude(mockConfig, { ...mockOptions, onStdout });
 
@@ -243,7 +251,9 @@ describe("claude", () => {
           usage: { input_tokens: 100, output_tokens: 50, total_cost_usd: 0.01 },
         },
       ];
-      vi.mocked(query).mockReturnValue(createAsyncIterable(mockResponse) as ReturnType<typeof query>);
+      vi.mocked(query).mockReturnValue(
+        createAsyncIterable(mockResponse) as ReturnType<typeof query>,
+      );
 
       await runClaude(mockConfig, { ...mockOptions, onStatus });
 
@@ -273,7 +283,9 @@ describe("claude", () => {
           usage: { input_tokens: 100, output_tokens: 50, total_cost_usd: 0.01 },
         },
       ];
-      vi.mocked(query).mockReturnValue(createAsyncIterable(mockResponse) as ReturnType<typeof query>);
+      vi.mocked(query).mockReturnValue(
+        createAsyncIterable(mockResponse) as ReturnType<typeof query>,
+      );
 
       await runClaude(mockConfig, {
         ...mockOptions,
@@ -308,7 +320,9 @@ describe("claude", () => {
           usage: { input_tokens: 100, output_tokens: 50, total_cost_usd: 0.01 },
         },
       ];
-      vi.mocked(query).mockReturnValue(createAsyncIterable(mockResponse) as ReturnType<typeof query>);
+      vi.mocked(query).mockReturnValue(
+        createAsyncIterable(mockResponse) as ReturnType<typeof query>,
+      );
 
       const result = await runClaude(mockConfig, mockOptions);
 

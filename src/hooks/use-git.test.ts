@@ -431,6 +431,5 @@ describe("use-git", () => {
       // The code joins tab-separated parts, so "file\twith\ttabs.ts" becomes "with\ttabs.ts" after first split
       expect(result[0]?.file).toBe("with\ttabs.ts");
     });
-
   });
 });
