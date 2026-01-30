@@ -17,7 +17,7 @@ Clean-up the codebase.
 [x] Remove unused InitOptions type and _options parameter from src/commands/init.ts (lines 99, 151)
 [x] Consolidate formatDuration - remove duplicate from src/lib/webserver.ts, import from src/lib/utils.ts
 [x] Fix error handling in src/hooks/use-claude.ts catch block (line 169) - add debug logging for swallowed errors
-[ ] Remove unused _config parameter from runClaude in src/lib/claude.ts (line 235)
+[x] Remove unused _config parameter from runClaude in src/lib/claude.ts (line 235)
 
 ### Medium Priority Issues
 

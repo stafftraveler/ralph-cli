@@ -55,3 +55,26 @@ Tests: All 86 tests passing
 Type check: Clean
 Lint: Clean
 Format: Applied (1 file formatted)
+
+## Iteration 4
+
+Task: Remove unused _config parameter from runClaude in claude.ts
+
+Completed:
+- Removed _config: RalphConfig parameter from runClaude function signature (line 235)
+- Updated JSDoc to remove @param config reference
+- Updated all call sites: run-ci.ts, use-claude.ts, claude.test.ts (9 test calls)
+- Removed unused RalphConfig import from claude.ts
+- Removed unused loadConfig import and config variable from run-ci.ts
+
+Files changed:
+- src/lib/claude.ts: Removed parameter, simplified signature, removed unused import
+- src/commands/run-ci.ts: Updated call site, removed unused config loading
+- src/hooks/use-claude.ts: Updated call site
+- src/lib/claude.test.ts: Updated all 9 test calls
+
+Reasoning: Config was never used inside runClaude - cost limits are checked in use-claude.ts hook instead. Removing unused parameter simplifies API.
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean

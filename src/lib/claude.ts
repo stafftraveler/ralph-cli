@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { query } from "@anthropic-ai/claude-agent-sdk";
-import type { RalphConfig, UsageInfo } from "../types.js";
+import type { UsageInfo } from "../types.js";
 import { getApiKeyFromKeychain, saveApiKeyToKeychain } from "./keychain.js";
 import { createApiKeyError, createFileNotFoundError, wrapError } from "./utils.js";
 
@@ -227,14 +227,10 @@ function calculateCost(usage: {
 /**
  * Runs Claude via the Agent SDK and streams output
  *
- * @param config - Ralph configuration
  * @param options - Run options
  * @returns Promise resolving to run result
  */
-export async function runClaude(
-  _config: RalphConfig,
-  options: RunClaudeOptions,
-): Promise<ClaudeRunResult> {
+export async function runClaude(options: RunClaudeOptions): Promise<ClaudeRunResult> {
   const prdPath = `${options.ralphDir}/PRD.md`;
   const progressPath = `${options.ralphDir}/progress.txt`;
 

@@ -156,7 +156,7 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
 
       let result: ClaudeRunResult;
       try {
-        result = await runClaude(config, {
+        result = await runClaude({
           ralphDir: options.ralphDir,
           prompt: options.prompt,
           verbose: options.verbose,
