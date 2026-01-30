@@ -97,10 +97,3 @@ export function stopCaffeinate(debug = false): void {
     caffeinateProcess = null;
   }
 }
-
-/**
- * Check if caffeinate is currently running
- */
-export function isCaffeinateRunning(): boolean {
-  return caffeinateProcess !== null;
-}

@@ -33,3 +33,21 @@
 - Verified with ts-prune and grep that no imports exist
 
 **Status**: ✅ Complete - dead code removed, all checks pass
+
+## Iteration 3 - Remove unused isCaffeinateRunning
+
+**Task**: Scan for code smells and fix ONE issue (PRD line 22)
+
+**Changes**:
+- Removed unused function: isCaffeinateRunning()
+- Function was never imported or called anywhere in codebase
+- Simple getter for internal state that wasn't needed externally
+
+**Files changed**:
+- src/lib/caffeinate.ts
+
+**Key decisions**:
+- startCaffeinate() and stopCaffeinate() are the only public API needed
+- Internal state check not required by consumers
+
+**Status**: ✅ Complete - unused export removed, all checks pass
