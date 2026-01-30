@@ -41,6 +41,75 @@ export async function prdHasTasks(prdPath: string): Promise<boolean> {
 }
 
 /**
+ * Represents a single task from the PRD
+ */
+export interface PrdTask {
+  text: string;
+  completed: boolean;
+  phase?: string;
+}
+
+/**
+ * Parse tasks from a PRD file
+ *
+ * Returns an array of tasks with their completion status.
+ * Supports both checkbox format [ ] and checkmark format ✅
+ */
+export async function parsePrdTasks(prdPath: string): Promise<PrdTask[]> {
+  let content: string;
+  try {
+    content = await readFile(prdPath, "utf-8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
+    }
+    const ralphError = wrapError(error, `Failed to read PRD file at ${prdPath}`);
+    throw ralphError;
+  }
+
+  const lines = content.split("\n");
+  const tasks: PrdTask[] = [];
+  let currentPhase: string | undefined;
+
+  // Pattern to match task lines:
+  // [ ] task - incomplete checkbox
+  // [x] task - completed checkbox
+  // [X] task - completed checkbox (uppercase)
+  // ✅ task - completed with checkmark emoji
+  const checkboxPattern = /^\s*\[([x\sX])\]\s+(.+)$/;
+  const checkmarkPattern = /^\s*✅\s+(.+)$/;
+  // Pattern to match phase headers (e.g., "### Phase 1: Visual Design")
+  const phasePattern = /^###\s+(.+)$/;
+
+  for (const line of lines) {
+    // Check for phase header
+    const phaseMatch = line.match(phasePattern);
+    if (phaseMatch) {
+      currentPhase = phaseMatch[1].trim();
+      continue;
+    }
+
+    // Check for checkbox task
+    const checkboxMatch = line.match(checkboxPattern);
+    if (checkboxMatch) {
+      const completed = checkboxMatch[1].toLowerCase() === "x";
+      const text = checkboxMatch[2].trim();
+      tasks.push({ text, completed, phase: currentPhase });
+      continue;
+    }
+
+    // Check for checkmark task
+    const checkmarkMatch = line.match(checkmarkPattern);
+    if (checkmarkMatch) {
+      const text = checkmarkMatch[1].trim();
+      tasks.push({ text, completed: true, phase: currentPhase });
+    }
+  }
+
+  return tasks;
+}
+
+/**
  * List available PRD templates from a directory.
  *
  * Returns template metadata sorted by name.

@@ -1,0 +1,26 @@
+# Progress Log
+
+## Iteration 1
+
+Task: Add API endpoint `GET /api/tasks` to return parsed PRD tasks
+
+Changes:
+- Added parsePrdTasks function to src/lib/prd.ts to parse PRD tasks with completion status
+- Function supports both checkbox format [ ] and checkmark format ✅
+- Parses phase headers to group tasks by phase
+- Added PrdTask interface with text, completed, and optional phase fields
+- Added GET /api/tasks endpoint to src/lib/webserver.ts
+- Endpoint returns tasks array with completedCount and totalCount
+- Made handleRequest function async to support async route handlers
+- Imported parsePrdTasks from prd.ts into webserver.ts
+
+Files changed:
+- src/lib/prd.ts (added parsePrdTasks function and PrdTask interface)
+- src/lib/webserver.ts (added /api/tasks endpoint, made handleRequest async)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- No linting errors
+- API returns JSON with { tasks: PrdTask[], completedCount: number, totalCount: number }
+- Ready for UI implementation in next iteration

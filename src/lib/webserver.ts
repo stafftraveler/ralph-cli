@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import type { SessionState } from "../types.js";
+import { parsePrdTasks } from "./prd.js";
 
 /**
  * Dashboard data that gets sent to the web UI
@@ -90,26 +91,21 @@ function getDashboardHtml(data: DashboardData): string {
     * {
       margin: 0;
       padding: 0;
-      box-box-sizing: border-box;
+      box-sizing: border-box;
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #ffffff;
       min-height: 100vh;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 16px;
     }
 
     .container {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       max-width: 600px;
       width: 100%;
-      padding: 32px;
+      margin: 0 auto;
+      padding: 0;
     }
 
     .header {
@@ -118,92 +114,85 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .title {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1a202c;
+      font-size: 24px;
+      font-weight: 600;
+      color: #000000;
       margin-bottom: 8px;
     }
 
     .session-id {
-      font-size: 14px;
-      color: #718096;
+      font-size: 13px;
+      color: #666666;
       font-family: 'Monaco', 'Courier New', monospace;
     }
 
     .progress-section {
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     .progress-label {
       display: flex;
       justify-content: space-between;
       margin-bottom: 8px;
-      font-size: 14px;
-      color: #4a5568;
+      font-size: 13px;
+      color: #666666;
     }
 
     .progress-bar {
-      height: 24px;
-      background: #e2e8f0;
-      border-radius: 12px;
+      height: 8px;
+      background: #e5e5e5;
+      border-radius: 4px;
       overflow: hidden;
       position: relative;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      background: #000000;
       transition: width 0.5s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 12px;
-      font-weight: 600;
     }
 
     .status-section {
-      background: #f7fafc;
-      border-radius: 12px;
-      padding: 16px;
       margin-bottom: 24px;
+      padding: 16px 0;
+      border-bottom: 1px solid #e5e5e5;
     }
 
     .status-label {
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #718096;
+      color: #999999;
       margin-bottom: 8px;
-      font-weight: 600;
+      font-weight: 500;
     }
 
     .status-text {
-      font-size: 16px;
-      color: #2d3748;
-      font-weight: 500;
+      font-size: 14px;
+      color: #000000;
+      font-weight: 400;
     }
 
     .cost-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #edf2f7;
-      border-radius: 12px;
-      padding: 16px;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
       margin-bottom: 24px;
+      font-size: 13px;
+      color: #666666;
     }
 
     .cost-label {
-      font-size: 14px;
-      color: #4a5568;
-      font-weight: 500;
+      font-size: 13px;
+      color: #666666;
+      font-weight: 400;
     }
 
     .cost-value {
-      font-size: 24px;
-      color: #2d3748;
-      font-weight: 700;
+      font-size: 13px;
+      color: #000000;
+      font-weight: 500;
+      font-family: 'Monaco', 'Courier New', monospace;
     }
 
     .iterations-section {
@@ -211,10 +200,10 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .iterations-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #2d3748;
-      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+      margin-bottom: 8px;
     }
 
     .iterations-list {
@@ -225,40 +214,45 @@ function getDashboardHtml(data: DashboardData): string {
     .iteration-item {
       display: flex;
       justify-content: space-between;
-      padding: 8px 12px;
-      background: #f7fafc;
-      margin-bottom: 4px;
-      border-radius: 6px;
-      font-size: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+
+    .iteration-item:last-child {
+      border-bottom: none;
     }
 
     .iteration-number {
-      color: #4a5568;
+      color: #666666;
     }
 
     .iteration-cost {
-      color: #2d3748;
-      font-weight: 600;
+      color: #000000;
+      font-weight: 500;
+      font-family: 'Monaco', 'Courier New', monospace;
     }
 
     .footer {
       text-align: center;
-      margin-top: 24px;
-      font-size: 12px;
-      color: #a0aec0;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e5e5;
+      font-size: 11px;
+      color: #999999;
     }
 
     .add-task-section {
-      margin-top: 24px;
+      margin-top: 32px;
       padding-top: 24px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid #e5e5e5;
     }
 
     .add-task-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #2d3748;
-      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+      margin-bottom: 8px;
     }
 
     .add-task-form {
@@ -268,9 +262,9 @@ function getDashboardHtml(data: DashboardData): string {
 
     .add-task-input {
       flex: 1;
-      padding: 12px 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
       font-size: 14px;
       font-family: inherit;
       transition: border-color 0.2s;
@@ -278,31 +272,31 @@ function getDashboardHtml(data: DashboardData): string {
 
     .add-task-input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #000000;
     }
 
     .add-task-input::placeholder {
-      color: #a0aec0;
+      color: #999999;
     }
 
     .add-task-button {
-      padding: 12px 20px;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      padding: 8px 16px;
+      background: #000000;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 4px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
+      transition: opacity 0.2s;
     }
 
     .add-task-button:hover {
-      opacity: 0.9;
+      opacity: 0.8;
     }
 
     .add-task-button:active {
-      transform: scale(0.98);
+      opacity: 0.6;
     }
 
     .add-task-button:disabled {
@@ -312,16 +306,16 @@ function getDashboardHtml(data: DashboardData): string {
 
     .add-task-feedback {
       margin-top: 8px;
-      font-size: 13px;
-      min-height: 20px;
+      font-size: 12px;
+      min-height: 16px;
     }
 
     .add-task-feedback.success {
-      color: #38a169;
+      color: #000000;
     }
 
     .add-task-feedback.error {
-      color: #e53e3e;
+      color: #000000;
     }
   </style>
   <script>
@@ -561,7 +555,7 @@ async function addTaskToPrd(task: string): Promise<void> {
 /**
  * Request handler for the web server
  */
-function handleRequest(req: IncomingMessage, res: ServerResponse) {
+async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   // CORS headers for API requests
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -599,6 +593,12 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  // API endpoint for PRD tasks
+  if (req.url === "/api/tasks") {
+    await handleGetTasks(req, res);
+    return;
+  }
+
   // HTML dashboard (default route)
   if (req.url === "/" || req.url === "/index.html") {
     const data = getDashboardData();
@@ -611,6 +611,38 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
   // 404 for other routes
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Not Found");
+}
+
+/**
+ * Handle GET /api/tasks - Get all tasks from PRD
+ */
+async function handleGetTasks(_req: IncomingMessage, res: ServerResponse) {
+  try {
+    if (!serverState.ralphDir) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Ralph directory not configured" }));
+      return;
+    }
+
+    const prdPath = join(serverState.ralphDir, "PRD.md");
+    const tasks = await parsePrdTasks(prdPath);
+
+    const completedCount = tasks.filter((t) => t.completed).length;
+    const totalCount = tasks.length;
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        tasks,
+        completedCount,
+        totalCount,
+      }),
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: message }));
+  }
 }
 
 /**
