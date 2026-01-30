@@ -33,6 +33,8 @@ import {
 import { formatCost, resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
 import {
   setIterationsChangeHandler,
+  setPauseAfterIterationHandler,
+  setStopSessionHandler,
   startWebServer,
   stopWebServer,
   updateServerState,
@@ -91,6 +93,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const [currentIteration, setCurrentIteration] = useState(1);
   const [totalIterations, setTotalIterations] = useState(options.iterations ?? 10);
   const [prdComplete, setPrdComplete] = useState(false);
+  const [pauseAfterIteration, setPauseAfterIteration] = useState(false);
 
   // Error state
   const [error, setError] = useState<string | null>(null);
@@ -109,18 +112,24 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   // Start tunnel for web dashboard (only when running)
   const tunnelState = useTunnel(WEB_SERVER_PORT, phase === "running");
 
+  // Handler for quit (shared between keyboard and dashboard)
+  const handleQuit = useCallback(() => {
+    isInterruptedRef.current = true;
+    if (session && session.iterations.length > 0) {
+      shouldShowSummaryRef.current = true;
+      setPhase("summary");
+    } else {
+      exit();
+    }
+  }, [session, exit]);
+
   // Keyboard shortcuts
-  const [keyboardState] = useKeyboardShortcuts({
+  const [keyboardState, keyboardActions] = useKeyboardShortcuts({
     isActive: phase === "running",
-    onQuit: useCallback(() => {
-      isInterruptedRef.current = true;
-      if (session && session.iterations.length > 0) {
-        shouldShowSummaryRef.current = true;
-        setPhase("summary");
-      } else {
-        exit();
-      }
-    }, [session, exit]),
+    onQuit: handleQuit,
+    onTogglePause: useCallback(() => {
+      setPauseAfterIteration((prev) => !prev);
+    }, []),
     onIncrementIterations: useCallback(() => {
       setTotalIterations((prev) => prev + 1);
     }, []),
@@ -128,6 +137,13 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       setTotalIterations((prev) => Math.max(prev - 1, currentIteration));
     }, [currentIteration]),
   });
+
+  // Sync pause state between keyboard and external sources (dashboard)
+  useEffect(() => {
+    if (keyboardState.pauseAfterIteration !== pauseAfterIteration) {
+      keyboardActions.setPauseAfterIteration(pauseAfterIteration);
+    }
+  }, [pauseAfterIteration, keyboardState.pauseAfterIteration, keyboardActions]);
 
   // Merge verbose/debug from CLI and keyboard toggles
   const verbose = options.verbose || keyboardState.verbose;
@@ -186,6 +202,16 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         setTotalIterations(newTotal);
       });
 
+      // Set up handler for dashboard pause toggle
+      setPauseAfterIterationHandler((pause) => {
+        setPauseAfterIteration(pause);
+      });
+
+      // Set up handler for dashboard stop button
+      setStopSessionHandler(() => {
+        handleQuit();
+      });
+
       // Start web server when entering running phase
       startWebServer(WEB_SERVER_PORT)
         .then((server) => {
@@ -207,7 +233,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         serverRef.current = null;
       }
     };
-  }, [phase, debug]);
+  }, [phase, debug, handleQuit]);
 
   // Update web server state whenever session or iteration changes
   useEffect(() => {
@@ -218,9 +244,18 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         totalIterations,
         status: currentStatus,
         ralphDir,
+        isPausedAfterIteration: pauseAfterIteration,
       });
     }
-  }, [phase, session, currentIteration, totalIterations, currentStatus, ralphDir]);
+  }, [
+    phase,
+    session,
+    currentIteration,
+    totalIterations,
+    currentStatus,
+    ralphDir,
+    pauseAfterIteration,
+  ]);
 
   // Handle SIGINT/SIGTERM
   useEffect(() => {
@@ -474,6 +509,14 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         return;
       }
 
+      // Check if pause after iteration was requested
+      if (pauseAfterIteration) {
+        isInterruptedRef.current = true;
+        shouldShowSummaryRef.current = true;
+        setPhase("summary");
+        return;
+      }
+
       // Handle retry on failure
       if (!result.success) {
         const maxRetries = config.maxRetries ?? 3;
@@ -533,6 +576,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       totalIterations,
       plugins,
       retryCount,
+      pauseAfterIteration,
     ],
   );
 
@@ -650,7 +694,12 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             previousIterations={session.iterations}
           />
           <Box marginTop={1}>
-            <KeyboardShortcuts verbose={verbose} debug={debug} totalIterations={totalIterations} />
+            <KeyboardShortcuts
+              verbose={verbose}
+              debug={debug}
+              pauseAfterIteration={pauseAfterIteration || keyboardState.pauseAfterIteration}
+              totalIterations={totalIterations}
+            />
           </Box>
           <StatusBar
             url={tunnelState.url}

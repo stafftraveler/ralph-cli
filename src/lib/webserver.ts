@@ -18,6 +18,7 @@ export interface DashboardData {
   status: string;
   totalCost: number;
   currentIterationStartedAt: string | null;
+  isPausedAfterIteration: boolean;
   iterations: Array<{
     number: number;
     timestamp: string;
@@ -42,6 +43,9 @@ interface WebServerState {
   outputBuffer: string;
   currentIterationStartedAt: string | null;
   onIterationsChange?: (newTotal: number) => void;
+  onPauseAfterIteration?: (pause: boolean) => void;
+  onStopSession?: () => void;
+  isPausedAfterIteration?: boolean;
 }
 
 let serverState: WebServerState = {
@@ -52,6 +56,7 @@ let serverState: WebServerState = {
   ralphDir: "",
   outputBuffer: "",
   currentIterationStartedAt: null,
+  isPausedAfterIteration: false,
 };
 
 /**
@@ -83,6 +88,27 @@ export function updateServerState(state: Partial<WebServerState>) {
  */
 export function setIterationsChangeHandler(handler: (newTotal: number) => void) {
   serverState.onIterationsChange = handler;
+}
+
+/**
+ * Set the callback for when pause after iteration is toggled from the dashboard
+ */
+export function setPauseAfterIterationHandler(handler: (pause: boolean) => void) {
+  serverState.onPauseAfterIteration = handler;
+}
+
+/**
+ * Set the callback for when stop is triggered from the dashboard
+ */
+export function setStopSessionHandler(handler: () => void) {
+  serverState.onStopSession = handler;
+}
+
+/**
+ * Get the current pause state
+ */
+export function getPauseAfterIterationState(): boolean {
+  return serverState.isPausedAfterIteration ?? false;
 }
 
 /**
@@ -211,6 +237,7 @@ function getDashboardData(): DashboardData {
     status: serverState.status,
     totalCost: serverState.session?.totalCostUsd ?? 0,
     currentIterationStartedAt: serverState.currentIterationStartedAt,
+    isPausedAfterIteration: serverState.isPausedAfterIteration ?? false,
     iterations: (serverState.session?.iterations ?? []).map((iter, idx) => ({
       number: idx + 1,
       timestamp: iter.startedAt,
@@ -915,6 +942,187 @@ function getDashboardHtml(data: DashboardData): string {
       font-style: italic;
     }
 
+    .session-controls-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .session-controls-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #000000;
+      margin-bottom: 16px;
+    }
+
+    .iterations-adjust-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .iterations-adjust-label {
+      font-size: 14px;
+      color: #333333;
+    }
+
+    .iterations-adjust-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .iterations-value-inline {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-weight: 500;
+      color: #000000;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .session-control-row {
+      margin-top: 12px;
+    }
+
+    .session-control-btn {
+      width: 100%;
+      padding: 14px 16px;
+      background: #f5f5f5;
+      color: #333333;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+    }
+
+    .session-control-btn:hover {
+      background: #eeeeee;
+    }
+
+    .session-control-btn:active {
+      background: #e0e0e0;
+      transform: scale(0.99);
+    }
+
+    .session-control-btn .btn-icon {
+      font-size: 16px;
+    }
+
+    .pause-btn.active {
+      background: #fff3e0;
+      border-color: #ffb74d;
+      color: #e65100;
+    }
+
+    .pause-btn.active:hover {
+      background: #ffe0b2;
+    }
+
+    .stop-btn {
+      background: #fff5f5;
+      border-color: #ffcdd2;
+      color: #c62828;
+    }
+
+    .stop-btn:hover {
+      background: #ffebee;
+    }
+
+    .stop-btn:active {
+      background: #ffcdd2;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 320px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #000000;
+      margin-bottom: 12px;
+    }
+
+    .modal-message {
+      font-size: 14px;
+      color: #666666;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 44px;
+    }
+
+    .modal-btn-cancel {
+      background: #f5f5f5;
+      color: #333333;
+      border: 1px solid #e0e0e0;
+    }
+
+    .modal-btn-cancel:hover {
+      background: #eeeeee;
+    }
+
+    .modal-btn-confirm {
+      background: #d32f2f;
+      color: #ffffff;
+      border: none;
+    }
+
+    .modal-btn-confirm:hover {
+      background: #c62828;
+    }
+
+    .modal-btn-confirm:active {
+      background: #b71c1c;
+    }
+
     /* Dark mode support */
     @media (prefers-color-scheme: dark) {
       body {
@@ -1157,6 +1365,87 @@ function getDashboardHtml(data: DashboardData): string {
 
       .verbose-output:empty::before {
         color: #666666;
+      }
+
+      .session-controls-section {
+        border-top: 1px solid #333333;
+      }
+
+      .session-controls-title {
+        color: #ffffff;
+      }
+
+      .iterations-adjust-row {
+        border-bottom: 1px solid #333333;
+      }
+
+      .iterations-adjust-label {
+        color: #cccccc;
+      }
+
+      .iterations-value-inline {
+        color: #ffffff;
+      }
+
+      .session-control-btn {
+        background: #1a1a1a;
+        color: #cccccc;
+        border: 1px solid #333333;
+      }
+
+      .session-control-btn:hover {
+        background: #262626;
+      }
+
+      .session-control-btn:active {
+        background: #333333;
+      }
+
+      .pause-btn.active {
+        background: #3d2800;
+        border-color: #ff9800;
+        color: #ffb74d;
+      }
+
+      .pause-btn.active:hover {
+        background: #4d3300;
+      }
+
+      .stop-btn {
+        background: #2d1515;
+        border-color: #b71c1c;
+        color: #ef5350;
+      }
+
+      .stop-btn:hover {
+        background: #3d1f1f;
+      }
+
+      .stop-btn:active {
+        background: #4d2929;
+      }
+
+      .modal-content {
+        background: #1a1a1a;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-title {
+        color: #ffffff;
+      }
+
+      .modal-message {
+        color: #999999;
+      }
+
+      .modal-btn-cancel {
+        background: #262626;
+        color: #cccccc;
+        border: 1px solid #333333;
+      }
+
+      .modal-btn-cancel:hover {
+        background: #333333;
       }
     }
   </style>
@@ -1602,11 +1891,14 @@ function getDashboardHtml(data: DashboardData): string {
         }
       }
 
-      // Update iterations value
-      const iterationsValue = document.getElementById('iterations-value');
-      if (iterationsValue) {
-        iterationsValue.textContent = data.totalIterations;
+      // Update current iteration
+      const currentIterationEl = document.getElementById('current-iteration');
+      if (currentIterationEl) {
+        currentIterationEl.textContent = data.currentIteration;
       }
+
+      // Update iterations value (both in header and controls)
+      updateIterationsValue(data.totalIterations);
 
       // Update status
       const statusText = document.querySelector('.status-text');
@@ -1632,6 +1924,12 @@ function getDashboardHtml(data: DashboardData): string {
       const costValue = document.querySelector('.cost-value');
       if (costValue) {
         costValue.textContent = '$' + data.totalCost.toFixed(4);
+      }
+
+      // Update pause state
+      if (data.isPausedAfterIteration !== isPaused) {
+        isPaused = data.isPausedAfterIteration;
+        updatePauseButton(isPaused);
       }
 
       // Update iterations list
@@ -1774,10 +2072,7 @@ function getDashboardHtml(data: DashboardData): string {
         if (response.ok) {
           const result = await response.json();
           // Update will come through WebSocket, but update immediately for responsiveness
-          const iterationsValue = document.getElementById('iterations-value');
-          if (iterationsValue) {
-            iterationsValue.textContent = result.totalIterations;
-          }
+          updateIterationsValue(result.totalIterations);
         }
       } catch (err) {
         console.error('Failed to increment iterations:', err);
@@ -1797,15 +2092,103 @@ function getDashboardHtml(data: DashboardData): string {
         if (response.ok) {
           const result = await response.json();
           // Update will come through WebSocket, but update immediately for responsiveness
-          const iterationsValue = document.getElementById('iterations-value');
-          if (iterationsValue) {
-            iterationsValue.textContent = result.totalIterations;
-          }
+          updateIterationsValue(result.totalIterations);
         }
       } catch (err) {
         console.error('Failed to decrement iterations:', err);
       }
     }
+
+    // Update all iterations value displays
+    function updateIterationsValue(value) {
+      const iterationsValue = document.getElementById('iterations-value');
+      const iterationsValueControls = document.getElementById('iterations-value-controls');
+      if (iterationsValue) iterationsValue.textContent = value;
+      if (iterationsValueControls) iterationsValueControls.textContent = value;
+    }
+
+    // Pause toggle
+    let isPaused = ${data.isPausedAfterIteration};
+
+    async function togglePause() {
+      try {
+        const response = await fetch('/api/pause', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ pause: !isPaused })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          isPaused = result.isPaused;
+          updatePauseButton(isPaused);
+        }
+      } catch (err) {
+        console.error('Failed to toggle pause:', err);
+      }
+    }
+
+    function updatePauseButton(paused) {
+      const pauseBtn = document.getElementById('pause-btn');
+      const pauseBtnText = document.getElementById('pause-btn-text');
+      const pauseBtnIcon = pauseBtn?.querySelector('.btn-icon');
+      
+      if (pauseBtn) {
+        if (paused) {
+          pauseBtn.classList.add('active');
+          if (pauseBtnIcon) pauseBtnIcon.textContent = '▶';
+          if (pauseBtnText) pauseBtnText.textContent = 'Resume';
+        } else {
+          pauseBtn.classList.remove('active');
+          if (pauseBtnIcon) pauseBtnIcon.textContent = '⏸';
+          if (pauseBtnText) pauseBtnText.textContent = 'Pause After Iteration';
+        }
+      }
+    }
+
+    // Stop modal functions
+    function showStopModal() {
+      const modal = document.getElementById('stop-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function hideStopModal() {
+      const modal = document.getElementById('stop-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+
+    async function confirmStop() {
+      try {
+        const response = await fetch('/api/stop', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          hideStopModal();
+          // Update connection status to show stopping
+          updateConnectionStatus('completed');
+        }
+      } catch (err) {
+        console.error('Failed to stop session:', err);
+      }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('stop-modal');
+      if (modal && event.target === modal) {
+        hideStopModal();
+      }
+    });
 
     // Add task form handling
     async function addTask(event) {
@@ -1913,12 +2296,7 @@ function getDashboardHtml(data: DashboardData): string {
     <div class="progress-section">
       <div class="progress-label">
         <span>Progress</span>
-        <div class="iterations-control">
-          <span>Iteration ${data.currentIteration} of</span>
-          <button class="iteration-adjust-btn" onclick="decrementIterations()" title="Decrease iterations">−</button>
-          <span class="iterations-value" id="iterations-value">${data.totalIterations}</span>
-          <button class="iteration-adjust-btn" onclick="incrementIterations()" title="Increase iterations">+</button>
-        </div>
+        <span>Iteration <span id="current-iteration">${data.currentIteration}</span> of <span class="iterations-value" id="iterations-value">${data.totalIterations}</span></span>
       </div>
       <div class="progress-bar">
         <div class="progress-fill" style="width: ${progressPercent}%"></div>
@@ -1983,6 +2361,45 @@ function getDashboardHtml(data: DashboardData): string {
         <button type="submit" id="task-button" class="add-task-button">Add</button>
       </form>
       <div id="task-feedback" class="add-task-feedback"></div>
+    </div>
+
+    <div class="session-controls-section">
+      <div class="session-controls-title">Session Controls</div>
+      
+      <div class="iterations-adjust-row">
+        <span class="iterations-adjust-label">Adjust Iterations</span>
+        <div class="iterations-adjust-buttons">
+          <button class="iteration-adjust-btn" onclick="decrementIterations()" title="Decrease iterations">−</button>
+          <span class="iterations-value-inline" id="iterations-value-controls">${data.totalIterations}</span>
+          <button class="iteration-adjust-btn" onclick="incrementIterations()" title="Increase iterations">+</button>
+        </div>
+      </div>
+
+      <div class="session-control-row">
+        <button id="pause-btn" class="session-control-btn pause-btn ${data.isPausedAfterIteration ? "active" : ""}" onclick="togglePause()">
+          <span class="btn-icon">${data.isPausedAfterIteration ? "▶" : "⏸"}</span>
+          <span id="pause-btn-text">${data.isPausedAfterIteration ? "Resume" : "Pause After Iteration"}</span>
+        </button>
+      </div>
+
+      <div class="session-control-row">
+        <button class="session-control-btn stop-btn" onclick="showStopModal()">
+          <span class="btn-icon">⏹</span>
+          <span>Stop Session</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stop Confirmation Modal -->
+    <div id="stop-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-title">Stop Session?</div>
+        <div class="modal-message">This will immediately stop the current session. Any work in progress will be saved.</div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-cancel" onclick="hideStopModal()">Cancel</button>
+          <button class="modal-btn modal-btn-confirm" onclick="confirmStop()">Stop Session</button>
+        </div>
+      </div>
     </div>
 
     <div class="footer">
@@ -2067,6 +2484,14 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     }
     if (req.url === "/api/iterations") {
       handleAdjustIterations(req, res);
+      return;
+    }
+    if (req.url === "/api/pause") {
+      handlePauseToggle(req, res);
+      return;
+    }
+    if (req.url === "/api/stop") {
+      handleStopSession(req, res);
       return;
     }
     res.writeHead(404, { "Content-Type": "application/json" });
@@ -2220,6 +2645,50 @@ async function handleAdjustIterations(req: IncomingMessage, res: ServerResponse)
 
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ success: true, totalIterations: newTotal }));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: message }));
+  }
+}
+
+/**
+ * Handle POST /api/pause - Toggle pause after current iteration
+ */
+async function handlePauseToggle(req: IncomingMessage, res: ServerResponse) {
+  try {
+    const body = (await parseJsonBody(req)) as { pause?: boolean };
+
+    const shouldPause = body.pause ?? !serverState.isPausedAfterIteration;
+
+    // Update server state
+    serverState.isPausedAfterIteration = shouldPause;
+
+    // Call the handler if set (to update App.tsx state)
+    serverState.onPauseAfterIteration?.(shouldPause);
+
+    // Broadcast update to all clients
+    broadcastUpdate();
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true, isPaused: shouldPause }));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: message }));
+  }
+}
+
+/**
+ * Handle POST /api/stop - Stop the session immediately
+ */
+async function handleStopSession(_req: IncomingMessage, res: ServerResponse) {
+  try {
+    // Call the handler if set (to trigger quit in App.tsx)
+    serverState.onStopSession?.();
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true }));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     res.writeHead(500, { "Content-Type": "application/json" });
