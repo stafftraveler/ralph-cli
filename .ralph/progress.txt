@@ -15,3 +15,21 @@
 - This maintains proper React hooks dependencies while avoiding circular references
 
 **Status**: ✅ Complete - all linting errors fixed, tests pass
+
+## Iteration 2 - Remove unused exports
+
+**Task**: Scan for code smells and fix ONE issue (PRD line 22)
+
+**Changes**:
+- Removed unused standalone functions: startTunnel() and stopTunnel()
+- Both exports were never imported or used anywhere in codebase
+- The useTunnel() hook is the main API; standalone functions were dead code
+
+**Files changed**:
+- src/hooks/use-tunnel.ts
+
+**Key decisions**:
+- Removed both functions together as they're tightly related utilities
+- Verified with ts-prune and grep that no imports exist
+
+**Status**: ✅ Complete - dead code removed, all checks pass

@@ -285,29 +285,3 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
   return { url, isConnecting, error, password, isReconnecting, reconnectAttempts };
 }
-
-/**
- * Standalone function to start localtunnel
- *
- * @param port - Port to expose via tunnel
- * @returns Promise with tunnel instance
- */
-export async function startTunnel(port: number): Promise<Tunnel> {
-  try {
-    const tunnel = await localtunnel({ port });
-    return tunnel;
-  } catch (err) {
-    throw new Error(`Failed to start tunnel: ${err instanceof Error ? err.message : String(err)}`);
-  }
-}
-
-/**
- * Standalone function to stop tunnel
- */
-export async function stopTunnel(tunnel: Tunnel): Promise<void> {
-  try {
-    tunnel.close();
-  } catch (_err) {
-    // Ignore close errors
-  }
-}
