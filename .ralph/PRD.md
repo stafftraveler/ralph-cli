@@ -78,7 +78,7 @@ Moved to phase 7
 [x] Add success/failure status indicator per iteration
 [x] Display relative timestamps ("2m ago" instead of ISO dates)
 [x] Color-code iterations by status (green=success, red=failed, yellow=running)
-[ ] Make iteration items expandable to show more details (tokens, status messages)
+[x] Make iteration items expandable to show more details (tokens, status messages)
 
 ### Phase 7: WebSocket Implementation
 
