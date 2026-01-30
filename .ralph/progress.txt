@@ -298,3 +298,43 @@ Notes:
 - CLI flag provides flexible cost limit override without editing config
 - Works seamlessly with existing cost enforcement and warning system
 - Next: Show cost projections (Task 3.4)
+
+## Iteration 11: Add cost projections
+
+Task: PRD Task 3.4 - Show cost projections based on previous iterations
+
+Decisions:
+- Calculate average cost from completed iterations in session
+- Display projected total cost for remaining iterations
+- Show average cost per iteration alongside projection
+- Warn if projected cost would exceed maxCostPerSession limit
+- Only show projections when previous iteration data available
+
+Files changed:
+- src/components/IterationRunner.tsx:
+  - Added previousIterations prop to IterationRunnerProps
+  - Added currentIteration, totalIterations, previousIterations to UsageDisplayProps
+  - Calculate avgCostPerIteration from previousIterations with usage data
+  - Project remaining cost: avgCostPerIteration * remainingIterations
+  - Project total cost: sessionTotal + projectedRemainingCost
+  - Display "Projected total: $X.XX (avg $Y.YY/iter)" when data available
+  - Show yellow warning "⚠ Projected cost would exceed limit" if projection > maxCostPerSession
+  - Warning shown only when not already showing other warnings (exceeded/approaching)
+
+- src/components/App.tsx:
+  - Pass session.iterations as previousIterations prop to IterationRunner
+
+Implementation details:
+- Extract costs: previousIterations.map(iter => iter.usage?.totalCostUsd ?? 0).filter(cost => cost > 0)
+- Average calculation: costsFromPrevious.reduce((sum, cost) => sum + cost, 0) / costsFromPrevious.length
+- Remaining iterations: totalIterations - currentIteration
+- Projection warning logic: projectionWouldExceedLimit && !hasExceededLimit && !isApproachingLimit
+- Graceful handling when no previous iteration cost data exists
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- Projections help users anticipate cost overruns before they happen
+- Based on actual iteration costs, not estimates
+- Complements existing 80% warning and hard limit enforcement
+- Next: Section 4 - Improve Error Messages (multiple tasks)

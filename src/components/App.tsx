@@ -569,6 +569,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             verbose={verbose}
             debug={debug}
             sessionCostSoFar={session.totalCostUsd ?? 0}
+            previousIterations={session.iterations}
           />
           <Box marginTop={1}>
             <KeyboardShortcuts verbose={verbose} debug={debug} totalIterations={totalIterations} />

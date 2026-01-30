@@ -78,7 +78,7 @@ Already implemented. Verify that these have been implemented correctly.
     - Add option to cli.ts and CliOptions type
     - Pass through to iteration runner
 
-[ ] Show cost projections
+[x] Show cost projections
     - Calculate average cost per iteration from previous iterations
     - Display projected remaining cost before each iteration
     - Warn if projected cost would exceed limit

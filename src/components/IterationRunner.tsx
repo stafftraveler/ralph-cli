@@ -27,6 +27,8 @@ export interface IterationRunnerProps {
   debug?: boolean;
   /** Cumulative session cost so far in USD */
   sessionCostSoFar?: number;
+  /** Previous iterations for cost projection */
+  previousIterations?: IterationResult[];
 }
 
 /**
@@ -55,12 +57,22 @@ interface UsageDisplayProps {
   state: UseClaudeState;
   sessionCostSoFar?: number;
   maxCostPerSession?: number;
+  currentIteration: number;
+  totalIterations: number;
+  previousIterations?: IterationResult[];
 }
 
 /**
  * Cost and usage display with optional session total and warning
  */
-function UsageDisplay({ state, sessionCostSoFar, maxCostPerSession }: UsageDisplayProps) {
+function UsageDisplay({
+  state,
+  sessionCostSoFar,
+  maxCostPerSession,
+  currentIteration,
+  totalIterations,
+  previousIterations,
+}: UsageDisplayProps) {
   const { usage } = state;
 
   if (!usage) {
@@ -75,6 +87,34 @@ function UsageDisplay({ state, sessionCostSoFar, maxCostPerSession }: UsageDispl
   const isApproachingLimit = warnThreshold !== undefined && sessionTotal >= warnThreshold;
   const hasExceededLimit = maxCostPerSession !== undefined && sessionTotal >= maxCostPerSession;
 
+  // Calculate cost projection
+  let avgCostPerIteration: number | undefined;
+  let projectedTotalCost: number | undefined;
+  let projectedRemainingCost: number | undefined;
+  let projectionWouldExceedLimit = false;
+
+  if (previousIterations && previousIterations.length > 0) {
+    // Calculate average cost from completed iterations
+    const costsFromPrevious = previousIterations
+      .map((iter) => iter.usage?.totalCostUsd ?? 0)
+      .filter((cost) => cost > 0);
+
+    if (costsFromPrevious.length > 0) {
+      avgCostPerIteration =
+        costsFromPrevious.reduce((sum, cost) => sum + cost, 0) / costsFromPrevious.length;
+
+      // Project total cost for all iterations
+      const remainingIterations = totalIterations - currentIteration;
+      projectedRemainingCost = avgCostPerIteration * remainingIterations;
+      projectedTotalCost = sessionTotal + projectedRemainingCost;
+
+      // Check if projection would exceed limit
+      if (maxCostPerSession !== undefined && projectedTotalCost > maxCostPerSession) {
+        projectionWouldExceedLimit = true;
+      }
+    }
+  }
+
   return (
     <Box flexDirection="column" marginTop={1}>
       <Text color="gray">
@@ -87,6 +127,12 @@ function UsageDisplay({ state, sessionCostSoFar, maxCostPerSession }: UsageDispl
           {maxCostPerSession !== undefined && <Text> / {formatCost(maxCostPerSession)} limit</Text>}
         </Text>
       )}
+      {avgCostPerIteration !== undefined && projectedTotalCost !== undefined && (
+        <Text color="gray">
+          Projected total: {formatCost(projectedTotalCost)} (avg {formatCost(avgCostPerIteration)}
+          /iter)
+        </Text>
+      )}
       {hasExceededLimit && (
         <Text color="red" bold>
           ⚠ Cost limit exceeded!
@@ -96,6 +142,9 @@ function UsageDisplay({ state, sessionCostSoFar, maxCostPerSession }: UsageDispl
         <Text color="yellow">
           ⚠ Approaching cost limit ({Math.round((sessionTotal / maxCostPerSession) * 100)}%)
         </Text>
+      )}
+      {projectionWouldExceedLimit && !hasExceededLimit && !isApproachingLimit && (
+        <Text color="yellow">⚠ Projected cost would exceed limit</Text>
       )}
     </Box>
   );
@@ -120,6 +169,7 @@ export function IterationRunner({
   verbose,
   debug,
   sessionCostSoFar,
+  previousIterations,
 }: IterationRunnerProps) {
   const [state, actions] = useClaude();
   const { isRunning, currentStatus, elapsedSeconds } = state;
@@ -173,6 +223,9 @@ export function IterationRunner({
           state={state}
           sessionCostSoFar={sessionCostSoFar}
           maxCostPerSession={config.maxCostPerSession}
+          currentIteration={iteration}
+          totalIterations={totalIterations}
+          previousIterations={previousIterations}
         />
       </Box>
     );
@@ -197,6 +250,9 @@ export function IterationRunner({
         state={state}
         sessionCostSoFar={sessionCostSoFar}
         maxCostPerSession={config.maxCostPerSession}
+        currentIteration={iteration}
+        totalIterations={totalIterations}
+        previousIterations={previousIterations}
       />
       {debug && state.statusHistory.length > 0 && (
         <Box flexDirection="column" marginTop={1} marginLeft={2}>
