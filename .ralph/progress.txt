@@ -17,3 +17,12 @@ Iteration 2 - Chapter 2: Dashboard Detailed Status Display (Already Complete)
 - All three tasks were previously implemented, marked complete in PRD
 Files changed: .ralph/PRD.md
 All tests pass, type checks pass, no lint errors
+
+Iteration 3 - Chapter 3: Show completed tasks (Already Implemented)
+- Analyzed updateTasks() function in webserver.ts - iterates ALL tasks without filtering
+- Verified parsePrdTasks() returns all tasks including completed ones
+- Confirmed CSS styling for completed tasks: checkbox with checkmark, gray strikethrough text
+- No filter logic found that excludes completed tasks
+- Code already implements requested functionality: all tasks displayed with appropriate visual distinction
+Files changed: .ralph/PRD.md
+All tests pass, type checks pass, no lint errors
