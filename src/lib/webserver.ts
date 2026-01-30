@@ -30,6 +30,7 @@ interface WebServerState {
   totalIterations: number;
   status: string;
   ralphDir: string;
+  outputBuffer: string;
 }
 
 let serverState: WebServerState = {
@@ -38,13 +39,38 @@ let serverState: WebServerState = {
   totalIterations: 5,
   status: "Starting...",
   ralphDir: "",
+  outputBuffer: "",
 };
+
+/**
+ * Maximum size of output buffer in characters (100KB)
+ */
+const MAX_OUTPUT_BUFFER_SIZE = 100000;
 
 /**
  * Update the server state for the dashboard
  */
 export function updateServerState(state: Partial<WebServerState>) {
   serverState = { ...serverState, ...state };
+}
+
+/**
+ * Append output to the buffer, keeping only the most recent data
+ */
+export function appendOutput(chunk: string) {
+  serverState.outputBuffer += chunk;
+
+  // Trim buffer if it exceeds max size (keep last N characters)
+  if (serverState.outputBuffer.length > MAX_OUTPUT_BUFFER_SIZE) {
+    serverState.outputBuffer = serverState.outputBuffer.slice(-MAX_OUTPUT_BUFFER_SIZE);
+  }
+}
+
+/**
+ * Clear the output buffer (useful at start of new iteration)
+ */
+export function clearOutput() {
+  serverState.outputBuffer = "";
 }
 
 /**
@@ -788,6 +814,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
   // API endpoint for PRD tasks
   if (req.url === "/api/tasks") {
     await handleGetTasks(req, res);
+    return;
+  }
+
+  // API endpoint for Claude output
+  if (req.url === "/api/output") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ output: serverState.outputBuffer }));
     return;
   }
 

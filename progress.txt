@@ -82,3 +82,38 @@ Notes:
 - Type checking passes
 - Phase 2 (Task Display) now complete!
 - Progress bar updates every 2s with task refresh cycle
+
+## Iteration 4
+
+Task: Create API endpoint `GET /api/output` to stream Claude's output
+
+Changes:
+- Added outputBuffer field to WebServerState to store recent Claude output
+- Added appendOutput() function to append chunks to buffer (max 100KB)
+- Added clearOutput() function to reset buffer between iterations
+- Added GET /api/output endpoint returning JSON { output: string }
+- Imported and called appendOutput() from useClaude hook's handleStdout callback
+- Imported and called clearOutput() from IterationRunner before starting iteration
+
+Design decisions:
+- 100KB buffer size balances memory usage with sufficient history
+- Buffer trimmed from beginning when full (keeps most recent output)
+- Cleared at start of each iteration for clean separation
+- Returns entire buffer as single JSON response (not streaming)
+- Simple text format without parsing/processing for performance
+
+Architecture:
+- Output flows: Claude SDK -> useClaude hook -> appendOutput -> buffer -> API endpoint
+- Buffer lives in webserver module state (singleton)
+- Hook calls webserver functions (coupling necessary for real-time updates)
+
+Files changed:
+- src/lib/webserver.ts (added buffer, functions, endpoint)
+- src/hooks/use-claude.ts (call appendOutput on stdout chunks)
+- src/components/IterationRunner.tsx (call clearOutput before iteration)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- API ready for UI consumption
+- Next: Add UI toggle and display components

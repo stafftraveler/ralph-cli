@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { type ClaudeRunResult, runClaude } from "../lib/claude.js";
+import { appendOutput } from "../lib/webserver.js";
 import type { IterationResult, RalphConfig, UsageInfo } from "../types.js";
 
 /**
@@ -140,6 +141,8 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
       const handleStdout = (chunk: string) => {
         collectedOutput += chunk;
         setOutput(collectedOutput);
+        // Also append to web server buffer for remote monitoring
+        appendOutput(chunk);
       };
 
       // Callback for status/tool updates from SDK

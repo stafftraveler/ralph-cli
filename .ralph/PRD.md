@@ -54,7 +54,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 ### Phase 3: Verbose Mode
 
 [ ] Add "Verbose mode" toggle button to the dashboard UI
-[ ] Create API endpoint `GET /api/output` to stream Claude's output
+[x] Create API endpoint `GET /api/output` to stream Claude's output
 [ ] Display verbose output in a scrollable, monospace font container
 [ ] Auto-scroll to bottom as new output arrives
 [ ] Add ability to collapse/expand verbose output section
