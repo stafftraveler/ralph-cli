@@ -12,3 +12,17 @@
 - src/lib/webserver.ts (removed duplicate if check)
 
 **Notes**: Large monolithic file needs refactoring - HTML/CSS/JS should be extracted to separate files with build step. This is the main architectural issue to address next.
+
+## Iteration 2: Replace magic numbers with named constants
+
+**Task**: Replace hardcoded WebSocket ready state value `1` with `WebSocket.OPEN`
+
+**Decisions**:
+- Changed import from `type { WebSocket }` to `{ WebSocket }` to access static constants
+- Replaced all 4 occurrences of `client.readyState === 1` with `client.readyState === WebSocket.OPEN`
+- Removed redundant comments that just repeated the constant name
+
+**Files changed**:
+- src/lib/webserver.ts (imports and 4 readyState checks)
+
+**Notes**: Using named constants improves code readability and prevents magic number errors.

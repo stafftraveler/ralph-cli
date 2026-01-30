@@ -2,8 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import { join } from "node:path";
-import type { WebSocket } from "ws";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 import type { SessionState } from "../types.js";
 import { parsePrdTasks } from "./prd.js";
 import { formatDuration } from "./utils.js";
@@ -147,8 +146,7 @@ function broadcastUpdate() {
   });
 
   for (const client of wsClients) {
-    if (client.readyState === 1) {
-      // WebSocket.OPEN
+    if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
   }
@@ -166,8 +164,7 @@ function broadcastOutputUpdate(chunk: string) {
   });
 
   for (const client of wsClients) {
-    if (client.readyState === 1) {
-      // WebSocket.OPEN
+    if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
   }
@@ -184,8 +181,7 @@ function broadcastCompleted() {
   });
 
   for (const client of wsClients) {
-    if (client.readyState === 1) {
-      // WebSocket.OPEN
+    if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
   }
