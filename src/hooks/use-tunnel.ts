@@ -23,6 +23,12 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 2000;
 
 /**
+ * Minimum time a tunnel must stay alive before we attempt reconnection on close.
+ * If a tunnel dies within this period, we assume it's unstable and stop retrying.
+ */
+const CONNECTION_COOLDOWN = 5000;
+
+/**
  * State returned by useTunnel hook
  */
 export interface UseTunnelState {
@@ -181,12 +187,25 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
         setIsReconnecting(false);
         setReconnectAttempts(0);
 
+        // Track when the tunnel was established to detect rapid failures
+        const connectionTime = Date.now();
+
         // Handle tunnel close event - only act if this is still the current tunnel
         tunnel.on("close", () => {
           if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
             setUrl(null);
             setPassword(null);
-            // Don't set error here - we'll try to reconnect first
+
+            // Check if tunnel died too quickly (within cooldown period)
+            const timeSinceConnection = Date.now() - connectionTime;
+            if (timeSinceConnection < CONNECTION_COOLDOWN) {
+              // Tunnel is unstable - don't retry, show error
+              setError("Tunnel connection unstable - died immediately after connecting");
+              setIsReconnecting(false);
+              return;
+            }
+
+            // Tunnel lived long enough - try to reconnect
             scheduleReconnectRef.current?.();
           }
         });
@@ -194,7 +213,18 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
         // Handle tunnel error event - only act if this is still the current tunnel
         tunnel.on("error", (_err: Error) => {
           if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
-            // Don't set error here - we'll try to reconnect first
+            // Check if tunnel died too quickly (within cooldown period)
+            const timeSinceConnection = Date.now() - connectionTime;
+            if (timeSinceConnection < CONNECTION_COOLDOWN) {
+              // Tunnel is unstable - don't retry, show error
+              setUrl(null);
+              setPassword(null);
+              setError("Tunnel connection unstable - error immediately after connecting");
+              setIsReconnecting(false);
+              return;
+            }
+
+            // Tunnel lived long enough - try to reconnect
             scheduleReconnectRef.current?.();
           }
         });
