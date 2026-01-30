@@ -40,6 +40,7 @@ interface WebServerState {
   ralphDir: string;
   outputBuffer: string;
   currentIterationStartedAt: string | null;
+  onIterationsChange?: (newTotal: number) => void;
 }
 
 let serverState: WebServerState = {
@@ -74,6 +75,13 @@ export function updateServerState(state: Partial<WebServerState>) {
   serverState = { ...serverState, ...state };
   // Broadcast update to all connected WebSocket clients
   broadcastUpdate();
+}
+
+/**
+ * Set the callback for when iterations are adjusted from the dashboard
+ */
+export function setIterationsChangeHandler(handler: (newTotal: number) => void) {
+  serverState.onIterationsChange = handler;
 }
 
 /**
@@ -386,9 +394,56 @@ function getDashboardHtml(data: DashboardData): string {
     .progress-label {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       margin-bottom: 8px;
       font-size: 13px;
       color: #666666;
+    }
+
+    .iterations-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .iterations-value {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-weight: 500;
+      color: #000000;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .iteration-adjust-btn {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: #000000;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .iteration-adjust-btn:hover {
+      opacity: 0.8;
+    }
+
+    .iteration-adjust-btn:active {
+      opacity: 0.6;
+      transform: scale(0.95);
+    }
+
+    .iteration-adjust-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
     }
 
     .progress-bar {
@@ -437,6 +492,9 @@ function getDashboardHtml(data: DashboardData): string {
       font-size: 14px;
       color: #000000;
       font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .elapsed-time {
@@ -894,6 +952,15 @@ function getDashboardHtml(data: DashboardData): string {
 
       .progress-label {
         color: #999999;
+      }
+
+      .iterations-value {
+        color: #ffffff;
+      }
+
+      .iteration-adjust-btn {
+        background: #ffffff;
+        color: #000000;
       }
 
       .progress-bar {
@@ -1534,7 +1601,6 @@ function getDashboardHtml(data: DashboardData): string {
       // Update progress
       const progressPercent = (data.currentIteration / data.totalIterations) * 100;
       const progressFill = document.querySelector('.progress-fill');
-      const progressLabel = document.querySelector('.progress-label span:last-child');
       if (progressFill) {
         progressFill.style.width = progressPercent + '%';
         progressFill.textContent = progressPercent.toFixed(0) + '%';
@@ -1546,8 +1612,11 @@ function getDashboardHtml(data: DashboardData): string {
           progressFill.classList.remove('active');
         }
       }
-      if (progressLabel) {
-        progressLabel.textContent = 'Iteration ' + data.currentIteration + ' of ' + data.totalIterations;
+
+      // Update iterations value
+      const iterationsValue = document.getElementById('iterations-value');
+      if (iterationsValue) {
+        iterationsValue.textContent = data.totalIterations;
       }
 
       // Update status
@@ -1687,6 +1756,53 @@ function getDashboardHtml(data: DashboardData): string {
       return div.innerHTML;
     }
 
+    // Iteration adjustment functions
+    async function incrementIterations() {
+      try {
+        const response = await fetch('/api/iterations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ action: 'increment' })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // Update will come through WebSocket, but update immediately for responsiveness
+          const iterationsValue = document.getElementById('iterations-value');
+          if (iterationsValue) {
+            iterationsValue.textContent = result.totalIterations;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to increment iterations:', err);
+      }
+    }
+
+    async function decrementIterations() {
+      try {
+        const response = await fetch('/api/iterations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ action: 'decrement' })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // Update will come through WebSocket, but update immediately for responsiveness
+          const iterationsValue = document.getElementById('iterations-value');
+          if (iterationsValue) {
+            iterationsValue.textContent = result.totalIterations;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to decrement iterations:', err);
+      }
+    }
+
     // Add task form handling
     async function addTask(event) {
       event.preventDefault();
@@ -1793,7 +1909,12 @@ function getDashboardHtml(data: DashboardData): string {
     <div class="progress-section">
       <div class="progress-label">
         <span>Progress</span>
-        <span>Iteration ${data.currentIteration} of ${data.totalIterations}</span>
+        <div class="iterations-control">
+          <span>Iteration ${data.currentIteration} of</span>
+          <button class="iteration-adjust-btn" onclick="decrementIterations()" title="Decrease iterations">−</button>
+          <span class="iterations-value" id="iterations-value">${data.totalIterations}</span>
+          <button class="iteration-adjust-btn" onclick="incrementIterations()" title="Increase iterations">+</button>
+        </div>
       </div>
       <div class="progress-bar">
         <div class="progress-fill" style="width: ${progressPercent}%">
@@ -1942,6 +2063,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       handleAddTask(req, res);
       return;
     }
+    if (req.url === "/api/iterations") {
+      handleAdjustIterations(req, res);
+      return;
+    }
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not Found" }));
     return;
@@ -2047,6 +2172,52 @@ async function handleAddTask(req: IncomingMessage, res: ServerResponse) {
 
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ success: true, task }));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: message }));
+  }
+}
+
+/**
+ * Handle POST /api/iterations - Adjust total iterations
+ */
+async function handleAdjustIterations(req: IncomingMessage, res: ServerResponse) {
+  try {
+    const body = (await parseJsonBody(req)) as { action?: string };
+
+    if (!body.action || typeof body.action !== "string") {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Action is required (increment or decrement)" }));
+      return;
+    }
+
+    const action = body.action.toLowerCase();
+    if (action !== "increment" && action !== "decrement") {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Action must be increment or decrement" }));
+      return;
+    }
+
+    let newTotal = serverState.totalIterations;
+    if (action === "increment") {
+      newTotal += 1;
+    } else if (action === "decrement") {
+      // Don't allow going below current iteration
+      newTotal = Math.max(serverState.totalIterations - 1, serverState.currentIteration);
+    }
+
+    // Update server state
+    serverState.totalIterations = newTotal;
+
+    // Call the handler if set (to update App.tsx state)
+    serverState.onIterationsChange?.(newTotal);
+
+    // Broadcast update to all clients
+    broadcastUpdate();
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true, totalIterations: newTotal }));
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     res.writeHead(500, { "Content-Type": "application/json" });

@@ -31,7 +31,12 @@ import {
   saveSession,
 } from "../lib/session.js";
 import { formatCost, resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
-import { startWebServer, stopWebServer, updateServerState } from "../lib/webserver.js";
+import {
+  setIterationsChangeHandler,
+  startWebServer,
+  stopWebServer,
+  updateServerState,
+} from "../lib/webserver.js";
 import type {
   AppPhase,
   CliOptions,
@@ -176,6 +181,11 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   // Start/stop web server based on phase
   useEffect(() => {
     if (phase === "running") {
+      // Set up handler for dashboard iteration adjustments
+      setIterationsChangeHandler((newTotal) => {
+        setTotalIterations(newTotal);
+      });
+
       // Start web server when entering running phase
       startWebServer(WEB_SERVER_PORT)
         .then((server) => {

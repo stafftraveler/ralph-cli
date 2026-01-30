@@ -97,6 +97,23 @@ function shortenPath(filePath: string): string {
 }
 
 /**
+ * Extracts a description field from tool input if available
+ */
+function extractDescription(toolInput: unknown): string | undefined {
+  if (typeof toolInput !== "object" || toolInput === null) {
+    return undefined;
+  }
+
+  const input = toolInput as Record<string, unknown>;
+
+  if (typeof input.description === "string") {
+    return input.description;
+  }
+
+  return undefined;
+}
+
+/**
  * Formats a tool use event into a human-friendly status message
  *
  * @param toolName - The raw tool name from the SDK
@@ -104,6 +121,14 @@ function shortenPath(filePath: string): string {
  * @returns Human-friendly status string
  */
 function formatToolStatus(toolName: string, toolInput?: unknown): string {
+  // For Shell/Bash tools, prefer the description field if available
+  if (toolName === "Shell" || toolName === "Bash") {
+    const desc = extractDescription(toolInput);
+    if (desc) {
+      return desc;
+    }
+  }
+
   const description = TOOL_DESCRIPTIONS[toolName] ?? `Using tool: ${toolName}`;
 
   const filePath = extractFilePath(toolInput);

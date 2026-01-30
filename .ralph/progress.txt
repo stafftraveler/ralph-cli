@@ -26,3 +26,17 @@ Iteration 3 - Chapter 3: Show completed tasks (Already Implemented)
 - Code already implements requested functionality: all tasks displayed with appropriate visual distinction
 Files changed: .ralph/PRD.md
 All tests pass, type checks pass, no lint errors
+
+Iteration 4 - Chapter 3: Add iteration adjustment feature
+- Verified CLI keyboard handlers already implemented in App.tsx (up/down arrows)
+- Added onIterationsChange callback to WebServerState interface
+- Implemented setIterationsChangeHandler() function
+- Added POST /api/iterations endpoint with increment/decrement actions
+- Added iteration adjustment buttons (+/-) to dashboard progress section
+- Styled buttons with circular design, hover/active states, dark mode support
+- Implemented JS functions incrementIterations() and decrementIterations()
+- Updated updateDashboard() to sync iterations value from WebSocket
+- Wired up handler in App.tsx to call setTotalIterations when dashboard adjusts
+Decision: Decrement never goes below current iteration (safety)
+Files changed: src/components/App.tsx, src/lib/webserver.ts
+All tests pass, type checks pass, no lint errors
