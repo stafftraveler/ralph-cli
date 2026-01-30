@@ -69,3 +69,21 @@
 - Remove planned-but-unused delete functionality
 
 **Status**: ✅ Complete - unused export removed, all checks pass
+
+## Iteration 5 - Remove unused createGitError
+
+**Task**: Scan for code smells and fix ONE issue (PRD line 22)
+
+**Changes**:
+- Removed unused function: createGitError()
+- Function was never imported or called anywhere
+- Utility for creating typed git errors that was planned but not used
+
+**Files changed**:
+- src/lib/utils.ts
+
+**Key decisions**:
+- Keep only actively used error creation utilities
+- Remove unused error helper that was never needed
+
+**Status**: ✅ Complete - unused export removed, all checks pass

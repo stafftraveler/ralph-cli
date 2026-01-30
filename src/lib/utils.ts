@@ -182,17 +182,6 @@ export function createConfigError(message: string, details?: string): RalphError
 }
 
 /**
- * Create a git operation error
- */
-export function createGitError(operation: string, originalError?: Error): RalphError {
-  return new RalphError(RalphErrorCode.EGIT, `Git operation failed: ${operation}`, {
-    suggestion: "Ensure you're in a git repository and have necessary permissions",
-    details: originalError?.message,
-    originalError,
-  });
-}
-
-/**
  * Create a cost limit error
  */
 export function createCostLimitError(current: number, limit: number): RalphError {
