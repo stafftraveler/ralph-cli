@@ -126,9 +126,15 @@ export async function addIterationResult(
   session: SessionState,
   result: IterationResult,
 ): Promise<SessionState> {
+  // Calculate cumulative cost
+  const previousCost = session.totalCostUsd ?? 0;
+  const iterationCost = result.usage?.totalCostUsd ?? 0;
+  const totalCostUsd = previousCost + iterationCost;
+
   const updatedSession: SessionState = {
     ...session,
     iterations: [...session.iterations, result],
+    totalCostUsd,
   };
 
   await saveSession(ralphDir, updatedSession);
