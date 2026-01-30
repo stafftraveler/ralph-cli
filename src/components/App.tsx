@@ -137,7 +137,13 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         getCurrentBranch(),
       ]);
 
-      setConfig(loadedConfig);
+      // Override maxCostPerSession with CLI --max-cost flag if provided
+      const mergedConfig = {
+        ...loadedConfig,
+        maxCostPerSession: options.maxCost ?? loadedConfig.maxCostPerSession,
+      };
+
+      setConfig(mergedConfig);
       setRepoRoot(root ?? "");
       setBranch(currentBranch ?? "");
 
@@ -148,7 +154,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       }
     }
     void initialize();
-  }, [ralphDir, options.noPlugins, options.reset, exit]);
+  }, [ralphDir, options.noPlugins, options.reset, options.maxCost, exit]);
 
   // Handle SIGINT/SIGTERM
   useEffect(() => {

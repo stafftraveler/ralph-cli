@@ -188,6 +188,8 @@ export interface CliOptions {
   iterations?: number;
   /** CI mode - non-interactive, no Ink UI */
   ci: boolean;
+  /** Override MAX_COST_PER_SESSION from CLI */
+  maxCost?: number;
 }
 
 /**

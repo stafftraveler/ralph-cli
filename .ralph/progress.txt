@@ -258,3 +258,43 @@ Notes:
 - Simpler than separate config field - one setting controls both warning and limit
 - Warning automatically appears when approaching limit without extra config
 - Next: Add --max-cost CLI flag (Task 3.3)
+
+## Iteration 10: Add --max-cost CLI flag
+
+Task: PRD Task 3.3 - Add --max-cost CLI flag to override MAX_COST_PER_SESSION
+
+Decisions:
+- Added --max-cost <amount> flag to CLI run command
+- CLI flag overrides config MAX_COST_PER_SESSION value
+- Accepts floating point USD amounts (e.g., --max-cost 5.50)
+- Shows in dry-run output as "$X.XX" or "from config" if not set
+- Integrated cleanly with existing config system
+
+Files changed:
+- src/types.ts:
+  - Added maxCost?: number to CliOptions interface
+  - Documented as "Override MAX_COST_PER_SESSION from CLI"
+
+- src/cli.ts:
+  - Added .option("--max-cost <amount>", "Override MAX_COST_PER_SESSION from config (in USD)")
+  - Parse maxCost from opts.maxCost using parseFloat with validation
+  - Added maxCost to all option initialization locations (run action, init action, getParsedArgs default)
+  - Updated dry-run display to show max cost value
+
+- src/components/App.tsx:
+  - Merge CLI maxCost with config maxCostPerSession in initialization
+  - CLI flag takes precedence: options.maxCost ?? loadedConfig.maxCostPerSession
+  - Added options.maxCost to useEffect dependency array
+
+Implementation details:
+- Parsing: const parsed = Number.parseFloat(opts.maxCost); validates and converts string
+- Validation: if (!Number.isNaN(parsed) && parsed > 0) ensures positive values only
+- Merge logic: maxCostPerSession: options.maxCost ?? loadedConfig.maxCostPerSession
+- Display format: options.maxCost !== undefined ? `$${options.maxCost.toFixed(2)}` : "from config"
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- CLI flag provides flexible cost limit override without editing config
+- Works seamlessly with existing cost enforcement and warning system
+- Next: Show cost projections (Task 3.4)

@@ -58,6 +58,9 @@ async function showDryRunInfo(ralphDir: string, options: CliOptions): Promise<vo
   console.log(`  Resume:         ${options.resume ? "yes" : "no"}`);
   console.log(`  No Plugins:     ${options.noPlugins ? "yes" : "no"}`);
   console.log(`  Create PR:      ${options.createPr ? "yes" : "no"}`);
+  console.log(
+    `  Max Cost:       ${options.maxCost !== undefined ? `$${options.maxCost.toFixed(2)}` : "from config"}`,
+  );
   console.log("");
 
   // PRD analysis
@@ -203,12 +206,22 @@ export async function createProgram(): Promise<Command> {
     .option("--no-plugins", "Disable all plugins")
     .option("--create-pr", "Force create PR on completion", false)
     .option("--ci", "CI mode - non-interactive, no Ink UI", false)
+    .option("--max-cost <amount>", "Override MAX_COST_PER_SESSION from config (in USD)")
     .action((iterations, opts) => {
       let parsedIterations: number | undefined;
       if (iterations) {
         const parsed = Number.parseInt(iterations, 10);
         if (!Number.isNaN(parsed) && parsed > 0) {
           parsedIterations = parsed;
+        }
+      }
+
+      // Parse --max-cost flag
+      let maxCost: number | undefined;
+      if (opts.maxCost) {
+        const parsed = Number.parseFloat(opts.maxCost);
+        if (!Number.isNaN(parsed) && parsed > 0) {
+          maxCost = parsed;
         }
       }
 
@@ -227,6 +240,7 @@ export async function createProgram(): Promise<Command> {
           createPr: opts.createPr ?? false,
           iterations: parsedIterations,
           ci: opts.ci ?? false,
+          maxCost,
         },
       };
     });
@@ -249,6 +263,7 @@ export async function createProgram(): Promise<Command> {
           noPlugins: false,
           createPr: false,
           ci: false,
+          maxCost: undefined,
         },
       };
     });
@@ -275,6 +290,7 @@ export function getParsedArgs(): ParsedArgs {
         noPlugins: false,
         createPr: false,
         ci: false,
+        maxCost: undefined,
       },
     };
   }

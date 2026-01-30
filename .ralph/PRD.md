@@ -73,7 +73,7 @@ Already implemented. Verify that these have been implemented correctly.
     - Warn user when approaching cost limit (e.g., 80% of MAX_COST_PER_SESSION)
     - Display warning in UI with current/max cost values
 
-[ ] Add --max-cost CLI flag
+[x] Add --max-cost CLI flag
     - Allow overriding config MAX_COST_PER_SESSION via CLI
     - Add option to cli.ts and CliOptions type
     - Pass through to iteration runner
