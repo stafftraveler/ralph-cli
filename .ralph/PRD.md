@@ -36,7 +36,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 
 ### Phase 1: Visual Design Cleanup
 
-[ ] Remove the card container and gradient background - use a clean white/dark background
+[x] Remove the card container and gradient background - use a clean white/dark background
 [ ] Remove gradient from progress bar - use solid color
 [ ] Make 'Total Cost' block smaller and more subtle (inline or smaller font)
 [ ] Use a more minimal color palette (monochrome with accent color)
@@ -75,7 +75,6 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 [ ] Show elapsed time for current iteration
 [ ] Display estimated time remaining based on average iteration duration
 [ ] Add connection status indicator (connected/reconnecting)
-[ ] Implement smarter refresh intervals (faster when active, slower when idle)
 
 ### Phase 6: Iteration History Improvements
 
@@ -85,15 +84,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 [ ] Color-code iterations by status (green=success, red=failed, yellow=running)
 [ ] Make iteration items expandable to show more details (tokens, status messages)
 
-### Phase 7: Accessibility
-
-[ ] Add ARIA labels to progress bars and interactive elements
-[ ] Ensure color contrast meets WCAG AA standards
-[ ] Add `aria-live="polite"` to status text for screen reader updates
-[ ] Support `prefers-reduced-motion` for animations
-[ ] Add visible focus states for keyboard navigation
-
-### Phase 8: WebSocket Implementation
+### Phase 7: WebSocket Implementation
 
 [ ] Add WebSocket server alongside HTTP server
 [ ] Broadcast status updates to connected clients in real-time
@@ -124,7 +115,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 
 ### Dependencies
 
-- `ws` package for WebSocket server (Phase 8)
+- `ws` package for WebSocket server (Phase 7)
 
 ---
 
