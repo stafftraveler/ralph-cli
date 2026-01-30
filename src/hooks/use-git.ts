@@ -1,5 +1,6 @@
 import { execa } from "execa";
 import type { CommitInfo, DiffStat } from "../types.js";
+import { debugLog } from "../lib/utils.js";
 
 /**
  * Get the root directory of the current git repository
@@ -9,9 +10,7 @@ export async function getRepoRoot(): Promise<string | null> {
     const { stdout } = await execa("git", ["rev-parse", "--show-toplevel"]);
     return stdout.trim();
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[use-git] Failed to get repo root:", error);
-    }
+    debugLog("[use-git] Failed to get repo root:", error);
     return null;
   }
 }
@@ -24,9 +23,7 @@ export async function isGitRepo(): Promise<boolean> {
     await execa("git", ["rev-parse", "--git-dir"]);
     return true;
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[use-git] Not a git repository:", error);
-    }
+    debugLog("[use-git] Not a git repository:", error);
     return false;
   }
 }
@@ -39,9 +36,7 @@ export async function getCurrentBranch(): Promise<string | null> {
     const { stdout } = await execa("git", ["branch", "--show-current"]);
     return stdout.trim() || null;
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[use-git] Failed to get current branch:", error);
-    }
+    debugLog("[use-git] Failed to get current branch:", error);
     return null;
   }
 }
@@ -54,9 +49,7 @@ export async function getCurrentCommit(): Promise<string | null> {
     const { stdout } = await execa("git", ["rev-parse", "HEAD"]);
     return stdout.trim();
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[use-git] Failed to get current commit:", error);
-    }
+    debugLog("[use-git] Failed to get current commit:", error);
     return null;
   }
 }
@@ -70,17 +63,13 @@ export async function createBranch(name: string): Promise<boolean> {
     await execa("git", ["checkout", "-b", name]);
     return true;
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[use-git] Failed to create new branch, trying to switch:", error);
-    }
+    debugLog("[use-git] Failed to create new branch, trying to switch:", error);
     // Branch might exist, try switching
     try {
       await execa("git", ["checkout", name]);
       return true;
     } catch (switchError) {
-      if (process.env.DEBUG) {
-        console.error("[use-git] Failed to switch to existing branch:", switchError);
-      }
+      debugLog("[use-git] Failed to switch to existing branch:", switchError);
       return false;
     }
   }
@@ -111,9 +100,7 @@ export async function getCommitsSince(sha: string): Promise<CommitInfo[]> {
         };
       });
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[use-git] Failed to get commits since", sha, ":", error);
-    }
+    debugLog(`[use-git] Failed to get commits since ${sha}:`, error);
     return [];
   }
 }
@@ -165,9 +152,7 @@ export async function getDiffStats(fromCommit: string): Promise<DiffStat[]> {
 
     return stats;
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[use-git] Failed to get diff stats from", fromCommit, ":", error);
-    }
+    debugLog(`[use-git] Failed to get diff stats from ${fromCommit}:`, error);
     return [];
   }
 }

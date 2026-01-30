@@ -1,4 +1,5 @@
 import { execa } from "execa";
+import { debugLog } from "./utils.js";
 
 /**
  * Service name for storing the API key in the macOS Keychain
@@ -51,13 +52,11 @@ export async function saveApiKeyToKeychain(apiKey: string): Promise<boolean> {
     return true;
   } catch (error) {
     // Log error in debug mode with helpful context
-    if (process.env.DEBUG) {
-      console.error("[keychain] Failed to save API key:", error);
-      console.error(
-        "[keychain] Tip: Check keychain access with: security find-generic-password -s ralph-cli",
-      );
-      console.error("[keychain] Or manually set: export ANTHROPIC_API_KEY='your-key'");
-    }
+    debugLog("[keychain] Failed to save API key:", error);
+    debugLog(
+      "[keychain] Tip: Check keychain access with: security find-generic-password -s ralph-cli",
+    );
+    debugLog("[keychain] Or manually set: export ANTHROPIC_API_KEY='your-key'");
     return false;
   }
 }
@@ -124,9 +123,7 @@ export async function saveLinearTokenToKeychain(apiKey: string): Promise<boolean
 
     return true;
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[keychain] Failed to save Linear API key:", error);
-    }
+    debugLog("[keychain] Failed to save Linear API key:", error);
     return false;
   }
 }

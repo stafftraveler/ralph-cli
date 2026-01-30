@@ -189,3 +189,34 @@ Remaining low priority items (optional polish):
 - Review console.* calls for DEBUG guarding
 
 All tests passing (86/86), type checking clean, linting clean.
+## Iteration 9
+
+Task: Deduplicate debug logging pattern - create debugLog utility
+
+Completed:
+- Created debugLog utility in src/lib/utils.ts (new function)
+- Replaced 20+ instances of "if (process.env.DEBUG) { console.error(...) }" pattern
+- Updated 8 files to use new utility:
+  * src/hooks/use-git.ts: 8 replacements
+  * src/hooks/use-claude.ts: 1 replacement (with 3 additional debug calls)
+  * src/cli.ts: 3 replacements
+  * src/lib/linear.ts: 5 replacements
+  * src/lib/keychain.ts: 2 replacements (with 2 additional debug calls)
+  * src/index.tsx: 1 replacement
+
+Files changed:
+- src/lib/utils.ts: Added debugLog(message, error?) function
+- src/hooks/use-git.ts: Import debugLog, replace 8 debug patterns
+- src/hooks/use-claude.ts: Import debugLog, replace 4 debug calls
+- src/cli.ts: Import debugLog, replace 3 debug patterns
+- src/lib/linear.ts: Import debugLog, replace 5 debug patterns
+- src/lib/keychain.ts: Import debugLog, replace 4 debug calls
+- src/index.tsx: Import debugLog, replace 1 debug pattern
+
+Reasoning: DRY principle - 20+ instances of same pattern. Utility function provides single source of truth for debug logging behavior, easier to maintain and consistent across codebase.
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean
+Format: Applied (1 file formatted)
+

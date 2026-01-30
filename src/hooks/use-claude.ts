@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { type ClaudeRunResult, runClaude } from "../lib/claude.js";
+import { debugLog } from "../lib/utils.js";
 import { appendOutput } from "../lib/webserver.js";
 import type { IterationResult, RalphConfig, UsageInfo } from "../types.js";
 
@@ -168,14 +169,12 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
         });
       } catch (error) {
         // Cancelled or failed - log error details in debug mode
-        if (process.env.DEBUG) {
-          console.error("[use-claude] Iteration failed:", error);
-          if (error instanceof Error) {
-            console.error("[use-claude] Error name:", error.name);
-            console.error("[use-claude] Error message:", error.message);
-            if (error.stack) {
-              console.error("[use-claude] Stack trace:", error.stack);
-            }
+        debugLog("[use-claude] Iteration failed:", error);
+        if (error instanceof Error) {
+          debugLog(`[use-claude] Error name: ${error.name}`);
+          debugLog(`[use-claude] Error message: ${error.message}`);
+          if (error.stack) {
+            debugLog(`[use-claude] Stack trace: ${error.stack}`);
           }
         }
 
