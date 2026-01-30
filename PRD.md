@@ -23,4 +23,5 @@ Clean-up the codebase.
     - ✅ Iteration 10: Made 2 interface exports private in use-preflight.ts - UsePreflightState, UsePreflightActions only used internally
     - ✅ Iteration 11: Made 2 interface exports private in use-claude.ts - UseClaudeActions, RunIterationOptions only used internally (kept UseClaudeState exported as it's used by IterationRunner)
     - ✅ Iteration 12: Removed hasUncommittedChanges() from use-git.ts (19 lines) - exported but never imported
-    - Continue scanning for more issues (hasUntrackedFiles, isOnMainBranch, getCommitCount still unused)
+    - ✅ Iteration 13: Removed hasUntrackedFiles() from use-git.ts (13 lines) - exported but never imported
+    - Continue scanning for more issues (isOnMainBranch, getCommitCount still unused)

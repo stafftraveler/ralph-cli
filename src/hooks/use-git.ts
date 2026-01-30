@@ -161,22 +161,6 @@ export async function getDiffStats(fromCommit: string): Promise<DiffStat[]> {
 }
 
 /**
- * Check if there are untracked files (excluding .ralph/ directory)
- */
-export async function hasUntrackedFiles(): Promise<boolean> {
-  try {
-    const { stdout } = await execa("git", ["ls-files", "--others", "--exclude-standard"]);
-    const files = stdout
-      .trim()
-      .split("\n")
-      .filter((f) => f && !f.startsWith(".ralph/"));
-    return files.length > 0;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Check if currently on main or master branch
  */
 export async function isOnMainBranch(): Promise<boolean> {
