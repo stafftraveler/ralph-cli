@@ -78,3 +78,23 @@ Reasoning: Config was never used inside runClaude - cost limits are checked in u
 Tests: All 86 tests passing
 Type check: Clean
 Lint: Clean
+
+## Iteration 5
+
+Task: Export NotifyOptions interface in notify.ts
+
+Completed:
+- Added export keyword to NotifyOptions interface (line 9)
+- Added JSDoc comment for the interface
+- Verified interface is used in App.tsx when calling notify()
+- Removed unused mockConfig and RalphConfig import from claude.test.ts (leftover from previous iteration)
+
+Files changed:
+- src/lib/notify.ts: Exported NotifyOptions interface with documentation
+- src/lib/claude.test.ts: Cleanup - removed unused mockConfig and import
+
+Reasoning: Exporting the interface improves API discoverability and allows callers to type options programmatically. Interface is used inline in App.tsx - export enables better type safety if needed.
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean

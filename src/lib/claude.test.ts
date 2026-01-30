@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { RalphConfig } from "../types.js";
 import { hasApiKey, hasApiKeySync, type RunClaudeOptions, runClaude, setApiKey } from "./claude.js";
 import * as keychain from "./keychain.js";
 
@@ -20,17 +19,6 @@ vi.mock("./keychain.js", () => ({
 }));
 
 describe("claude", () => {
-  const mockConfig: RalphConfig = {
-    maxRetries: 3,
-    soundOnComplete: true,
-    notificationSound: "/System/Library/Sounds/Glass.aiff",
-    saveOutput: false,
-    outputDir: "logs",
-    prdTemplatesDir: "templates",
-    defaultTemplate: "empty",
-    defaultIterations: 10,
-  };
-
   // Helper to create async iterable from array
   async function* createAsyncIterable<T>(items: T[]): AsyncIterable<T> {
     for (const item of items) {
