@@ -8,8 +8,6 @@ export interface StatusBarProps {
   isConnecting: boolean;
   /** Error message if any */
   error: string | null;
-  /** Tunnel password (public IP) for accessing the tunnel */
-  password?: string | null;
   /** Whether tunnel is reconnecting */
   isReconnecting?: boolean;
   /** Number of reconnection attempts */
@@ -23,7 +21,6 @@ export function StatusBar({
   url,
   isConnecting,
   error,
-  password,
   isReconnecting,
   reconnectAttempts,
 }: StatusBarProps) {
@@ -66,12 +63,6 @@ export function StatusBar({
             Dashboard:
           </Text>{" "}
           <Text color="cyan">{url}</Text>
-          {password && (
-            <Text dimColor>
-              {" "}
-              (password: <Text color="yellow">{password}</Text>)
-            </Text>
-          )}
         </Text>
       </Box>
     );

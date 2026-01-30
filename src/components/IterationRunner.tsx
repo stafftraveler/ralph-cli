@@ -2,6 +2,7 @@ import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import { useEffect, useRef } from "react";
 import { type UseClaudeState, useClaude } from "../hooks/use-claude.js";
+import { useCostProjections } from "../hooks/use-cost-projections.js";
 import { formatCost, formatDuration } from "../lib/utils.js";
 import { clearOutput } from "../lib/webserver.js";
 import type { IterationResult, RalphConfig } from "../types.js";
@@ -78,51 +79,36 @@ function UsageDisplay({
 }: UsageDisplayProps) {
   const { usage } = state;
 
-  if (!usage) {
+  const projection = useCostProjections({
+    usage,
+    sessionCostSoFar,
+    maxCostPerSession,
+    currentIteration,
+    totalIterations,
+    previousIterations,
+  });
+
+  if (!projection) {
     return null;
   }
 
-  const iterationCost = usage.totalCostUsd ?? 0;
-  const sessionTotal = (sessionCostSoFar ?? 0) + iterationCost;
-
-  // Calculate 80% threshold from maxCostPerSession
-  const warnThreshold = maxCostPerSession !== undefined ? maxCostPerSession * 0.8 : undefined;
-  const isApproachingLimit = warnThreshold !== undefined && sessionTotal >= warnThreshold;
-  const hasExceededLimit = maxCostPerSession !== undefined && sessionTotal >= maxCostPerSession;
-
-  // Calculate cost projection
-  let avgCostPerIteration: number | undefined;
-  let projectedTotalCost: number | undefined;
-  let projectedRemainingCost: number | undefined;
-  let projectionWouldExceedLimit = false;
-
-  if (previousIterations && previousIterations.length > 0) {
-    // Calculate average cost from completed iterations
-    const costsFromPrevious = previousIterations
-      .map((iter) => iter.usage?.totalCostUsd ?? 0)
-      .filter((cost) => cost > 0);
-
-    if (costsFromPrevious.length > 0) {
-      avgCostPerIteration =
-        costsFromPrevious.reduce((sum, cost) => sum + cost, 0) / costsFromPrevious.length;
-
-      // Project total cost for all iterations
-      const remainingIterations = totalIterations - currentIteration;
-      projectedRemainingCost = avgCostPerIteration * remainingIterations;
-      projectedTotalCost = sessionTotal + projectedRemainingCost;
-
-      // Check if projection would exceed limit
-      if (maxCostPerSession !== undefined && projectedTotalCost > maxCostPerSession) {
-        projectionWouldExceedLimit = true;
-      }
-    }
-  }
+  const {
+    sessionTotal,
+    avgCostPerIteration,
+    projectedTotalCost,
+    projectionWouldExceedLimit,
+    isApproachingLimit,
+    hasExceededLimit,
+  } = projection;
 
   return (
     <Box flexDirection="column" marginTop={1}>
       <Text color="gray">
-        Tokens: {usage.inputTokens.toLocaleString()} in / {usage.outputTokens.toLocaleString()} out
-        {usage.totalCostUsd !== undefined && <Text> · Cost: {formatCost(usage.totalCostUsd)}</Text>}
+        Tokens: {usage!.inputTokens.toLocaleString()} in / {usage!.outputTokens.toLocaleString()}{" "}
+        out
+        {usage!.totalCostUsd !== undefined && (
+          <Text> · Cost: {formatCost(usage!.totalCostUsd)}</Text>
+        )}
       </Text>
       {sessionCostSoFar !== undefined && sessionCostSoFar > 0 && (
         <Text color="gray">

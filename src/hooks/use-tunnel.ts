@@ -1,16 +1,6 @@
-import type { Tunnel } from "localtunnel";
-import localtunnel from "localtunnel";
+import { existsSync } from "node:fs";
+import { Tunnel, bin, install } from "cloudflared";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-/**
- * Health check interval in milliseconds (30 seconds)
- */
-const HEALTH_CHECK_INTERVAL = 30000;
-
-/**
- * Health check timeout in milliseconds (10 seconds)
- */
-const HEALTH_CHECK_TIMEOUT = 10000;
 
 /**
  * Maximum reconnection attempts before giving up
@@ -18,9 +8,9 @@ const HEALTH_CHECK_TIMEOUT = 10000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
 /**
- * Base delay for exponential backoff (2 seconds)
+ * Base delay for exponential backoff (3 seconds)
  */
-const BASE_RECONNECT_DELAY = 2000;
+const BASE_RECONNECT_DELAY = 3000;
 
 /**
  * Minimum time a tunnel must stay alive before we attempt reconnection on close.
@@ -38,8 +28,6 @@ export interface UseTunnelState {
   isConnecting: boolean;
   /** Error message if connection failed */
   error: string | null;
-  /** Tunnel password (public IP) for accessing the tunnel */
-  password: string | null;
   /** Whether the tunnel is currently reconnecting */
   isReconnecting: boolean;
   /** Number of reconnection attempts made */
@@ -47,54 +35,20 @@ export interface UseTunnelState {
 }
 
 /**
- * Fetch the tunnel password from loca.lt
- * The password is the public IP of the machine running the tunnel
+ * Ensure the cloudflared binary is installed
+ * Downloads it automatically if not present
  */
-async function fetchTunnelPassword(): Promise<string | null> {
-  try {
-    const response = await fetch("https://loca.lt/mytunnelpassword");
-    if (response.ok) {
-      const text = await response.text();
-      return text.trim();
-    }
-    return null;
-  } catch {
-    return null;
+async function ensureBinaryInstalled(): Promise<void> {
+  if (!existsSync(bin)) {
+    await install(bin);
   }
 }
 
 /**
- * Check if the tunnel is healthy by making a request to it
- * Returns true if the tunnel responds, false otherwise
- */
-async function checkTunnelHealth(tunnelUrl: string): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT);
-
-    const response = await fetch(tunnelUrl, {
-      method: "HEAD",
-      signal: controller.signal,
-      // Don't follow redirects - we just want to know if the tunnel is alive
-      redirect: "manual",
-    });
-
-    clearTimeout(timeoutId);
-
-    // Any response (including redirects and errors from our server) means tunnel is alive
-    // We're checking the tunnel itself, not our app
-    return response.status !== 502 && response.status !== 504;
-  } catch {
-    // Network error, timeout, or abort means tunnel is dead
-    return false;
-  }
-}
-
-/**
- * Hook to manage localtunnel lifecycle with automatic health checks and reconnection
+ * Hook to manage cloudflared tunnel lifecycle with automatic reconnection
  *
- * Automatically starts a localtunnel for the given port, monitors its health,
- * and reconnects if the connection drops.
+ * Automatically starts a Cloudflare quick tunnel for the given port,
+ * monitors connection status via events, and reconnects if the connection drops.
  *
  * @param port - Port to expose via tunnel
  * @param enabled - Whether to start the tunnel (default: true)
@@ -104,27 +58,21 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
   const [url, setUrl] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [password, setPassword] = useState<string | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   // Refs to track mutable state across async operations
   const tunnelRef = useRef<Tunnel | null>(null);
   const isMountedRef = useRef(true);
-  const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scheduleReconnectRef = useRef<(() => void) | null>(null);
   // Track tunnel instance to prevent stale event handlers from affecting new tunnels
   const tunnelInstanceIdRef = useRef(0);
 
   /**
-   * Clear all timers
+   * Clear reconnect timer
    */
-  const clearTimers = useCallback(() => {
-    if (healthCheckIntervalRef.current) {
-      clearInterval(healthCheckIntervalRef.current);
-      healthCheckIntervalRef.current = null;
-    }
+  const clearTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -137,7 +85,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
   const closeTunnel = useCallback(() => {
     if (tunnelRef.current) {
       try {
-        tunnelRef.current.close();
+        tunnelRef.current.stop();
       } catch {
         // Ignore close errors
       }
@@ -154,7 +102,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
       // Close any existing tunnel
       closeTunnel();
-      clearTimers();
+      clearTimer();
 
       // Increment instance ID to invalidate any pending events from old tunnels
       tunnelInstanceIdRef.current += 1;
@@ -168,58 +116,57 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
       setError(null);
 
       try {
-        // Start tunnel and fetch password in parallel
-        const [tunnel, tunnelPassword] = await Promise.all([
-          localtunnel({ port }),
-          fetchTunnelPassword(),
-        ]);
+        // Ensure cloudflared binary is installed
+        await ensureBinaryInstalled();
 
-        // Check if this tunnel instance is still current
         if (!isMountedRef.current || currentInstanceId !== tunnelInstanceIdRef.current) {
-          tunnel.close();
           return false;
         }
 
+        // Create a quick tunnel to our local server
+        const tunnel = Tunnel.quick(`http://localhost:${port}`);
         tunnelRef.current = tunnel;
-        setUrl(tunnel.url);
-        setPassword(tunnelPassword);
-        setIsConnecting(false);
-        setIsReconnecting(false);
-        setReconnectAttempts(0);
 
         // Track when the tunnel was established to detect rapid failures
         const connectionTime = Date.now();
 
-        // Handle tunnel close event - only act if this is still the current tunnel
-        tunnel.on("close", () => {
-          if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
-            setUrl(null);
-            setPassword(null);
+        // Wait for the URL to be assigned
+        const tunnelUrl = await new Promise<string>((resolve, reject) => {
+          const urlTimeout = setTimeout(() => {
+            reject(new Error("Timeout waiting for tunnel URL"));
+          }, 30000);
 
-            // Check if tunnel died too quickly (within cooldown period)
-            const timeSinceConnection = Date.now() - connectionTime;
-            if (timeSinceConnection < CONNECTION_COOLDOWN) {
-              // Tunnel is unstable - don't retry, show error
-              setError("Tunnel connection unstable - died immediately after connecting");
-              setIsReconnecting(false);
-              return;
-            }
+          tunnel.once("url", (assignedUrl: string) => {
+            clearTimeout(urlTimeout);
+            resolve(assignedUrl);
+          });
 
-            // Tunnel lived long enough - try to reconnect
-            scheduleReconnectRef.current?.();
-          }
+          tunnel.once("error", (err: Error) => {
+            clearTimeout(urlTimeout);
+            reject(err);
+          });
         });
 
-        // Handle tunnel error event - only act if this is still the current tunnel
-        tunnel.on("error", (_err: Error) => {
+        // Check if this tunnel instance is still current
+        if (!isMountedRef.current || currentInstanceId !== tunnelInstanceIdRef.current) {
+          tunnel.stop();
+          return false;
+        }
+
+        setUrl(tunnelUrl);
+        setIsConnecting(false);
+        setIsReconnecting(false);
+        setReconnectAttempts(0);
+
+        // Handle tunnel disconnection - cloudflared emits this when connection drops
+        tunnel.on("disconnected", () => {
           if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
             // Check if tunnel died too quickly (within cooldown period)
             const timeSinceConnection = Date.now() - connectionTime;
             if (timeSinceConnection < CONNECTION_COOLDOWN) {
               // Tunnel is unstable - don't retry, show error
               setUrl(null);
-              setPassword(null);
-              setError("Tunnel connection unstable - error immediately after connecting");
+              setError("Tunnel connection unstable - disconnected immediately after connecting");
               setIsReconnecting(false);
               return;
             }
@@ -229,28 +176,42 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
           }
         });
 
-        // Start health check interval
-        healthCheckIntervalRef.current = setInterval(async () => {
-          // Check both mounted state and instance ID
-          if (
-            !isMountedRef.current ||
-            !tunnelRef.current ||
-            currentInstanceId !== tunnelInstanceIdRef.current
-          )
-            return;
+        // Handle tunnel exit - process terminated
+        tunnel.on("exit", (code: number | null) => {
+          if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
+            setUrl(null);
 
-          const currentUrl = tunnelRef.current.url;
-          const isHealthy = await checkTunnelHealth(currentUrl);
+            // Check if tunnel died too quickly (within cooldown period)
+            const timeSinceConnection = Date.now() - connectionTime;
+            if (timeSinceConnection < CONNECTION_COOLDOWN) {
+              // Tunnel is unstable - don't retry, show error
+              setError(`Tunnel process exited immediately (code: ${code})`);
+              setIsReconnecting(false);
+              return;
+            }
 
-          if (
-            !isHealthy &&
-            isMountedRef.current &&
-            currentInstanceId === tunnelInstanceIdRef.current
-          ) {
-            // Tunnel is dead, trigger reconnection
+            // Tunnel lived long enough - try to reconnect
             scheduleReconnectRef.current?.();
           }
-        }, HEALTH_CHECK_INTERVAL);
+        });
+
+        // Handle tunnel errors
+        tunnel.on("error", (err: Error) => {
+          if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
+            // Check if tunnel died too quickly (within cooldown period)
+            const timeSinceConnection = Date.now() - connectionTime;
+            if (timeSinceConnection < CONNECTION_COOLDOWN) {
+              // Tunnel is unstable - don't retry, show error
+              setUrl(null);
+              setError(`Tunnel error: ${err.message}`);
+              setIsReconnecting(false);
+              return;
+            }
+
+            // Tunnel lived long enough - try to reconnect
+            scheduleReconnectRef.current?.();
+          }
+        });
 
         return true;
       } catch (err) {
@@ -269,7 +230,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
         return false;
       }
     },
-    [port, closeTunnel, clearTimers],
+    [port, closeTunnel, clearTimer],
   );
 
   /**
@@ -278,8 +239,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
   const scheduleReconnect = useCallback(() => {
     if (!isMountedRef.current) return;
 
-    // Clear existing timers
-    clearTimers();
+    // Clear existing timer
+    clearTimer();
 
     // Close the dead tunnel
     closeTunnel();
@@ -292,11 +253,10 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
         setError(`Tunnel connection lost after ${MAX_RECONNECT_ATTEMPTS} reconnection attempts`);
         setIsReconnecting(false);
         setUrl(null);
-        setPassword(null);
         return prev;
       }
 
-      // Calculate delay with exponential backoff: 2s, 4s, 8s, 16s, 32s
+      // Calculate delay with exponential backoff: 3s, 6s, 12s, 24s, 48s
       const delay = BASE_RECONNECT_DELAY * 2 ** (attempts - 1);
 
       setIsReconnecting(true);
@@ -310,7 +270,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
       return attempts;
     });
-  }, [closeTunnel, clearTimers, startTunnel]);
+  }, [closeTunnel, clearTimer, startTunnel]);
 
   // Store scheduleReconnect in ref to avoid circular dependencies
   scheduleReconnectRef.current = scheduleReconnect;
@@ -328,10 +288,10 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
       isMountedRef.current = false;
       // Increment instance ID to invalidate any pending async events from old tunnel
       tunnelInstanceIdRef.current += 1;
-      clearTimers();
+      clearTimer();
       closeTunnel();
     };
-  }, [enabled, startTunnel, clearTimers, closeTunnel]);
+  }, [enabled, startTunnel, clearTimer, closeTunnel]);
 
-  return { url, isConnecting, error, password, isReconnecting, reconnectAttempts };
+  return { url, isConnecting, error, isReconnecting, reconnectAttempts };
 }

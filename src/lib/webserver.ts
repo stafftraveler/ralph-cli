@@ -1015,6 +1015,8 @@ function getDashboardHtml(data: DashboardData): string {
 
     .session-control-btn .btn-icon {
       font-size: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI Symbol', 'Segoe UI', sans-serif;
+      font-variant-emoji: text;
     }
 
     .pause-btn.active {
@@ -2138,11 +2140,11 @@ function getDashboardHtml(data: DashboardData): string {
       if (pauseBtn) {
         if (paused) {
           pauseBtn.classList.add('active');
-          if (pauseBtnIcon) pauseBtnIcon.textContent = '▶';
+          if (pauseBtnIcon) pauseBtnIcon.textContent = '▶︎';
           if (pauseBtnText) pauseBtnText.textContent = 'Resume';
         } else {
           pauseBtn.classList.remove('active');
-          if (pauseBtnIcon) pauseBtnIcon.textContent = '⏸';
+          if (pauseBtnIcon) pauseBtnIcon.textContent = '⏸︎';
           if (pauseBtnText) pauseBtnText.textContent = 'Pause After Iteration';
         }
       }
@@ -2189,6 +2191,64 @@ function getDashboardHtml(data: DashboardData): string {
         hideStopModal();
       }
     });
+
+    // Set up button event listeners (more reliable than inline onclick on mobile)
+    function setupButtonListeners() {
+      const incrementBtn = document.getElementById('increment-btn');
+      const decrementBtn = document.getElementById('decrement-btn');
+      const pauseBtn = document.getElementById('pause-btn');
+      const stopBtn = document.getElementById('stop-btn');
+      const modalCancelBtn = document.getElementById('modal-cancel-btn');
+      const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+
+      if (incrementBtn) {
+        incrementBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          incrementIterations();
+        });
+      }
+
+      if (decrementBtn) {
+        decrementBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          decrementIterations();
+        });
+      }
+
+      if (pauseBtn) {
+        pauseBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          togglePause();
+        });
+      }
+
+      if (stopBtn) {
+        stopBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          showStopModal();
+        });
+      }
+
+      if (modalCancelBtn) {
+        modalCancelBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          hideStopModal();
+        });
+      }
+
+      if (modalConfirmBtn) {
+        modalConfirmBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          confirmStop();
+        });
+      }
+    }
 
     // Add task form handling
     async function addTask(event) {
@@ -2271,6 +2331,7 @@ function getDashboardHtml(data: DashboardData): string {
     updateRelativeTimestamps(); // Initial update
     updateElapsedTime(); // Initial update
     initWebSocket();
+    setupButtonListeners(); // Set up button event listeners
 
     // Update elapsed time and ETA every second
     setInterval(function() {
@@ -2369,22 +2430,22 @@ function getDashboardHtml(data: DashboardData): string {
       <div class="iterations-adjust-row">
         <span class="iterations-adjust-label">Adjust Iterations</span>
         <div class="iterations-adjust-buttons">
-          <button class="iteration-adjust-btn" onclick="decrementIterations()" title="Decrease iterations">−</button>
+          <button id="decrement-btn" class="iteration-adjust-btn" title="Decrease iterations">−</button>
           <span class="iterations-value-inline" id="iterations-value-controls">${data.totalIterations}</span>
-          <button class="iteration-adjust-btn" onclick="incrementIterations()" title="Increase iterations">+</button>
+          <button id="increment-btn" class="iteration-adjust-btn" title="Increase iterations">+</button>
         </div>
       </div>
 
       <div class="session-control-row">
-        <button id="pause-btn" class="session-control-btn pause-btn ${data.isPausedAfterIteration ? "active" : ""}" onclick="togglePause()">
-          <span class="btn-icon">${data.isPausedAfterIteration ? "▶" : "⏸"}</span>
+        <button id="pause-btn" class="session-control-btn pause-btn ${data.isPausedAfterIteration ? "active" : ""}">
+          <span class="btn-icon">${data.isPausedAfterIteration ? "▶︎" : "⏸︎"}</span>
           <span id="pause-btn-text">${data.isPausedAfterIteration ? "Resume" : "Pause After Iteration"}</span>
         </button>
       </div>
 
       <div class="session-control-row">
-        <button class="session-control-btn stop-btn" onclick="showStopModal()">
-          <span class="btn-icon">⏹</span>
+        <button id="stop-btn" class="session-control-btn stop-btn">
+          <span class="btn-icon">⏹︎</span>
           <span>Stop Session</span>
         </button>
       </div>
@@ -2396,8 +2457,8 @@ function getDashboardHtml(data: DashboardData): string {
         <div class="modal-title">Stop Session?</div>
         <div class="modal-message">This will immediately stop the current session. Any work in progress will be saved.</div>
         <div class="modal-buttons">
-          <button class="modal-btn modal-btn-cancel" onclick="hideStopModal()">Cancel</button>
-          <button class="modal-btn modal-btn-confirm" onclick="confirmStop()">Stop Session</button>
+          <button id="modal-cancel-btn" class="modal-btn modal-btn-cancel">Cancel</button>
+          <button id="modal-confirm-btn" class="modal-btn modal-btn-confirm">Stop Session</button>
         </div>
       </div>
     </div>
@@ -2707,6 +2768,12 @@ export async function startWebServer(port: number) {
 
   // Create WebSocket server attached to HTTP server
   wss = new WebSocketServer({ server });
+
+  // Handle WebSocket server errors (e.g., when HTTP server fails to bind)
+  wss.on("error", (err) => {
+    // Error is handled by the HTTP server's error handler, just prevent unhandled event
+    console.error("WebSocket server error:", err.message);
+  });
 
   // Handle WebSocket connections
   wss.on("connection", async (ws: WebSocket) => {

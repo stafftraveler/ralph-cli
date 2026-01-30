@@ -99,7 +99,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const isInterruptedRef = useRef(false);
   const hasRunDonePluginsRef = useRef(false);
 
-  // Web server and localtunnel state
+  // Web server and cloudflared state
   const serverRef = useRef<Server | null>(null);
   const [currentStatus, setCurrentStatus] = useState("Starting...");
   const WEB_SERVER_PORT = 3737;
@@ -700,7 +700,6 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             url={tunnelState.url}
             isConnecting={tunnelState.isConnecting}
             error={tunnelState.error}
-            password={tunnelState.password}
             isReconnecting={tunnelState.isReconnecting}
             reconnectAttempts={tunnelState.reconnectAttempts}
           />
