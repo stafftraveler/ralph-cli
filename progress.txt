@@ -281,3 +281,18 @@
 **All checks passed**: format, lint, types ✓
 
 **Note**: Code smell scan for unused git functions complete. All proactively-written but unused git utilities have been removed.
+
+## Post-Cleanup Verification
+
+**Task**: Verify token usage and cost tracking implementation
+
+**What was verified**:
+- Token usage IS correctly captured from SDK result messages (src/lib/claude.ts lines 271-291)
+- Usage displayed after each iteration in IterationRunner component (src/components/IterationRunner.tsx lines 63-99)
+- Session total costs tracked and displayed with threshold warnings
+- Summary shows total session cost correctly (src/components/Summary.tsx lines 174-179)
+- Implementation matches SDK documentation: usage only available in final result message, not during streaming
+
+**Conclusion**: Token usage and cost tracking working as designed. SDK provides usage data only after iteration completes, not during streaming. Current implementation is correct.
+
+**All code smell cleanup complete**: 15 iterations removed ~500+ lines of dead code, unused exports, and duplicate code. Codebase significantly cleaner and more maintainable.
