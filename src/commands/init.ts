@@ -154,11 +154,11 @@ export async function runInit(repoRoot: string, _options: InitOptions = {}): Pro
     console.log(chalk.dim(".ralph/ directory already exists"));
   }
 
-  // Create prd directory
-  const prdTemplatesDir = join(ralphDir, "prd");
+  // Create templates directory
+  const prdTemplatesDir = join(ralphDir, "templates");
   if (!existsSync(prdTemplatesDir)) {
     await mkdir(prdTemplatesDir, { recursive: true });
-    console.log(chalk.green("Created .ralph/prd/ directory"));
+    console.log(chalk.green("Created .ralph/templates/ directory"));
   }
 
   // Discover available PRD templates from the bundled templates directory
@@ -172,7 +172,7 @@ export async function runInit(repoRoot: string, _options: InitOptions = {}): Pro
   }
   for (const file of templateFiles) {
     if (existsSync(join(prdTemplatesDir, file))) {
-      existingTemplates.push(`prd/${file}`);
+      existingTemplates.push(`templates/${file}`);
     }
   }
 
@@ -212,12 +212,41 @@ export async function runInit(repoRoot: string, _options: InitOptions = {}): Pro
     console.log(chalk.dim("progress.txt already exists"));
   }
 
+  // Create default config file
+  const configPath = join(ralphDir, "config");
+  if (!existsSync(configPath)) {
+    const defaultConfig = `# Ralph CLI Configuration
+# See README.md for all available options
+
+# Maximum retry attempts for failed iterations
+MAX_RETRIES=3
+
+# Play sound when iterations complete
+SOUND_ON_COMPLETE=true
+
+# Save Claude's output for each iteration
+SAVE_OUTPUT=true
+
+# Directory for output log files (relative to .ralph/)
+OUTPUT_DIR=logs
+
+# Cost limits (optional, in USD)
+# MAX_COST_PER_ITERATION=0.50
+# MAX_COST_PER_SESSION=5.00
+# WARN_COST_THRESHOLD=4.00
+`;
+    await writeFile(configPath, defaultConfig);
+    console.log(chalk.green("Created config"));
+  } else {
+    console.log(chalk.dim("config already exists"));
+  }
+
   // Copy prd templates
   for (const file of templateFiles) {
     await copyTemplate(
       join(prdSourceDir, file),
       join(prdTemplatesDir, file),
-      `prd/${file}`,
+      `templates/${file}`,
       shouldPromptOverwrite,
     );
   }

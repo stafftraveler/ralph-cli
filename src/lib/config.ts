@@ -11,7 +11,7 @@ const DEFAULT_CONFIG: RalphConfig = {
   notificationSound: "/System/Library/Sounds/Glass.aiff",
   saveOutput: false,
   outputDir: "logs",
-  prdTemplatesDir: "prd",
+  prdTemplatesDir: "templates",
   defaultTemplate: "empty",
   maxCostPerIteration: undefined,
   maxCostPerSession: undefined,

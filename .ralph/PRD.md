@@ -2,19 +2,107 @@
 
 ## Overview
 
-Clean-up the codebase.
+Improve Ralph CLI with automated testing, CI/CD pipeline enhancements, cost limit enforcement, and better error handling.
 
 ## Working directory
 
 `src/`
 
+## Reference
+
+- CLAUDE.md and AGENTS.md for project architecture
+- PRD-advise.md for detailed implementation suggestions
+- src/lib/config.ts for configuration loading
+- src/hooks/use-claude.ts for iteration execution
+
+## Purpose
+
+Make Ralph CLI more robust, maintainable, and user-friendly through testing, better error messages, and proper cost controls.
+
 ## Tasks
 
-## When the codebase has been cleaned up
+### 1. Add Automated Testing
 
-[x] The token usage and costs are possibly not reported after the loop finishes. Read about token usage reporting in https://platform.claude.com/docs/en/agent-sdk/cost-tracking and fix this in our code. If possible, show the live token usage and costs of the session in the status bar on the bottom of the screen.
-[x] Review the entire codebase. Fix issues.
-[x] Prepare this package for release to @stafftraveler/ralph-cli. We are going to install it in other repositories to run our Ralph loops. Finish up README.md. Automatically run the init script after installation of the package using pnpm.
-[x] Create a new `/PRD-advise.md` file with items that you suggest can be improved in this package. Also, add instructions on how to publish this package and integrate it in other repositories.
-[x] Scan the code to verify if it is correct according to the updated AGENTS.md instructions. Update files if needed.
-[x] Scan for code smells: unused exports, dead code, inconsistent patterns, duplicate code. Fix ONE issue per iteration. Repeat as needed.
+[ ] Set up Vitest testing framework
+    - Add vitest and related dependencies to package.json
+    - Create vitest.config.ts configuration file
+    - Add test scripts to package.json (`test`, `test:watch`, `test:coverage`)
+
+[ ] Add unit tests for session management (src/lib/session.ts)
+    - Test session creation and loading
+    - Test checkpoint save/restore functionality
+    - Mock file system operations
+
+[ ] Add unit tests for configuration loading (src/lib/config.ts)
+    - Test default config values
+    - Test parsing of config file with various formats
+    - Test handling of missing or malformed config files
+
+[ ] Add unit tests for Claude integration (src/lib/claude.ts)
+    - Test iteration execution flow
+    - Test error handling and retries
+    - Mock Claude Agent SDK
+
+[ ] Add unit tests for git operations (src/hooks/use-git.ts)
+    - Test commit creation
+    - Test branch operations
+    - Mock execa calls
+
+[ ] Update CI workflow to run tests
+    - Add `pnpm test` step to .github/workflows/ci.yml
+
+### 2. Add CI/CD Pipeline Enhancements
+
+[ ] Add format check to CI workflow
+    - Add `pnpm format --check` step to ci.yml
+
+[ ] Add automated publishing on version tags
+    - Create workflow that triggers on `v*` tag push
+    - Run quality checks before publishing
+    - Publish to GitHub Package Registry
+
+### 3. Add Cost Limit Enforcement
+
+[ ] Implement pre-iteration cost limit check
+    - Check cumulative session cost BEFORE starting each iteration
+    - Compare against MAX_COST_PER_SESSION config value
+    - Stop execution gracefully if limit would be exceeded
+
+[ ] Add cost warning threshold
+    - Warn user when approaching cost limit (e.g., 80% of MAX_COST_PER_SESSION)
+    - Display warning in UI with current/max cost values
+
+[ ] Add --max-cost CLI flag
+    - Allow overriding config MAX_COST_PER_SESSION via CLI
+    - Add option to cli.ts and CliOptions type
+    - Pass through to iteration runner
+
+[ ] Show cost projections
+    - Calculate average cost per iteration from previous iterations
+    - Display projected remaining cost before each iteration
+    - Warn if projected cost would exceed limit
+
+### 4. Improve Error Messages
+
+[ ] Add error codes for common errors
+    - Create error code enum/constants in types.ts
+    - Map errors to codes: ENOENT, EAUTH, ERATE, ECONFIG, etc.
+
+[ ] Improve file not found errors
+    - Include full path in error message
+    - Add actionable suggestion (e.g., "Run 'npx ralph init'")
+    - Example: "Failed to read PRD.md at /path/.ralph/PRD.md - run 'npx ralph init'"
+
+[ ] Improve API key errors
+    - Clear message when key is missing vs invalid
+    - Link to API key creation page
+    - Suggest keychain commands for debugging
+
+[ ] Improve config parsing errors
+    - Show line number and problematic value
+    - Suggest valid format/values
+    - Continue with defaults where possible
+
+[ ] Add troubleshooting section to error output
+    - Link to relevant docs when available
+    - Suggest common fixes for known issues
