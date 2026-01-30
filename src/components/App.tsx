@@ -1,3 +1,4 @@
+import type { Server } from "node:http";
 import { join } from "node:path";
 import { Box, Text, useApp } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,6 +10,7 @@ import {
   getRepoRoot,
 } from "../hooks/use-git.js";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard.js";
+import { useNgrok } from "../hooks/use-ngrok.js";
 import { loadConfig } from "../lib/config.js";
 import { notify } from "../lib/notify.js";
 import {
@@ -29,6 +31,7 @@ import {
   saveSession,
 } from "../lib/session.js";
 import { formatCost, resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
+import { startWebServer, stopWebServer, updateServerState } from "../lib/webserver.js";
 import type {
   AppPhase,
   CliOptions,
@@ -44,6 +47,7 @@ import { IterationsPrompt } from "./IterationsPrompt.js";
 import { KeyboardShortcuts } from "./KeyboardShortcuts.js";
 import { Preflight } from "./Preflight.js";
 import { SessionPrompt } from "./SessionPrompt.js";
+import { StatusBar } from "./StatusBar.js";
 import { createSummary, Summary } from "./Summary.js";
 import { TemplateSelector } from "./TemplateSelector.js";
 import { Welcome } from "./Welcome.js";
@@ -91,6 +95,14 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const shouldShowSummaryRef = useRef(false);
   const isInterruptedRef = useRef(false);
   const hasRunDonePluginsRef = useRef(false);
+
+  // Web server and ngrok state
+  const serverRef = useRef<Server | null>(null);
+  const [currentStatus, setCurrentStatus] = useState("Starting...");
+  const WEB_SERVER_PORT = 3737;
+
+  // Start ngrok tunnel for web dashboard (only when running)
+  const ngrokState = useNgrok(WEB_SERVER_PORT, phase === "running");
 
   // Keyboard shortcuts
   const [keyboardState] = useKeyboardShortcuts({
@@ -155,6 +167,44 @@ export function App({ ralphDir, prompt, options }: AppProps) {
     }
     void initialize();
   }, [ralphDir, options.noPlugins, options.reset, options.maxCost, exit]);
+
+  // Start/stop web server based on phase
+  useEffect(() => {
+    if (phase === "running") {
+      // Start web server when entering running phase
+      startWebServer(WEB_SERVER_PORT)
+        .then((server) => {
+          serverRef.current = server;
+        })
+        .catch((err) => {
+          if (debug) {
+            console.error("Failed to start web server:", err);
+          }
+        });
+    }
+
+    return () => {
+      // Cleanup web server when leaving running phase
+      if (serverRef.current) {
+        stopWebServer(serverRef.current).catch(() => {
+          // Ignore errors
+        });
+        serverRef.current = null;
+      }
+    };
+  }, [phase, debug]);
+
+  // Update web server state whenever session or iteration changes
+  useEffect(() => {
+    if (phase === "running" && session) {
+      updateServerState({
+        session,
+        currentIteration,
+        totalIterations,
+        status: currentStatus,
+      });
+    }
+  }, [phase, session, currentIteration, totalIterations, currentStatus]);
 
   // Handle SIGINT/SIGTERM
   useEffect(() => {
@@ -573,6 +623,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             iteration={currentIteration}
             totalIterations={totalIterations}
             onComplete={handleIterationComplete}
+            onStatusChange={setCurrentStatus}
             verbose={verbose}
             debug={debug}
             sessionCostSoFar={session.totalCostUsd ?? 0}
@@ -581,6 +632,11 @@ export function App({ ralphDir, prompt, options }: AppProps) {
           <Box marginTop={1}>
             <KeyboardShortcuts verbose={verbose} debug={debug} totalIterations={totalIterations} />
           </Box>
+          <StatusBar
+            url={ngrokState.url}
+            isConnecting={ngrokState.isConnecting}
+            error={ngrokState.error}
+          />
         </Box>
       )}
 

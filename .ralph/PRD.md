@@ -106,6 +106,6 @@ Already implemented. Verify that these have been implemented correctly.
 
 ## 5. Remote monitoring
 
-[ ] Install ngrok. Run ngrok when starting a session. Present the ngrok URL in a status bar on the bottom of the terminal while running the script.
+[x] Install ngrok. Run ngrok when starting a session. Present the ngrok URL in a status bar on the bottom of the terminal while running the script.
 
-[ ] Add a small, simple webserver that presents a mobile-friendly dashboard. The dashboard shows a progress bar indicating the progress (iteration x of y). It also shows the latest status messages (like in the CLI debug mode). Finally, it shows the current costs of the session. Use Tailwind 4 for styling. Make the UI minimalistic but beautiful.
+[x] Add a small, simple webserver that presents a mobile-friendly dashboard. The dashboard shows a progress bar indicating the progress (iteration x of y). It also shows the latest status messages (like in the CLI debug mode). Finally, it shows the current costs of the session. Uses inline CSS (no Tailwind) for styling. The UI is minimalistic and beautiful with gradient purple theme.

@@ -21,6 +21,8 @@ export interface IterationRunnerProps {
   totalIterations: number;
   /** Called when iteration completes */
   onComplete: (result: IterationResult) => void;
+  /** Called when status changes */
+  onStatusChange?: (status: string) => void;
   /** Enable verbose output */
   verbose?: boolean;
   /** Enable debug mode */
@@ -166,6 +168,7 @@ export function IterationRunner({
   iteration,
   totalIterations,
   onComplete,
+  onStatusChange,
   verbose,
   debug,
   sessionCostSoFar,
@@ -179,6 +182,13 @@ export function IterationRunner({
   // This ensures mid-iteration changes to totalIterations are respected
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
+
+  // Notify parent when status changes
+  useEffect(() => {
+    if (onStatusChange && currentStatus) {
+      onStatusChange(currentStatus);
+    }
+  }, [currentStatus, onStatusChange]);
 
   // Reset hasStartedRef when iteration number changes
   if (lastIterationRef.current !== iteration) {

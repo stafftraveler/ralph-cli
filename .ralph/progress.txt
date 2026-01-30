@@ -533,3 +533,57 @@ Quality metrics:
 - Comprehensive user guidance for all error scenarios
 
 Section 5 (Remote monitoring with ngrok/web dashboard) remains as optional enhancement beyond core scope.
+
+## Iteration 16: Implement ngrok tunnel and web dashboard
+
+Task: PRD Section 5 - Install ngrok, run it when starting a session, present ngrok URL in status bar, add webserver with mobile-friendly dashboard
+
+Decisions:
+- Installed ngrok package (v5.0.0-beta.2) as dependency
+- Created useNgrok hook for managing ngrok tunnel lifecycle
+- Created webserver module with HTTP server serving dashboard HTML + API endpoint
+- Created StatusBar component displaying ngrok URL at bottom of terminal
+- Integrated into App.tsx - starts when entering "running" phase
+- Dashboard auto-refreshes every 2 seconds via meta refresh
+- Web server listens on port 3737, exposed via ngrok tunnel
+- Dashboard shows: progress bar, current status, total cost, iteration history
+- Used gradient purple/blue theme, minimalistic design, mobile-responsive
+- Status updates flow: IterationRunner -> App -> updateServerState -> Dashboard
+
+Files created:
+- src/hooks/use-ngrok.ts: React hook + standalone functions for ngrok tunnel management
+- src/lib/webserver.ts: HTTP server with dashboard HTML and /api/status JSON endpoint
+- src/components/StatusBar.tsx: Terminal UI component showing ngrok URL in bordered box
+
+Files changed:
+- package.json: Added ngrok dependency
+- src/components/App.tsx: Integrated ngrok hook, web server lifecycle, StatusBar component
+- src/components/IterationRunner.tsx: Added onStatusChange callback prop, fires on status updates
+
+Implementation details:
+- useNgrok hook manages tunnel lifecycle with useEffect cleanup
+- Web server uses Node.js http.createServer with HTML template string
+- Dashboard HTML includes inline CSS (no external deps), gradient background
+- Progress bar animates width with CSS transitions
+- updateServerState() updates shared state object read by request handler
+- StatusBar shows green/yellow/red border based on connection state
+- Ngrok uses NGROK_AUTHTOKEN env var if available (graceful fallback)
+- Server starts on phase="running", stops on cleanup
+
+Dashboard features:
+- Session ID display
+- Progress bar with percentage (X of Y iterations)
+- Current status message from <status> tags
+- Total session cost (formatted to 4 decimals)
+- Iteration history list with individual costs
+- Auto-refresh every 2 seconds
+- Mobile-friendly responsive design
+- Gradient purple theme with white cards
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- Ngrok tunnel provides public URL for remote monitoring
+- Dashboard works on any device with web browser
+- Both tasks in PRD Section 5 complete
+- Next: Update PRD with completion markers
