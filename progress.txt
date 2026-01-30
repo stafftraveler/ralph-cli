@@ -399,3 +399,39 @@ Notes:
 - Type checking passes
 - Linting passes
 - Phase 4 Mobile UX now 4 of 6 tasks complete
+
+## Iteration 12
+
+Task: Support prefers-color-scheme dark media query for automatic dark mode (Phase 4)
+
+Changes:
+- Added comprehensive @media (prefers-color-scheme: dark) CSS block
+- Inverted color scheme: black background (#000000), white text (#ffffff)
+- Dark mode palette: #000 (bg), #fff (primary text), #999/#666 (secondary text), #333/#1a1a1a (borders/surfaces)
+- Updated theme-color meta tags to support both light and dark modes
+- Light mode: theme-color="#ffffff"
+- Dark mode: theme-color="#000000"
+
+Design decisions:
+- Pure black background for true OLED black on mobile devices
+- White primary elements (buttons, progress fills) invert to maintain contrast
+- Gray scale (#1a1a1a, #333, #666, #999) provides hierarchy in dark mode
+- Checkbox checkmark inverts color (black on white background in dark mode)
+- Verbose output uses dark surface (#1a1a1a) with light text (#ccc)
+- All borders use #333 or #1a1a1a for subtle separation
+
+Dark mode benefits:
+- Automatic activation based on system preference
+- Reduced eye strain in low-light environments
+- Better battery life on OLED displays (pure black pixels = off)
+- Professional appearance matching OS dark mode
+- Maintains readability with proper contrast ratios
+
+Files changed:
+- src/lib/webserver.ts (added dark mode media query, updated theme-color meta tags)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 4 Mobile UX now 5 of 6 tasks complete (83% done)

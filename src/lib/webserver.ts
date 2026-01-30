@@ -115,7 +115,8 @@ function getDashboardHtml(data: DashboardData): string {
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Ralph Dashboard">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <meta name="description" content="Ralph CLI Dashboard - Monitor Claude Code iterations remotely">
   <title>Ralph CLI Dashboard</title>
   <style>
@@ -526,6 +527,188 @@ function getDashboardHtml(data: DashboardData): string {
       content: 'No output yet...';
       color: #999999;
       font-style: italic;
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #000000;
+        color: #ffffff;
+      }
+
+      .title {
+        color: #ffffff;
+      }
+
+      .session-id {
+        color: #999999;
+      }
+
+      .progress-label {
+        color: #999999;
+      }
+
+      .progress-bar {
+        background: #333333;
+      }
+
+      .progress-fill {
+        background: #ffffff;
+      }
+
+      .status-section {
+        border-bottom: 1px solid #333333;
+      }
+
+      .status-label {
+        color: #666666;
+      }
+
+      .status-text {
+        color: #ffffff;
+      }
+
+      .cost-section {
+        color: #999999;
+      }
+
+      .cost-label {
+        color: #999999;
+      }
+
+      .cost-value {
+        color: #ffffff;
+      }
+
+      .iterations-title {
+        color: #ffffff;
+      }
+
+      .iteration-item {
+        border-bottom: 1px solid #1a1a1a;
+      }
+
+      .iteration-number {
+        color: #999999;
+      }
+
+      .iteration-cost {
+        color: #ffffff;
+      }
+
+      .footer {
+        border-top: 1px solid #333333;
+        color: #666666;
+      }
+
+      .add-task-section {
+        border-top: 1px solid #333333;
+      }
+
+      .add-task-title {
+        color: #ffffff;
+      }
+
+      .add-task-input {
+        background: #1a1a1a;
+        border: 1px solid #333333;
+        color: #ffffff;
+      }
+
+      .add-task-input:focus {
+        border-color: #ffffff;
+        background: #262626;
+      }
+
+      .add-task-input:active {
+        background: #333333;
+      }
+
+      .add-task-input::placeholder {
+        color: #666666;
+      }
+
+      .add-task-button {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      .add-task-feedback.success,
+      .add-task-feedback.error {
+        color: #ffffff;
+      }
+
+      .tasks-section {
+        border-top: 1px solid #333333;
+      }
+
+      .tasks-title {
+        color: #ffffff;
+      }
+
+      .tasks-count {
+        color: #999999;
+      }
+
+      .tasks-progress-bar {
+        background: #333333;
+      }
+
+      .tasks-progress-fill {
+        background: #ffffff;
+      }
+
+      .phase-header {
+        color: #666666;
+      }
+
+      .task-item {
+        border-bottom: 1px solid #1a1a1a;
+      }
+
+      .task-checkbox {
+        border: 1px solid #666666;
+      }
+
+      .task-checkbox.completed {
+        background: #ffffff;
+        border-color: #ffffff;
+      }
+
+      .task-checkbox.completed::after {
+        color: #000000;
+      }
+
+      .task-text {
+        color: #cccccc;
+      }
+
+      .task-text.completed {
+        color: #666666;
+      }
+
+      .verbose-section {
+        border-top: 1px solid #333333;
+      }
+
+      .verbose-title {
+        color: #ffffff;
+      }
+
+      .verbose-toggle {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      .verbose-output {
+        background: #1a1a1a;
+        border: 1px solid #333333;
+        color: #cccccc;
+      }
+
+      .verbose-output:empty::before {
+        color: #666666;
+      }
     }
   </style>
   <script>

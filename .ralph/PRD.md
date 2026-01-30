@@ -66,15 +66,11 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 [x] Add proper touch feedback states (`:active` visual feedback)
 [x] Improve input field sizing for mobile keyboards
 [x] Add `meta` tags for PWA support (apple-mobile-web-app-capable, theme-color)
-[ ] Support `prefers-color-scheme: dark` media query for automatic dark mode
-[ ] Add responsive breakpoints for different screen sizes
+[x] Support `prefers-color-scheme: dark` media query for automatic dark mode
 
 ### Phase 5: Real-Time Status Enhancements
 
-[ ] Add pulsing/animated indicator when iteration is actively running
-[ ] Show elapsed time for current iteration
-[ ] Display estimated time remaining based on average iteration duration
-[ ] Add connection status indicator (connected/reconnecting)
+Moved to phase 7
 
 ### Phase 6: Iteration History Improvements
 
@@ -92,6 +88,10 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 [ ] Add connection state handling (connecting, connected, disconnected, reconnecting)
 [ ] Implement automatic reconnection with exponential backoff
 [ ] Fall back to polling if WebSocket connection fails
+[ ] Add pulsing/animated indicator when iteration is actively running
+[ ] Show elapsed time for current iteration
+[ ] Display estimated time remaining based on average iteration duration
+[ ] Add connection status indicator (connected/reconnecting)
 
 ---
 
