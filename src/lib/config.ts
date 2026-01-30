@@ -132,8 +132,9 @@ export async function loadConfig(ralphDir: string): Promise<RalphConfig> {
   } catch (error) {
     // Config file doesn't exist or can't be read - use defaults
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      throw error;
+      console.error(`Warning: Could not read config file at ${configPath}:`, error);
     }
+    // Fall through to return defaults
   }
 
   return config;

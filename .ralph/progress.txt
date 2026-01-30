@@ -16,3 +16,23 @@ Files changed:
 Result: Token usage and costs now properly reported with live session totals in UI
 
 Note: Reviewed SDK docs. Current implementation correctly captures usage from result message and displays it. The issue was missing cumulative session cost tracking, now fixed.
+
+## Iteration 2 - Config error handling fix
+
+Task: Review codebase and fix issues
+Reference: PRD task 2
+
+Issue found: config.ts error handling was inconsistent with plugins.ts and comment
+- config.ts would throw on read errors (EACCES, etc), crashing the app
+- Comment claimed it would "use defaults" but code would throw
+- Inconsistent with plugins.ts which logs errors and continues
+
+Changes:
+- Fixed error handling in loadConfig() to log warnings instead of throwing
+- Now gracefully falls back to defaults if config file can't be read
+- Consistent with plugin loading behavior
+
+Files changed:
+- src/lib/config.ts: Changed error handling to warn + use defaults
+
+Result: App now handles config read errors gracefully, improving robustness
