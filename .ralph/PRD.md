@@ -12,12 +12,12 @@ Send a "completed" message through WebSocket before closing connections, so the 
 
 ### Tasks
 
-[ ] Add `broadcastCompleted()` function in `lib/webserver.ts` to send `{ type: "completed" }` message to all WebSocket clients
-[ ] Call `broadcastCompleted()` before closing connections in `stopWebServer()`
-[ ] Update dashboard JavaScript to handle "completed" message type and set `sessionCompleted` flag
-[ ] Modify `ws.onclose` handler to skip reconnection when `sessionCompleted` is true
-[ ] Modify `fallbackToPolling()` to skip polling when `sessionCompleted` is true
-[ ] Add CSS for `.connection-dot.completed` status (green dot like "connected")
+[x] Add `broadcastCompleted()` function in `lib/webserver.ts` to send `{ type: "completed" }` message to all WebSocket clients
+[x] Call `broadcastCompleted()` before closing connections in `stopWebServer()`
+[x] Update dashboard JavaScript to handle "completed" message type and set `sessionCompleted` flag
+[x] Modify `ws.onclose` handler to skip reconnection when `sessionCompleted` is true
+[x] Modify `fallbackToPolling()` to skip polling when `sessionCompleted` is true
+[x] Add CSS for `.connection-dot.completed` status (green dot like "connected")
 
 ---
 
