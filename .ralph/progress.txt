@@ -139,3 +139,27 @@ Reasoning: Empty catch blocks hide errors during development. Debug logging (gua
 Tests: All 86 tests passing
 Type check: Clean
 Lint: Clean
+
+## Iteration 8
+
+Task: Review and add debug logging to empty catch blocks in use-git.ts
+
+Completed:
+- Added DEBUG-guarded error logging to 8 catch blocks in use-git.ts
+- Line 11 (getRepoRoot): Logs error when git repo root detection fails
+- Line 23 (isGitRepo): Logs error when git repository check fails
+- Line 35 (getCurrentBranch): Logs error when branch name detection fails
+- Line 47 (getCurrentCommit): Logs error when commit SHA fetch fails
+- Line 60 (createBranch): Logs error when branch creation fails (first attempt)
+- Line 65 (createBranch): Logs error when switching to existing branch fails (second attempt)
+- Line 95 (getCommitsSince): Logs error when git log command fails
+- Line 146 (getDiffStats): Logs error when diff stats command fails
+
+Files changed:
+- src/hooks/use-git.ts: Enhanced 8 catch blocks with debug logging
+
+Reasoning: Git operations can fail for various reasons (not in repo, invalid SHA, permissions). Debug logging helps diagnose issues without affecting normal operation. All functions have sensible fallback returns (null, false, or empty arrays).
+
+Tests: All 86 tests passing
+Type check: Clean
+Lint: Clean
