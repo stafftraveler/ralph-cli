@@ -40,6 +40,15 @@ export function useNgrok(port: number, enabled = true): UseNgrokState {
       setError(null);
 
       try {
+        // Check if NGROK_AUTHTOKEN is set
+        if (!process.env.NGROK_AUTHTOKEN) {
+          if (isMounted) {
+            setError("NGROK_AUTHTOKEN not set");
+            setIsConnecting(false);
+          }
+          return;
+        }
+
         const tunnelUrl = await ngrok.connect({
           addr: port,
           authtoken_from_env: true, // Use NGROK_AUTHTOKEN env var if available

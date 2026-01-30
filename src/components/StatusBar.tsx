@@ -14,9 +14,15 @@ export interface StatusBarProps {
  */
 export function StatusBar({ url, isConnecting, error }: StatusBarProps) {
   if (error) {
+    // Show a more helpful message for missing auth token
+    const isAuthError = error.includes("NGROK_AUTHTOKEN");
+    const message = isAuthError
+      ? "Dashboard unavailable: Set NGROK_AUTHTOKEN to enable remote monitoring"
+      : `Dashboard unavailable: ${error}`;
+
     return (
-      <Box borderStyle="round" borderColor="red" paddingX={1} marginTop={1}>
-        <Text color="red">Dashboard unavailable: {error}</Text>
+      <Box borderStyle="round" borderColor="yellow" paddingX={1} marginTop={1}>
+        <Text color="yellow">{message}</Text>
       </Box>
     );
   }
@@ -42,5 +48,15 @@ export function StatusBar({ url, isConnecting, error }: StatusBarProps) {
     );
   }
 
-  return null;
+  // Always show local dashboard URL as fallback
+  return (
+    <Box borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
+      <Text>
+        <Text color="cyan" bold>
+          Local Dashboard:
+        </Text>{" "}
+        <Text color="white">http://localhost:3737</Text>
+      </Text>
+    </Box>
+  );
 }

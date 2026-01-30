@@ -109,3 +109,11 @@ Already implemented. Verify that these have been implemented correctly.
 [x] Install ngrok. Run ngrok when starting a session. Present the ngrok URL in a status bar on the bottom of the terminal while running the script.
 
 [x] Add a small, simple webserver that presents a mobile-friendly dashboard. The dashboard shows a progress bar indicating the progress (iteration x of y). It also shows the latest status messages (like in the CLI debug mode). Finally, it shows the current costs of the session. Uses inline CSS (no Tailwind) for styling. The UI is minimalistic and beautiful with gradient purple theme.
+
+[x] I'm getting this error message in the terminal when starting: "Dashboard unavailable: connect ECONNREFUSED 127.0.0.1:4040    " Please fix.
+    - Added check for NGROK_AUTHTOKEN before connecting
+    - Shows helpful error message: "Set NGROK_AUTHTOKEN to enable remote monitoring"
+    - Added fallback to show local dashboard URL (http://localhost:3737) when ngrok unavailable
+    - Changed error styling from red to yellow (warning, not critical error)
+
+[ ] Replace ngrok with an more modern alternative that doesn't need authentication.
