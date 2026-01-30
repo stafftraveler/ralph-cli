@@ -168,6 +168,16 @@ export async function runBeforeRun(plugins: RalphPlugin[], context: PluginContex
 }
 
 /**
+ * Run beforeIteration hook on all plugins
+ */
+export async function runBeforeIteration(
+  plugins: RalphPlugin[],
+  context: IterationContext,
+): Promise<void> {
+  await runHook(plugins, "beforeIteration", context);
+}
+
+/**
  * Run afterIteration hook on all plugins
  */
 export async function runAfterIteration(

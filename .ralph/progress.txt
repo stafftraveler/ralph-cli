@@ -127,3 +127,28 @@ Findings: Codebase is in full compliance with all AGENTS.md standards
 - Error handling patterns correct
 
 Result: No changes needed - codebase exemplary in following standards
+
+## Iteration 6 - Fix missing beforeIteration plugin hook
+
+Task: Scan for code smells, fix ONE issue
+Reference: PRD task 6
+
+Code smell identified: Dead code - unused plugin hook
+- beforeIteration hook defined in RalphPlugin interface
+- Hook handler existed in internal runHook function
+- But no exported runBeforeIteration function
+- Hook was never called anywhere in the app
+- Documented in AGENTS.md but not implemented
+
+Fix applied:
+- Added runBeforeIteration export in plugins.ts
+- Called before first iteration in handleNewSession
+- Called before resumed iteration in handleResumeSession  
+- Called before each subsequent iteration in handleIterationComplete
+- Added totalIterations to useCallback dependencies (lint fix)
+
+Files changed:
+- src/lib/plugins.ts: Added runBeforeIteration export
+- src/components/App.tsx: Import and call runBeforeIteration at 3 locations
+
+Result: Plugin lifecycle now complete - all documented hooks functional

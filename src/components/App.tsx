@@ -14,6 +14,7 @@ import { notify } from "../lib/notify.js";
 import {
   loadPlugins,
   runAfterIteration,
+  runBeforeIteration,
   runBeforeRun,
   runDone,
   runOnError,
@@ -278,8 +279,16 @@ export function App({ ralphDir, prompt, options }: AppProps) {
     };
     await runBeforeRun(plugins, ctx);
 
+    // Run beforeIteration hook for the first iteration
+    const firstIterationCtx = {
+      ...ctx,
+      iteration: 1,
+      totalIterations,
+    };
+    await runBeforeIteration(plugins, firstIterationCtx);
+
     setPhase("running");
-  }, [config, branch, options.branch, options.dryRun, plugins, ralphDir, repoRoot, verbose]);
+  }, [config, branch, options.branch, options.dryRun, plugins, ralphDir, repoRoot, verbose, totalIterations]);
 
   // Phase: Resume session
   const handleResumeSession = useCallback(
@@ -311,9 +320,17 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       };
       await runBeforeRun(plugins, ctx);
 
+      // Run beforeIteration hook for the resumed iteration
+      const resumedIterationCtx = {
+        ...ctx,
+        iteration: resumeIteration,
+        totalIterations: totalIterations + resumeIteration,
+      };
+      await runBeforeIteration(plugins, resumedIterationCtx);
+
       setPhase("running");
     },
-    [config, ralphDir, repoRoot, verbose, options.dryRun, plugins, handleNewSession],
+    [config, ralphDir, repoRoot, verbose, options.dryRun, plugins, handleNewSession, totalIterations],
   );
 
   // Handle iteration complete
@@ -378,7 +395,22 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       setRetryCount(0);
 
       // Move to next iteration
-      setCurrentIteration((prev) => prev + 1);
+      const nextIteration = result.iteration + 1;
+      setCurrentIteration(nextIteration);
+
+      // Run beforeIteration hook for the next iteration
+      // Note: This fires slightly before the iteration actually starts (when React re-renders)
+      const nextCtx = {
+        config,
+        session: updatedSession,
+        repoRoot,
+        branch,
+        verbose,
+        dryRun: options.dryRun,
+        iteration: nextIteration,
+        totalIterations,
+      };
+      await runBeforeIteration(plugins, nextCtx);
     },
     [
       config,
