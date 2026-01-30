@@ -74,7 +74,7 @@ Moved to phase 7
 
 ### Phase 6: Iteration History Improvements
 
-[ ] Show duration for each completed iteration
+[x] Show duration for each completed iteration
 [ ] Add success/failure status indicator per iteration
 [ ] Display relative timestamps ("2m ago" instead of ISO dates)
 [ ] Color-code iterations by status (green=success, red=failed, yellow=running)
@@ -92,6 +92,10 @@ Moved to phase 7
 [ ] Show elapsed time for current iteration
 [ ] Display estimated time remaining based on average iteration duration
 [ ] Add connection status indicator (connected/reconnecting)
+
+### When done
+
+[ ] Update README.md and AGENTS.md if needed
 
 ---
 

@@ -18,6 +18,7 @@ export interface DashboardData {
     number: number;
     timestamp: string;
     cost: number;
+    durationSeconds: number;
   }>;
 }
 
@@ -87,8 +88,26 @@ function getDashboardData(): DashboardData {
       number: idx + 1,
       timestamp: iter.startedAt,
       cost: iter.usage?.totalCostUsd ?? 0,
+      durationSeconds: iter.durationSeconds,
     })),
   };
+}
+
+/**
+ * Format duration in seconds to a human-readable string
+ */
+function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes < 60) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${remainingMinutes}m`;
 }
 
 /**
@@ -101,6 +120,7 @@ function getDashboardHtml(data: DashboardData): string {
       (iter) => `
       <div class="iteration-item">
         <span class="iteration-number">Iteration ${iter.number}</span>
+        <span class="iteration-duration">${formatDuration(iter.durationSeconds)}</span>
         <span class="iteration-cost">$${iter.cost.toFixed(4)}</span>
       </div>
     `,
@@ -244,7 +264,8 @@ function getDashboardHtml(data: DashboardData): string {
 
     .iteration-item {
       display: flex;
-      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
       padding: 8px 0;
       border-bottom: 1px solid #f0f0f0;
       font-size: 13px;
@@ -255,13 +276,21 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .iteration-number {
+      flex: 1;
       color: #666666;
+    }
+
+    .iteration-duration {
+      color: #999999;
+      font-size: 12px;
+      font-family: 'Monaco', 'Courier New', monospace;
     }
 
     .iteration-cost {
       color: #000000;
       font-weight: 500;
       font-family: 'Monaco', 'Courier New', monospace;
+      text-align: right;
     }
 
     .footer {
@@ -590,6 +619,10 @@ function getDashboardHtml(data: DashboardData): string {
 
       .iteration-number {
         color: #999999;
+      }
+
+      .iteration-duration {
+        color: #666666;
       }
 
       .iteration-cost {

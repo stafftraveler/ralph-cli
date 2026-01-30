@@ -435,3 +435,39 @@ Notes:
 - Type checking passes
 - Linting passes
 - Phase 4 Mobile UX now 5 of 6 tasks complete (83% done)
+
+## Iteration 13
+
+Task: Show duration for each completed iteration (Phase 6)
+
+Changes:
+- Added durationSeconds field to DashboardData iterations array
+- Created formatDuration() helper function for human-readable time format
+- Updated iteration item HTML to display duration between number and cost
+- Adjusted CSS layout from space-between to flex with gap for 3-column layout
+- Added iteration-duration CSS class with monospace font and subtle color
+
+Duration formatting:
+- < 60s: "42s"
+- < 60m: "5m 23s"
+- >= 60m: "2h 15m"
+- Uses monospace font for consistent width
+
+Layout changes:
+- Iteration number: flex: 1 (takes available space, left-aligned)
+- Duration: centered, subtle gray color (#999)
+- Cost: right-aligned, bold (unchanged)
+- 16px gap between elements for clean spacing
+
+Dark mode:
+- Duration color: #666 (darker than light mode for proper contrast)
+
+Files changed:
+- src/lib/webserver.ts (added duration field, formatter, HTML, CSS)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 6 Iteration History now 1 of 5 tasks complete (20% done)
+- Duration data already available from IterationResult.durationSeconds
