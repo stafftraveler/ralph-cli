@@ -293,12 +293,13 @@ function getDashboardHtml(data: DashboardData): string {
 
     .add-task-input {
       flex: 1;
-      padding: 8px 12px;
+      padding: 12px;
       border: 1px solid #e5e5e5;
       border-radius: 4px;
       font-size: 14px;
       font-family: inherit;
       transition: border-color 0.2s;
+      min-height: 44px;
     }
 
     .add-task-input:focus {
@@ -311,7 +312,7 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .add-task-button {
-      padding: 8px 16px;
+      padding: 12px 16px;
       background: #000000;
       color: white;
       border: none;
@@ -320,6 +321,7 @@ function getDashboardHtml(data: DashboardData): string {
       font-weight: 500;
       cursor: pointer;
       transition: opacity 0.2s;
+      min-height: 44px;
     }
 
     .add-task-button:hover {
@@ -475,7 +477,7 @@ function getDashboardHtml(data: DashboardData): string {
     }
 
     .verbose-toggle {
-      padding: 6px 12px;
+      padding: 12px 16px;
       background: #000000;
       color: white;
       border: none;
@@ -484,7 +486,7 @@ function getDashboardHtml(data: DashboardData): string {
       font-weight: 500;
       cursor: pointer;
       transition: opacity 0.2s;
-      min-height: 32px;
+      min-height: 44px;
     }
 
     .verbose-toggle:hover {
