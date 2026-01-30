@@ -25,6 +25,8 @@ interface UseKeyboardShortcutsOptions {
   onToggleVerbose?: () => void;
   /** Handler for toggle debug (d key) */
   onToggleDebug?: () => void;
+  /** Handler for toggle pause (p key) */
+  onTogglePause?: () => void;
   /** Handler for increment iterations (up arrow) */
   onIncrementIterations?: () => void;
   /** Handler for decrement iterations (down arrow) */
@@ -39,6 +41,7 @@ interface UseKeyboardShortcutsOptions {
 interface KeyboardState {
   verbose: boolean;
   debug: boolean;
+  pauseAfterIteration: boolean;
 }
 
 /**
@@ -47,8 +50,10 @@ interface KeyboardState {
 interface KeyboardActions {
   setVerbose: (value: boolean) => void;
   setDebug: (value: boolean) => void;
+  setPauseAfterIteration: (value: boolean) => void;
   toggleVerbose: () => void;
   toggleDebug: () => void;
+  togglePauseAfterIteration: () => void;
 }
 
 /**
@@ -75,6 +80,7 @@ export function useKeyboardShortcuts(
     onQuit,
     onToggleVerbose,
     onToggleDebug,
+    onTogglePause,
     onIncrementIterations,
     onDecrementIterations,
     handlers = {},
@@ -82,6 +88,7 @@ export function useKeyboardShortcuts(
 
   const [verbose, setVerbose] = useState(false);
   const [debug, setDebug] = useState(false);
+  const [pauseAfterIteration, setPauseAfterIteration] = useState(false);
 
   const toggleVerbose = useCallback(() => {
     setVerbose((prev) => !prev);
@@ -92,6 +99,11 @@ export function useKeyboardShortcuts(
     setDebug((prev) => !prev);
     onToggleDebug?.();
   }, [onToggleDebug]);
+
+  const togglePauseAfterIteration = useCallback(() => {
+    setPauseAfterIteration((prev) => !prev);
+    onTogglePause?.();
+  }, [onTogglePause]);
 
   useInput(
     (input, key) => {
@@ -122,6 +134,9 @@ export function useKeyboardShortcuts(
         case "d":
           toggleDebug();
           break;
+        case "p":
+          togglePauseAfterIteration();
+          break;
         default:
           // Check custom handlers
           if (handlers[input]) {
@@ -136,13 +151,16 @@ export function useKeyboardShortcuts(
   const state: KeyboardState = {
     verbose,
     debug,
+    pauseAfterIteration,
   };
 
   const actions: KeyboardActions = {
     setVerbose,
     setDebug,
+    setPauseAfterIteration,
     toggleVerbose,
     toggleDebug,
+    togglePauseAfterIteration,
   };
 
   return [state, actions];

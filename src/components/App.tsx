@@ -2,14 +2,10 @@ import type { Server } from "node:http";
 import { join } from "node:path";
 import { Box, Text, useApp } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  createBranch,
-  getCommitsSince,
-  getCurrentBranch,
-  getDiffStats,
-  getRepoRoot,
-} from "../hooks/use-git.js";
+import { useAutoExit } from "../hooks/use-auto-exit.js";
+import { createBranch, getCurrentBranch, getRepoRoot } from "../hooks/use-git.js";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard.js";
+import { useSummaryData } from "../hooks/use-summary-data.js";
 import { useTunnel } from "../hooks/use-tunnel.js";
 import { loadConfig } from "../lib/config.js";
 import { notify } from "../lib/notify.js";
@@ -33,6 +29,8 @@ import {
 import { formatCost, resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
 import {
   setIterationsChangeHandler,
+  setPauseAfterIterationHandler,
+  setStopSessionHandler,
   startWebServer,
   stopWebServer,
   updateServerState,
@@ -40,7 +38,6 @@ import {
 import type {
   AppPhase,
   CliOptions,
-  DiffStat,
   IterationResult,
   PluginContext,
   RalphConfig,
@@ -91,6 +88,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const [currentIteration, setCurrentIteration] = useState(1);
   const [totalIterations, setTotalIterations] = useState(options.iterations ?? 10);
   const [prdComplete, setPrdComplete] = useState(false);
+  const [pauseAfterIteration, setPauseAfterIteration] = useState(false);
 
   // Error state
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +99,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const isInterruptedRef = useRef(false);
   const hasRunDonePluginsRef = useRef(false);
 
-  // Web server and localtunnel state
+  // Web server and cloudflared state
   const serverRef = useRef<Server | null>(null);
   const [currentStatus, setCurrentStatus] = useState("Starting...");
   const WEB_SERVER_PORT = 3737;
@@ -109,18 +107,24 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   // Start tunnel for web dashboard (only when running)
   const tunnelState = useTunnel(WEB_SERVER_PORT, phase === "running");
 
+  // Handler for quit (shared between keyboard and dashboard)
+  const handleQuit = useCallback(() => {
+    isInterruptedRef.current = true;
+    if (session && session.iterations.length > 0) {
+      shouldShowSummaryRef.current = true;
+      setPhase("summary");
+    } else {
+      exit();
+    }
+  }, [session, exit]);
+
   // Keyboard shortcuts
-  const [keyboardState] = useKeyboardShortcuts({
+  const [keyboardState, keyboardActions] = useKeyboardShortcuts({
     isActive: phase === "running",
-    onQuit: useCallback(() => {
-      isInterruptedRef.current = true;
-      if (session && session.iterations.length > 0) {
-        shouldShowSummaryRef.current = true;
-        setPhase("summary");
-      } else {
-        exit();
-      }
-    }, [session, exit]),
+    onQuit: handleQuit,
+    onTogglePause: useCallback(() => {
+      setPauseAfterIteration((prev) => !prev);
+    }, []),
     onIncrementIterations: useCallback(() => {
       setTotalIterations((prev) => prev + 1);
     }, []),
@@ -128,6 +132,13 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       setTotalIterations((prev) => Math.max(prev - 1, currentIteration));
     }, [currentIteration]),
   });
+
+  // Sync pause state between keyboard and external sources (dashboard)
+  useEffect(() => {
+    if (keyboardState.pauseAfterIteration !== pauseAfterIteration) {
+      keyboardActions.setPauseAfterIteration(pauseAfterIteration);
+    }
+  }, [pauseAfterIteration, keyboardState.pauseAfterIteration, keyboardActions]);
 
   // Merge verbose/debug from CLI and keyboard toggles
   const verbose = options.verbose || keyboardState.verbose;
@@ -186,6 +197,16 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         setTotalIterations(newTotal);
       });
 
+      // Set up handler for dashboard pause toggle
+      setPauseAfterIterationHandler((pause) => {
+        setPauseAfterIteration(pause);
+      });
+
+      // Set up handler for dashboard stop button
+      setStopSessionHandler(() => {
+        handleQuit();
+      });
+
       // Start web server when entering running phase
       startWebServer(WEB_SERVER_PORT)
         .then((server) => {
@@ -207,7 +228,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         serverRef.current = null;
       }
     };
-  }, [phase, debug]);
+  }, [phase, debug, handleQuit]);
 
   // Update web server state whenever session or iteration changes
   useEffect(() => {
@@ -218,9 +239,18 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         totalIterations,
         status: currentStatus,
         ralphDir,
+        isPausedAfterIteration: pauseAfterIteration,
       });
     }
-  }, [phase, session, currentIteration, totalIterations, currentStatus, ralphDir]);
+  }, [
+    phase,
+    session,
+    currentIteration,
+    totalIterations,
+    currentStatus,
+    ralphDir,
+    pauseAfterIteration,
+  ]);
 
   // Handle SIGINT/SIGTERM
   useEffect(() => {
@@ -474,6 +504,14 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         return;
       }
 
+      // Check if pause after iteration was requested
+      if (pauseAfterIteration) {
+        isInterruptedRef.current = true;
+        shouldShowSummaryRef.current = true;
+        setPhase("summary");
+        return;
+      }
+
       // Handle retry on failure
       if (!result.success) {
         const maxRetries = config.maxRetries ?? 3;
@@ -533,6 +571,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       totalIterations,
       plugins,
       retryCount,
+      pauseAfterIteration,
     ],
   );
 
@@ -650,13 +689,17 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             previousIterations={session.iterations}
           />
           <Box marginTop={1}>
-            <KeyboardShortcuts verbose={verbose} debug={debug} totalIterations={totalIterations} />
+            <KeyboardShortcuts
+              verbose={verbose}
+              debug={debug}
+              pauseAfterIteration={pauseAfterIteration || keyboardState.pauseAfterIteration}
+              totalIterations={totalIterations}
+            />
           </Box>
           <StatusBar
             url={tunnelState.url}
             isConnecting={tunnelState.isConnecting}
             error={tunnelState.error}
-            password={tunnelState.password}
             isReconnecting={tunnelState.isReconnecting}
             reconnectAttempts={tunnelState.reconnectAttempts}
           />
@@ -698,43 +741,10 @@ function SummaryView({
   isInterrupted: boolean;
   onExit: () => void;
 }) {
-  const [filesChanged, setFilesChanged] = useState<DiffStat[]>([]);
-  const [commits, setCommits] = useState<
-    Array<{
-      sha: string;
-      shortSha: string;
-      message: string;
-      author: string;
-      timestamp: string;
-    }>
-  >([]);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
-
-  useEffect(() => {
-    async function loadSummaryData() {
-      const [diffStats, commitList] = await Promise.all([
-        getDiffStats(session.startCommit),
-        getCommitsSince(session.startCommit),
-      ]);
-      setFilesChanged(diffStats);
-      setCommits(commitList);
-      setIsDataLoaded(true);
-    }
-    void loadSummaryData();
-  }, [session.startCommit]);
+  const { filesChanged, commits, isLoaded } = useSummaryData(session.startCommit);
 
   // Auto-exit after showing summary
-  useEffect(() => {
-    if (!isDataLoaded) return;
-
-    // Give user time to see the summary before exiting
-    // Shorter delay when interrupted (1s), longer for normal completion (3s)
-    const delay = isInterrupted ? 1000 : 3000;
-    const timer = setTimeout(() => {
-      onExit();
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [isDataLoaded, isInterrupted, onExit]);
+  useAutoExit(isLoaded, isInterrupted, onExit);
 
   const summary = createSummary({
     iterations: session.iterations,

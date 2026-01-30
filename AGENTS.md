@@ -88,6 +88,7 @@ ralph-cli/
 ### Data Flow
 
 1. **CLI Entry** (`bin/ralph` → `src/index.tsx`)
+
    - Parses arguments with Commander
    - Renders Ink `<App>` component
 
@@ -99,6 +100,7 @@ ralph-cli/
    ```
 
 3. **Iteration Loop** (`src/components/IterationRunner.tsx`)
+
    - Reads PRD.md and progress.txt
    - Sends prompt to Claude via SDK
    - Streams output and status updates
@@ -296,8 +298,10 @@ Key dependencies and their purposes:
 ## Features
 
 ### Remote Monitoring
+
 Ralph includes a mobile-optimized web dashboard for remote monitoring:
-- Accessible via localtunnel (no auth required)
+
+- Accessible via cloudflared
 - Real-time status updates with iteration history
 - Task management with progress tracking
 - Verbose mode toggle for Claude output
@@ -308,18 +312,22 @@ Ralph includes a mobile-optimized web dashboard for remote monitoring:
 - PWA-enabled for mobile devices
 
 ### Linear Integration
+
 Integrate with Linear for issue tracking:
+
 - Configure `LINEAR_TEAM_ID` and `LINEAR_API_KEY` in `.ralph/config`
 - Automatically link iterations to Linear issues
 - Update issue status based on progress
 
 ### Cost Management
+
 - Cost projections based on previous iterations
 - `--max-cost` flag to override session limits
 - Warnings at 80% of cost threshold
 - Per-iteration and per-session limits
 
 ### System Sleep Prevention
+
 Ralph uses `caffeinate` to prevent macOS from sleeping during execution
 
 ## Debugging

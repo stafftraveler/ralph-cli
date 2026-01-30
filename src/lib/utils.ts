@@ -7,6 +7,23 @@ import { RalphError, RalphErrorCode } from "../types.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
+ * Log a debug message with optional error details.
+ * Only outputs when DEBUG environment variable is set.
+ *
+ * @param message - Debug message to log
+ * @param error - Optional error object to log
+ */
+export function debugLog(message: string, error?: unknown): void {
+  if (process.env.DEBUG) {
+    if (error) {
+      console.error(message, error);
+    } else {
+      console.error(message);
+    }
+  }
+}
+
+/**
  * Format a duration in seconds to a human-readable string.
  *
  * @param seconds - Duration in seconds

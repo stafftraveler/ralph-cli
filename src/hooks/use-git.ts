@@ -1,4 +1,5 @@
 import { execa } from "execa";
+import { debugLog } from "../lib/utils.js";
 import type { CommitInfo, DiffStat } from "../types.js";
 
 /**
@@ -8,7 +9,8 @@ export async function getRepoRoot(): Promise<string | null> {
   try {
     const { stdout } = await execa("git", ["rev-parse", "--show-toplevel"]);
     return stdout.trim();
-  } catch {
+  } catch (error) {
+    debugLog("[use-git] Failed to get repo root:", error);
     return null;
   }
 }
@@ -20,7 +22,8 @@ export async function isGitRepo(): Promise<boolean> {
   try {
     await execa("git", ["rev-parse", "--git-dir"]);
     return true;
-  } catch {
+  } catch (error) {
+    debugLog("[use-git] Not a git repository:", error);
     return false;
   }
 }
@@ -32,7 +35,8 @@ export async function getCurrentBranch(): Promise<string | null> {
   try {
     const { stdout } = await execa("git", ["branch", "--show-current"]);
     return stdout.trim() || null;
-  } catch {
+  } catch (error) {
+    debugLog("[use-git] Failed to get current branch:", error);
     return null;
   }
 }
@@ -44,7 +48,8 @@ export async function getCurrentCommit(): Promise<string | null> {
   try {
     const { stdout } = await execa("git", ["rev-parse", "HEAD"]);
     return stdout.trim();
-  } catch {
+  } catch (error) {
+    debugLog("[use-git] Failed to get current commit:", error);
     return null;
   }
 }
@@ -57,12 +62,14 @@ export async function createBranch(name: string): Promise<boolean> {
     // Try to create new branch
     await execa("git", ["checkout", "-b", name]);
     return true;
-  } catch {
+  } catch (error) {
+    debugLog("[use-git] Failed to create new branch, trying to switch:", error);
     // Branch might exist, try switching
     try {
       await execa("git", ["checkout", name]);
       return true;
-    } catch {
+    } catch (switchError) {
+      debugLog("[use-git] Failed to switch to existing branch:", switchError);
       return false;
     }
   }
@@ -92,7 +99,8 @@ export async function getCommitsSince(sha: string): Promise<CommitInfo[]> {
           timestamp: parts[4] ?? "",
         };
       });
-  } catch {
+  } catch (error) {
+    debugLog(`[use-git] Failed to get commits since ${sha}:`, error);
     return [];
   }
 }
@@ -143,7 +151,8 @@ export async function getDiffStats(fromCommit: string): Promise<DiffStat[]> {
     }
 
     return stats;
-  } catch {
+  } catch (error) {
+    debugLog(`[use-git] Failed to get diff stats from ${fromCommit}:`, error);
     return [];
   }
 }

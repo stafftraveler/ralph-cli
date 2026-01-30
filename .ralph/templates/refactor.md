@@ -23,5 +23,5 @@ Refactor the codebase.
 
 ## Tasks
 
-[ ] Deduplicate code. Move duplicated code in separate component, hooks, and util functions, in their own files. Update the consumers.
-[ ] Extract logic from components. Move the logic into separate hooks or util functions, in separate files. Update the consumers.
+[ ] Find duplicate code. Add a task to this PRD for every piece of code that can be extracted to a separate component, hook, or util function, in their own files. Update the consumers.
+[ ] Extract logic from components. Add a task to this PRD for every piece of code in a component that can be extracted to a separate hook or util function, in a separate files. Update the consumers.

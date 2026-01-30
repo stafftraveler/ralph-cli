@@ -19,6 +19,8 @@ export interface KeyboardShortcutsProps {
   verbose?: boolean;
   /** Current debug mode state */
   debug?: boolean;
+  /** Current pause after iteration state */
+  pauseAfterIteration?: boolean;
   /** Current total iterations target */
   totalIterations?: number;
 }
@@ -28,6 +30,7 @@ export interface KeyboardShortcutsProps {
  */
 const DEFAULT_SHORTCUTS: Shortcut[] = [
   { key: "q", label: "Quit" },
+  { key: "p", label: "Pause after iteration" },
   { key: "v", label: "Toggle verbose" },
   { key: "d", label: "Toggle debug" },
   { key: "↑/↓", label: "Adjust iterations" },
@@ -55,18 +58,22 @@ function ShortcutItem({ shortcut, active }: { shortcut: Shortcut; active?: boole
  * Keyboard shortcuts bar displayed at bottom of screen
  *
  * Shows available keyboard shortcuts with their current state.
- * Highlights active toggles (verbose/debug) with checkmark.
+ * Highlights active toggles (verbose/debug/pause) with checkmark.
  */
 export function KeyboardShortcuts({
   shortcuts = DEFAULT_SHORTCUTS,
   verbose,
   debug,
+  pauseAfterIteration,
   totalIterations,
 }: KeyboardShortcutsProps) {
   return (
     <Box marginTop={1} gap={2}>
       {shortcuts.map((shortcut) => {
-        const isActive = (shortcut.key === "v" && verbose) || (shortcut.key === "d" && debug);
+        const isActive =
+          (shortcut.key === "v" && verbose) ||
+          (shortcut.key === "d" && debug) ||
+          (shortcut.key === "p" && pauseAfterIteration);
         // Show total iterations count for the arrow keys shortcut
         const label =
           shortcut.key === "↑/↓" && totalIterations !== undefined

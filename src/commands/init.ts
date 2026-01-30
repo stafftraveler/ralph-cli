@@ -96,8 +96,6 @@ async function copyTemplate(
   }
 }
 
-export type InitOptions = Record<string, never>;
-
 /**
  * Prompt user for API key interactively
  */
@@ -148,7 +146,7 @@ async function promptForApiKey(): Promise<string | null> {
 /**
  * Initialize .ralph/ directory with templates
  */
-export async function runInit(repoRoot: string, _options: InitOptions = {}): Promise<boolean> {
+export async function runInit(repoRoot: string): Promise<boolean> {
   console.log(chalk.bold.cyan("\n═══ Ralph Init ═══\n"));
 
   const ralphDir = join(repoRoot, ".ralph");
@@ -278,7 +276,7 @@ OUTPUT_DIR=logs
   console.log(chalk.bold.cyan("\n═══ Init Complete ═══\n"));
   console.log("Next steps:");
   console.log(chalk.dim("  1. Edit .ralph/PRD.md with your tasks"));
-  console.log(chalk.dim("  2. Run: pnpm ralph 5"));
+  console.log(chalk.dim("  2. Run: pnpm ralph"));
   console.log("");
 
   return true;
