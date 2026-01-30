@@ -647,6 +647,8 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             isConnecting={tunnelState.isConnecting}
             error={tunnelState.error}
             password={tunnelState.password}
+            isReconnecting={tunnelState.isReconnecting}
+            reconnectAttempts={tunnelState.reconnectAttempts}
           />
         </Box>
       )}
