@@ -1,14 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { query } from "@anthropic-ai/claude-agent-sdk";
-import { execa } from "execa";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { RalphConfig } from "../types.js";
 import {
   type RunClaudeOptions,
-  getClaudeCodeVersion,
   hasApiKey,
   hasApiKeySync,
-  isClaudeCodeInstalled,
   runClaude,
   setApiKey,
 } from "./claude.js";
@@ -21,10 +18,6 @@ vi.mock("node:fs/promises", () => ({
 
 vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
   query: vi.fn(),
-}));
-
-vi.mock("execa", () => ({
-  execa: vi.fn(),
 }));
 
 vi.mock("./keychain.js", () => ({
@@ -411,89 +404,6 @@ describe("claude", () => {
       const result = await setApiKey("sk-ant-new-key", true);
 
       expect(result).toBe(false);
-    });
-  });
-
-  describe("isClaudeCodeInstalled", () => {
-    it("should return true if claude command succeeds", async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 0,
-        stdout: "1.0.0",
-        stderr: "",
-      } as Awaited<ReturnType<typeof execa>>);
-
-      const result = await isClaudeCodeInstalled();
-
-      expect(result).toBe(true);
-      expect(execa).toHaveBeenCalledWith("claude", ["--version"], {
-        reject: false,
-      });
-    });
-
-    it("should return false if claude command fails", async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 1,
-        stdout: "",
-        stderr: "command not found",
-      } as Awaited<ReturnType<typeof execa>>);
-
-      const result = await isClaudeCodeInstalled();
-
-      expect(result).toBe(false);
-    });
-
-    it("should return false if execa throws", async () => {
-      vi.mocked(execa).mockRejectedValue(new Error("Command not found"));
-
-      const result = await isClaudeCodeInstalled();
-
-      expect(result).toBe(false);
-    });
-  });
-
-  describe("getClaudeCodeVersion", () => {
-    it("should return version string if command succeeds", async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 0,
-        stdout: "claude version 1.2.3",
-        stderr: "",
-      } as Awaited<ReturnType<typeof execa>>);
-
-      const result = await getClaudeCodeVersion();
-
-      expect(result).toBe("claude version 1.2.3");
-    });
-
-    it("should return null if command fails", async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 1,
-        stdout: "",
-        stderr: "error",
-      } as Awaited<ReturnType<typeof execa>>);
-
-      const result = await getClaudeCodeVersion();
-
-      expect(result).toBeNull();
-    });
-
-    it("should return null if execa throws", async () => {
-      vi.mocked(execa).mockRejectedValue(new Error("Command not found"));
-
-      const result = await getClaudeCodeVersion();
-
-      expect(result).toBeNull();
-    });
-
-    it("should trim whitespace from version output", async () => {
-      vi.mocked(execa).mockResolvedValue({
-        exitCode: 0,
-        stdout: "  1.2.3\n",
-        stderr: "",
-      } as Awaited<ReturnType<typeof execa>>);
-
-      const result = await getClaudeCodeVersion();
-
-      expect(result).toBe("1.2.3");
     });
   });
 });

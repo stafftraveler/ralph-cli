@@ -151,8 +151,6 @@ export interface UsageInfo {
  * Result of running preflight checks
  */
 export interface PreflightResult {
-  /** Claude Code installation check (required for SDK) */
-  claudeCode: PreflightCheck;
   /** Anthropic API key check */
   apiKey: PreflightCheck;
   /** Git repository check */

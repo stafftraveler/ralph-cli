@@ -1,7 +1,7 @@
 import { access, constants } from "node:fs/promises";
 import { join } from "node:path";
 import { useCallback, useMemo, useState } from "react";
-import { hasApiKey, isClaudeCodeInstalled } from "../lib/claude.js";
+import { hasApiKey } from "../lib/claude.js";
 import { prdHasTasks } from "../lib/prd.js";
 import type { PreflightCheck, PreflightResult } from "../types.js";
 import { isGitRepo } from "./use-git.js";
@@ -89,20 +89,6 @@ async function checkPrd(ralphDir: string): Promise<{ check: PreflightCheck; hasT
 }
 
 /**
- * Check if Claude Code is installed (required for SDK runtime)
- */
-async function checkClaudeCode(): Promise<PreflightCheck> {
-  const installed = await isClaudeCodeInstalled();
-  if (installed) {
-    return createPassedCheck("Claude Code", "Claude Code installed");
-  }
-  return createFailedCheck(
-    "Claude Code",
-    "Claude Code not installed. Run: brew install --cask claude-code",
-  );
-}
-
-/**
  * Check if ANTHROPIC_API_KEY is available (env var or keychain)
  */
 async function checkApiKey(): Promise<PreflightCheck> {
@@ -154,7 +140,6 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
 
     // Initialize all checks as "checking"
     const initialResults: PreflightResult = {
-      claudeCode: createCheckingCheck("Claude Code"),
       apiKey: createCheckingCheck("API Key"),
       git: createCheckingCheck("Git"),
       prd: createCheckingCheck("PRD"),
@@ -166,17 +151,6 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
     let prdTasksFound = false;
 
     // Create promises that update state incrementally as each check completes
-    const claudeCodePromise = checkClaudeCode()
-      .then((result) => {
-        setResults((prev) => (prev ? { ...prev, claudeCode: result } : prev));
-        return result;
-      })
-      .catch(() => {
-        const failed = createFailedCheck("Claude Code", "Check failed unexpectedly");
-        setResults((prev) => (prev ? { ...prev, claudeCode: failed } : prev));
-        return failed;
-      });
-
     const apiKeyPromise = checkApiKey()
       .then((result) => {
         setResults((prev) => (prev ? { ...prev, apiKey: result } : prev));
@@ -223,8 +197,7 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
       });
 
     // Wait for all checks to complete
-    const [finalClaudeCode, finalApiKey, finalGit, finalPrd, finalClaudeMd] = await Promise.all([
-      claudeCodePromise,
+    const [finalApiKey, finalGit, finalPrd, finalClaudeMd] = await Promise.all([
       apiKeyPromise,
       gitPromise,
       prdPromise,
@@ -232,7 +205,6 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
     ]);
 
     const finalResults: PreflightResult = {
-      claudeCode: finalClaudeCode,
       apiKey: finalApiKey,
       git: finalGit,
       prd: finalPrd,
@@ -242,7 +214,7 @@ export function usePreflight(): [UsePreflightState, UsePreflightActions] {
     setHasTasks(prdTasksFound);
 
     // Check if all passed (warnings are OK, only failures block)
-    const allChecks = [finalClaudeCode, finalApiKey, finalGit, finalPrd, finalClaudeMd];
+    const allChecks = [finalApiKey, finalGit, finalPrd, finalClaudeMd];
     const passed = allChecks.every((c) => c.status !== "failed");
     setAllPassed(passed);
 
@@ -300,19 +272,12 @@ export async function runPreflightChecks(ralphDir: string): Promise<{
   // Calculate repo root (parent of .ralph directory)
   const repoRoot = ralphDir.replace(/[/\\]\.ralph$/, "");
 
-  const [claudeCodeResult, apiKeyResult, gitResult, prdResult, claudeMdResult] =
-    await Promise.allSettled([
-      checkClaudeCode(),
-      checkApiKey(),
-      checkGitRepo(),
-      checkPrd(ralphDir),
-      checkClaudeMd(repoRoot),
-    ]);
-
-  const claudeCode =
-    claudeCodeResult.status === "fulfilled"
-      ? claudeCodeResult.value
-      : createFailedCheck("Claude Code", "Check failed unexpectedly");
+  const [apiKeyResult, gitResult, prdResult, claudeMdResult] = await Promise.allSettled([
+    checkApiKey(),
+    checkGitRepo(),
+    checkPrd(ralphDir),
+    checkClaudeMd(repoRoot),
+  ]);
 
   const apiKey =
     apiKeyResult.status === "fulfilled"
@@ -336,8 +301,8 @@ export async function runPreflightChecks(ralphDir: string): Promise<{
       ? claudeMdResult.value
       : createWarningCheck("CLAUDE.md", "Check failed unexpectedly");
 
-  const results: PreflightResult = { claudeCode, apiKey, git, prd, claudeMd };
-  const allChecks = [claudeCode, apiKey, git, prd, claudeMd];
+  const results: PreflightResult = { apiKey, git, prd, claudeMd };
+  const allChecks = [apiKey, git, prd, claudeMd];
   const allPassed = allChecks.every((c) => c.status !== "failed");
 
   return { results, allPassed, prdHasTasks: prdHasTasksResult };

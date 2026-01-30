@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import * as readline from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
-import { hasApiKey, isClaudeCodeInstalled, setApiKey } from "../lib/claude.js";
+import { hasApiKey, setApiKey } from "../lib/claude.js";
 import { createFileNotFoundError, wrapError } from "../lib/utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -263,15 +263,6 @@ OUTPUT_DIR=logs
   await addRalphScript(repoRoot);
 
   console.log("");
-
-  // Check if Claude Code is installed (required for SDK runtime)
-  const claudeInstalled = await isClaudeCodeInstalled();
-  if (!claudeInstalled) {
-    console.log(chalk.yellow("Claude Code is not installed."));
-    console.log(chalk.dim("Install it with: brew install --cask claude-code"));
-    return false;
-  }
-  console.log(chalk.green("✓ Claude Code is installed"));
 
   // Check if API key is set (checks env var and keychain)
   let hasKey = await hasApiKey();

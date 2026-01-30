@@ -155,7 +155,6 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
         </Box>
         {results && (
           <Box flexDirection="column" marginLeft={1} marginBottom={1}>
-            <CheckStatus check={results.claudeCode} />
             <CheckStatus check={results.apiKey} />
           </Box>
         )}
@@ -173,13 +172,7 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
     );
   }
 
-  const checks: PreflightCheck[] = [
-    results.claudeCode,
-    results.apiKey,
-    results.git,
-    results.prd,
-    results.claudeMd,
-  ];
+  const checks: PreflightCheck[] = [results.apiKey, results.git, results.prd, results.claudeMd];
 
   return (
     <Box flexDirection="column" marginY={1}>

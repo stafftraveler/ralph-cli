@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
 import { query } from "@anthropic-ai/claude-agent-sdk";
-import { execa } from "execa";
 import type { RalphConfig, UsageInfo } from "../types.js";
 import { getApiKeyFromKeychain, saveApiKeyToKeychain } from "./keychain.js";
 import { createApiKeyError, createFileNotFoundError, wrapError } from "./utils.js";
@@ -396,39 +395,4 @@ export async function setApiKey(apiKey: string, persistToKeychain = true): Promi
   }
 
   return true;
-}
-
-/**
- * Checks if Claude Code is installed (required for SDK runtime)
- *
- * @returns Promise resolving to true if Claude Code is installed
- */
-export async function isClaudeCodeInstalled(): Promise<boolean> {
-  try {
-    const result = await execa("claude", ["--version"], {
-      reject: false,
-    });
-    return result.exitCode === 0;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Gets the installed Claude Code version
- *
- * @returns Promise resolving to version string or null
- */
-export async function getClaudeCodeVersion(): Promise<string | null> {
-  try {
-    const result = await execa("claude", ["--version"], {
-      reject: false,
-    });
-    if (result.exitCode === 0 && result.stdout) {
-      return result.stdout.trim();
-    }
-    return null;
-  } catch {
-    return null;
-  }
 }
