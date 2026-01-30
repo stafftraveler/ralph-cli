@@ -2,20 +2,21 @@
 
 ## Overview
 
-Start with this empty PRD template.
+Clean-up the new code made in this PR.
 
 ## Working directory
 
 `src/`
 
-## Reference
+## Scope
 
 ...
 
-## Purpose
+## Out of Scope
 
 ...
 
 ## Tasks
 
-[ ]
+[x] Fix linting errors.
+[ ] Scan for code smells: unused exports, dead code, inconsistent patterns, duplicate code. Fix ONE issue per iteration.

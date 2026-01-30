@@ -107,6 +107,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
   const isMountedRef = useRef(true);
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scheduleReconnectRef = useRef<(() => void) | null>(null);
 
   /**
    * Clear all timers
@@ -179,15 +180,15 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
             setUrl(null);
             setPassword(null);
             // Don't set error here - we'll try to reconnect first
-            scheduleReconnect();
+            scheduleReconnectRef.current?.();
           }
         });
 
         // Handle tunnel error event
-        tunnel.on("error", (err: Error) => {
+        tunnel.on("error", (_err: Error) => {
           if (isMountedRef.current) {
             // Don't set error here - we'll try to reconnect first
-            scheduleReconnect();
+            scheduleReconnectRef.current?.();
           }
         });
 
@@ -200,7 +201,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
           if (!isHealthy && isMountedRef.current) {
             // Tunnel is dead, trigger reconnection
-            scheduleReconnect();
+            scheduleReconnectRef.current?.();
           }
         }, HEALTH_CHECK_INTERVAL);
 
@@ -211,7 +212,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
           if (isReconnect) {
             // If this was a reconnect attempt, schedule another one
-            scheduleReconnect();
+            scheduleReconnectRef.current?.();
           } else {
             setError(message);
             setIsConnecting(false);
@@ -263,6 +264,9 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
     });
   }, [closeTunnel, clearTimers, startTunnel]);
 
+  // Store scheduleReconnect in ref to avoid circular dependencies
+  scheduleReconnectRef.current = scheduleReconnect;
+
   // Start tunnel on mount (when enabled)
   useEffect(() => {
     if (!enabled) {
@@ -277,7 +281,7 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
       clearTimers();
       closeTunnel();
     };
-  }, [port, enabled, startTunnel, clearTimers, closeTunnel]);
+  }, [enabled, startTunnel, clearTimers, closeTunnel]);
 
   return { url, isConnecting, error, password, isReconnecting, reconnectAttempts };
 }

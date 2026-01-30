@@ -1,0 +1,17 @@
+## Iteration 1 - Fix linting errors
+
+**Task**: Fix linting errors (PRD line 21)
+
+**Changes**:
+- Fixed unused parameter in use-tunnel.ts error handler (prefixed with `_err`)
+- Fixed circular dependency issue between startTunnel and scheduleReconnect by using ref pattern
+- Removed unnecessary `port` dependency from useEffect (outer scope value)
+
+**Files changed**:
+- src/hooks/use-tunnel.ts
+
+**Key decisions**:
+- Used ref pattern (scheduleReconnectRef) to break circular dependency between useCallback hooks
+- This maintains proper React hooks dependencies while avoiding circular references
+
+**Status**: ✅ Complete - all linting errors fixed, tests pass
