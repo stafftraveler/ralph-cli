@@ -172,7 +172,7 @@ export function Preflight({ ralphDir, onComplete, skip }: PreflightProps) {
     );
   }
 
-  const checks: PreflightCheck[] = [results.apiKey, results.git, results.prd, results.claudeMd];
+  const checks: PreflightCheck[] = [results.apiKey, results.git, results.claudeMd, results.prd];
 
   return (
     <Box flexDirection="column" marginY={1}>

@@ -578,6 +578,13 @@ function getDashboardHtml(data: DashboardData): string {
       color: #000000;
     }
 
+    .no-iterations {
+      text-align: center;
+      color: #999999;
+      padding: 16px;
+      font-size: 13px;
+    }
+
     .footer {
       text-align: center;
       margin-top: 32px; /* 4 × 8px grid */
@@ -932,6 +939,10 @@ function getDashboardHtml(data: DashboardData): string {
 
       .iteration-details-value {
         color: #ffffff;
+      }
+
+      .no-iterations {
+        color: #666666;
       }
 
       .iteration-status.success {
@@ -1299,6 +1310,17 @@ function getDashboardHtml(data: DashboardData): string {
       return hours + 'h ' + remainingMinutes + 'm';
     }
 
+    // Format duration for iteration display (matches server-side formatDuration)
+    function formatDuration(seconds) {
+      if (seconds < 60) return seconds + 's';
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      if (minutes < 60) return minutes + 'm ' + remainingSeconds + 's';
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return hours + 'h ' + remainingMinutes + 'm';
+    }
+
     // Update elapsed time display
     function updateElapsedTime() {
       const elapsedTimeEl = document.getElementById('elapsed-time');
@@ -1502,6 +1524,11 @@ function getDashboardHtml(data: DashboardData): string {
       if (costValue) {
         costValue.textContent = '$' + data.totalCost.toFixed(4);
       }
+
+      // Update iterations list
+      if (data.iterations) {
+        updateIterations(data.iterations);
+      }
     }
 
     function updateTasks(data) {
@@ -1543,6 +1570,62 @@ function getDashboardHtml(data: DashboardData): string {
         }
       }
       tasksList.innerHTML = html;
+    }
+
+    function updateIterations(iterations) {
+      const iterationsList = document.getElementById('iterations-list');
+      if (!iterationsList) return;
+
+      if (!iterations || iterations.length === 0) {
+        iterationsList.innerHTML = '<div class="no-iterations">No completed iterations yet</div>';
+        return;
+      }
+
+      let html = '';
+      for (const iter of iterations) {
+        const statusClass = iter.success ? 'success' : 'failure';
+        const statusIcon = iter.success ? '✓' : '✗';
+        const duration = formatDuration(iter.durationSeconds || 0);
+        const cost = iter.cost ? iter.cost.toFixed(4) : '0.0000';
+        const inputTokens = iter.inputTokens ? iter.inputTokens.toLocaleString() : 'N/A';
+        const outputTokens = iter.outputTokens ? iter.outputTokens.toLocaleString() : 'N/A';
+
+        html += '<div class="iteration-item" onclick="toggleIterationDetails(' + iter.number + ')">';
+        html += '<div class="iteration-summary">';
+        html += '<span class="iteration-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<div class="iteration-info">';
+        html += '<span class="iteration-number">Iteration ' + iter.number + '</span>';
+        html += '<span class="iteration-timestamp" data-timestamp="' + iter.timestamp + '"></span>';
+        html += '</div>';
+        html += '<span class="iteration-duration">' + duration + '</span>';
+        html += '<span class="iteration-cost">$' + cost + '</span>';
+        html += '</div>';
+        html += '<div class="iteration-details" id="iteration-details-' + iter.number + '">';
+        
+        if (iter.inputTokens || iter.outputTokens) {
+          html += '<div class="iteration-details-row">';
+          html += '<span class="iteration-details-label">Input Tokens:</span>';
+          html += '<span class="iteration-details-value">' + inputTokens + '</span>';
+          html += '</div>';
+          html += '<div class="iteration-details-row">';
+          html += '<span class="iteration-details-label">Output Tokens:</span>';
+          html += '<span class="iteration-details-value">' + outputTokens + '</span>';
+          html += '</div>';
+        }
+        
+        if (iter.status) {
+          html += '<div class="iteration-details-row">';
+          html += '<span class="iteration-details-label">Status:</span>';
+          html += '<span class="iteration-details-value">' + escapeHtml(iter.status) + '</span>';
+          html += '</div>';
+        }
+        
+        html += '</div>';
+        html += '</div>';
+      }
+
+      iterationsList.innerHTML = html;
+      updateRelativeTimestamps();
     }
 
     function escapeHtml(text) {
@@ -1699,18 +1782,12 @@ function getDashboardHtml(data: DashboardData): string {
       <div id="verbose-output" class="verbose-output hidden"></div>
     </div>
 
-    ${
-      data.iterations.length > 0
-        ? `
     <div class="iterations-section">
       <div class="iterations-title">Iteration History</div>
-      <div class="iterations-list">
-        ${iterationsHtml}
+      <div class="iterations-list" id="iterations-list">
+        ${data.iterations.length > 0 ? iterationsHtml : '<div class="no-iterations">No completed iterations yet</div>'}
       </div>
     </div>
-    `
-        : ""
-    }
 
     <div class="add-task-section">
       <div class="add-task-title">Add Task to PRD</div>
