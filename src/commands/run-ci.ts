@@ -1,7 +1,6 @@
 import chalk from "chalk";
 import { runPreflightChecks } from "../hooks/use-preflight.js";
 import { runClaude } from "../lib/claude.js";
-import { loadConfig } from "../lib/config.js";
 import { formatCost, formatDuration } from "../lib/utils.js";
 import type { CliOptions, IterationResult } from "../types.js";
 
@@ -9,7 +8,6 @@ import type { CliOptions, IterationResult } from "../types.js";
  * Run Ralph in CI mode (non-interactive)
  */
 export async function runCi(ralphDir: string, prompt: string, options: CliOptions): Promise<void> {
-  const config = await loadConfig(ralphDir);
   const iterations = options.iterations ?? 1;
 
   console.log(chalk.bold.cyan("\n═══ Ralph CI Mode ═══\n"));
@@ -56,7 +54,7 @@ export async function runCi(ralphDir: string, prompt: string, options: CliOption
     const startedAt = new Date().toISOString();
 
     try {
-      const result = await runClaude(config, {
+      const result = await runClaude({
         ralphDir,
         prompt,
         verbose: options.verbose,

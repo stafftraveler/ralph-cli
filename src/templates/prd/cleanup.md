@@ -18,4 +18,4 @@ Clean-up the codebase.
 
 ## Tasks
 
-[ ] Scan for code smells: unused exports, dead code, inconsistent patterns, duplicate code. Fix ONE issue per iteration.
+[ ] Scan for code smells: identify unused exports, dead code, inconsistent patterns, and duplicate code. Document the issues you discover as tasks in this PRD.md file. Fix ONE issue per iteration.

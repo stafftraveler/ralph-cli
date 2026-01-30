@@ -1,6 +1,7 @@
 import { type IssueLabel, type IssueSearchResult, LinearClient, type Team } from "@linear/sdk";
 import type { FetchIssuesResult, LinearIssue, LinearTeam } from "../types.js";
 import { getLinearTokenFromKeychain, saveLinearTokenToKeychain } from "./keychain.js";
+import { debugLog } from "./utils.js";
 
 /**
  * Priority labels for Linear issues (0 = none, 1 = urgent, 4 = low)
@@ -89,9 +90,7 @@ export async function fetchTeams(): Promise<LinearTeam[]> {
       key: team.key,
     }));
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[linear] Failed to fetch teams:", error);
-    }
+    debugLog("[linear] Failed to fetch teams:", error);
     return [];
   }
 }
@@ -178,9 +177,7 @@ export async function fetchIssues(
 
     return mappedIssues;
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[linear] Failed to fetch issues:", error);
-    }
+    debugLog("[linear] Failed to fetch issues:", error);
     return [];
   }
 }
@@ -249,9 +246,7 @@ export async function fetchRecentIssues(
       endCursor: issuesResult.pageInfo.endCursor ?? null,
     };
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[linear] Failed to fetch recent issues:", error);
-    }
+    debugLog("[linear] Failed to fetch recent issues:", error);
     return { issues: [], hasMore: false, endCursor: null };
   }
 }
@@ -314,9 +309,7 @@ export async function fetchIssueByIdentifier(identifier: string): Promise<Linear
       teamKey: hit.identifier.split("-")[0] ?? "",
     };
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[linear] Failed to fetch issue by identifier:", error);
-    }
+    debugLog("[linear] Failed to fetch issue by identifier:", error);
     return null;
   }
 }
@@ -354,9 +347,7 @@ export async function fetchIssuesFull(issues: LinearIssue[]): Promise<LinearIssu
 
     return fullIssues;
   } catch (error) {
-    if (process.env.DEBUG) {
-      console.error("[linear] Failed to fetch full issue details:", error);
-    }
+    debugLog("[linear] Failed to fetch full issue details:", error);
     return issues;
   }
 }

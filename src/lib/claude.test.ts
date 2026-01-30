@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { RalphConfig } from "../types.js";
 import { hasApiKey, hasApiKeySync, type RunClaudeOptions, runClaude, setApiKey } from "./claude.js";
 import * as keychain from "./keychain.js";
 
@@ -20,17 +19,6 @@ vi.mock("./keychain.js", () => ({
 }));
 
 describe("claude", () => {
-  const mockConfig: RalphConfig = {
-    maxRetries: 3,
-    soundOnComplete: true,
-    notificationSound: "/System/Library/Sounds/Glass.aiff",
-    saveOutput: false,
-    outputDir: "logs",
-    prdTemplatesDir: "templates",
-    defaultTemplate: "empty",
-    defaultIterations: 10,
-  };
-
   // Helper to create async iterable from array
   async function* createAsyncIterable<T>(items: T[]): AsyncIterable<T> {
     for (const item of items) {
@@ -56,7 +44,7 @@ describe("claude", () => {
       error.code = "ENOENT";
       vi.mocked(readFile).mockRejectedValue(error);
 
-      const result = await runClaude(mockConfig, mockOptions);
+      const result = await runClaude(mockOptions);
 
       expect(result.success).toBe(false);
       // New error format includes error code and suggestion
@@ -89,7 +77,7 @@ describe("claude", () => {
         createAsyncIterable(mockResponse) as ReturnType<typeof query>,
       );
 
-      const result = await runClaude(mockConfig, mockOptions);
+      const result = await runClaude(mockOptions);
 
       // Should succeed with empty progress
       expect(result.success).toBe(true);
@@ -133,7 +121,7 @@ describe("claude", () => {
         createAsyncIterable(mockResponse) as ReturnType<typeof query>,
       );
 
-      const result = await runClaude(mockConfig, mockOptions);
+      const result = await runClaude(mockOptions);
 
       expect(result.success).toBe(true);
       expect(result.output).toBe("Hello from Claude");
@@ -176,7 +164,7 @@ describe("claude", () => {
         createAsyncIterable(mockResponse) as ReturnType<typeof query>,
       );
 
-      const result = await runClaude(mockConfig, mockOptions);
+      const result = await runClaude(mockOptions);
 
       expect(result.success).toBe(true);
       expect(result.prdComplete).toBe(true);
@@ -209,7 +197,7 @@ describe("claude", () => {
         createAsyncIterable(mockResponse) as ReturnType<typeof query>,
       );
 
-      await runClaude(mockConfig, { ...mockOptions, onStdout });
+      await runClaude({ ...mockOptions, onStdout });
 
       expect(onStdout).toHaveBeenCalledWith("First part");
       expect(onStdout).toHaveBeenCalledWith("Second part");
@@ -247,7 +235,7 @@ describe("claude", () => {
         createAsyncIterable(mockResponse) as ReturnType<typeof query>,
       );
 
-      await runClaude(mockConfig, { ...mockOptions, onStatus });
+      await runClaude({ ...mockOptions, onStatus });
 
       expect(onStatus).toHaveBeenCalledWith("Reading test/file.ts");
       expect(onStatus).toHaveBeenCalledWith("Running command");
@@ -260,7 +248,7 @@ describe("claude", () => {
         throw new Error("SDK connection failed");
       });
 
-      const result = await runClaude(mockConfig, mockOptions);
+      const result = await runClaude(mockOptions);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("SDK connection failed");
@@ -279,7 +267,7 @@ describe("claude", () => {
         createAsyncIterable(mockResponse) as ReturnType<typeof query>,
       );
 
-      await runClaude(mockConfig, {
+      await runClaude({
         ...mockOptions,
         resumeSessionId: "previous-session-id",
       });
@@ -316,7 +304,7 @@ describe("claude", () => {
         createAsyncIterable(mockResponse) as ReturnType<typeof query>,
       );
 
-      const result = await runClaude(mockConfig, mockOptions);
+      const result = await runClaude(mockOptions);
 
       expect(result.output).toBe("Part 1Part 2Part 3");
     });

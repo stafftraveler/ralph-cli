@@ -9,7 +9,7 @@ import { runCi } from "./commands/run-ci.js";
 import { App } from "./components/App.js";
 import { getRepoRoot } from "./hooks/use-git.js";
 import { startCaffeinate, stopCaffeinate } from "./lib/caffeinate.js";
-import { createFileNotFoundError, wrapError } from "./lib/utils.js";
+import { createFileNotFoundError, debugLog, wrapError } from "./lib/utils.js";
 import { RalphError } from "./types.js";
 
 /**
@@ -107,9 +107,7 @@ async function main() {
       }
     } else if (error instanceof Error) {
       console.error(chalk.red(`Error: ${error.message}`));
-      if (process.env.DEBUG) {
-        console.error(error.stack);
-      }
+      debugLog("Error stack:", error.stack);
     } else {
       console.error(chalk.red("An unknown error occurred"));
     }

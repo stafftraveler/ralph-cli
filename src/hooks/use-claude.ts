@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { type ClaudeRunResult, runClaude } from "../lib/claude.js";
+import { debugLog } from "../lib/utils.js";
 import { appendOutput } from "../lib/webserver.js";
 import type { IterationResult, RalphConfig, UsageInfo } from "../types.js";
 
@@ -156,7 +157,7 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
 
       let result: ClaudeRunResult;
       try {
-        result = await runClaude(config, {
+        result = await runClaude({
           ralphDir: options.ralphDir,
           prompt: options.prompt,
           verbose: options.verbose,
@@ -166,8 +167,17 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
           onStatus: handleStatus,
           resumeSessionId: options.resumeSessionId ?? previousSessionId ?? undefined,
         });
-      } catch (_error) {
-        // Cancelled or failed
+      } catch (error) {
+        // Cancelled or failed - log error details in debug mode
+        debugLog("[use-claude] Iteration failed:", error);
+        if (error instanceof Error) {
+          debugLog(`[use-claude] Error name: ${error.name}`);
+          debugLog(`[use-claude] Error message: ${error.message}`);
+          if (error.stack) {
+            debugLog(`[use-claude] Stack trace: ${error.stack}`);
+          }
+        }
+
         if (timerRef.current) {
           clearInterval(timerRef.current);
           timerRef.current = null;
@@ -177,6 +187,12 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
         const completedAt = new Date().toISOString();
         const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
+        // Determine if this was a cancellation or actual failure
+        const isCancelled =
+          error instanceof Error &&
+          (error.name === "AbortError" || error.message.includes("aborted"));
+        const status = isCancelled ? "Cancelled" : "Failed";
+
         return {
           iteration: options.iteration,
           startedAt,
@@ -184,7 +200,7 @@ export function useClaude(): [UseClaudeState, UseClaudeActions] {
           durationSeconds,
           success: false,
           output: collectedOutput,
-          status: "Cancelled or failed",
+          status,
           prdComplete: false,
         };
       }
