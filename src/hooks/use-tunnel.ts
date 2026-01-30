@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { Tunnel, bin, install } from "cloudflared";
+import { bin, install, Tunnel } from "cloudflared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**

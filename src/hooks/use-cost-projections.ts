@@ -90,7 +90,11 @@ export function useCostProjections(options: CostProjectionOptions): CostProjecti
       projectedTotalCost = sessionTotal + projectedRemainingCost;
 
       // Check if projection would exceed limit
-      if (maxCostPerSession !== undefined && projectedTotalCost !== undefined && projectedTotalCost > maxCostPerSession) {
+      if (
+        maxCostPerSession !== undefined &&
+        projectedTotalCost !== undefined &&
+        projectedTotalCost > maxCostPerSession
+      ) {
         projectionWouldExceedLimit = true;
       }
     }

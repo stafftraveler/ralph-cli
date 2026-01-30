@@ -1,6 +1,6 @@
 import { execa } from "execa";
-import type { CommitInfo, DiffStat } from "../types.js";
 import { debugLog } from "../lib/utils.js";
+import type { CommitInfo, DiffStat } from "../types.js";
 
 /**
  * Get the root directory of the current git repository

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getCommitsSince, getDiffStats } from "./use-git.js";
 import type { DiffStat } from "../types.js";
+import { getCommitsSince, getDiffStats } from "./use-git.js";
 
 /**
  * Return type for useSummaryData hook
