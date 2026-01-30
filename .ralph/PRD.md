@@ -19,5 +19,5 @@ pnpm
 [✅] @types/node: 22.19.7 → 25.1.0 (dev)
 [✅] @types/react: 18.3.27 → 19.2.10 (dev)
 [✅] @types/uuid: 10.0.0 → 11.0.0 (dev, deprecated)
-[ ] @vitest/coverage-v8: 2.1.9 → 4.0.18 (dev)
-[ ] vitest: 2.1.9 → 4.0.18 (dev)
+[✅] @vitest/coverage-v8: 2.1.9 → 4.0.18 (dev)
+[✅] vitest: 2.1.9 → 4.0.18 (dev)
