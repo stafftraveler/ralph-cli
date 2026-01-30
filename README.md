@@ -26,7 +26,9 @@ pnpm add -D @stafftraveler/ralph
 npm install -D @stafftraveler/ralph
 ```
 
-Or install globally:
+After installation, you'll see setup instructions automatically. Follow them to get started!
+
+Or install globally for use across all projects:
 
 ```bash
 pnpm add -g @stafftraveler/ralph
@@ -36,13 +38,19 @@ npm install -g @stafftraveler/ralph
 
 ## Quick Start
 
-1. **Initialize Ralph in your project** (from any git repository):
+After installation, initialize Ralph in your git repository:
 
-   ```bash
-   npx ralph init
-   ```
+```bash
+npx ralph init
+# or if installed globally
+ralph init
+```
 
-   This creates the `.ralph/` directory with templates and adds a `ralph` script to your `package.json`.
+This will:
+- Create the `.ralph/` directory with templates
+- Add a `ralph` script to your `package.json` (if present)
+- Prompt for your Anthropic API key (stored securely in macOS Keychain)
+- Guide you through the initial setup
 
 2. **Set up your API key** (if not already configured):
 
@@ -277,15 +285,61 @@ pnpm check:types
 
 ## Publishing
 
-This package is published to GitHub Package Registry:
+This package is published to GitHub Package Registry under the `@stafftraveler` scope.
+
+### Prerequisites for Publishing
+
+1. **Authenticate with GitHub Package Registry:**
+   ```bash
+   npm login --scope=@stafftraveler --registry=https://npm.pkg.github.com
+   ```
+   You'll need a GitHub Personal Access Token with `write:packages` permission.
+
+2. **Ensure version is bumped:**
+   ```bash
+   # Update version in package.json
+   npm version patch  # or minor, or major
+   ```
+
+3. **Verify package contents:**
+   ```bash
+   # See what files will be published
+   npm pack --dry-run
+   ```
+
+### Publishing Steps
 
 ```bash
-# Ensure you're logged in to GitHub Package Registry
-npm login --scope=@stafftraveler --registry=https://npm.pkg.github.com
+# Build/verify (optional - our package uses runtime compilation)
+pnpm check:types
+pnpm lint
 
 # Publish to GitHub Package Registry
 pnpm publish --registry=https://npm.pkg.github.com
+
+# Tag the release
+git push --tags
 ```
+
+### Installing in Other Projects
+
+After publishing, other projects can install Ralph:
+
+```bash
+# In the target project, authenticate first (one-time)
+npm login --scope=@stafftraveler --registry=https://npm.pkg.github.com
+
+# Install as dev dependency
+pnpm add -D @stafftraveler/ralph
+
+# Initialize in the project
+npx ralph init
+
+# Use the ralph script
+pnpm ralph 5
+```
+
+The postinstall script will automatically show setup instructions after installation.
 
 ## License
 

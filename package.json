@@ -9,9 +9,12 @@
   "files": [
     "bin/",
     "src/",
+    "README.md",
+    "LICENSE",
     "tsconfig.json"
   ],
   "scripts": {
+    "postinstall": "node ./bin/postinstall.js",
     "check:types": "tsc --noEmit",
     "lint": "biome lint ./src",
     "lint:fix": "biome lint --write ./src",

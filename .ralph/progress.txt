@@ -36,3 +36,26 @@ Files changed:
 - src/lib/config.ts: Changed error handling to warn + use defaults
 
 Result: App now handles config read errors gracefully, improving robustness
+
+## Iteration 3 - Package release preparation
+
+Task: Prepare package for release to @stafftraveler/ralph-cli
+Reference: PRD task 3
+
+Decision: Automatic init on postinstall would be intrusive
+- Running 'ralph init' automatically could modify user package.json unexpectedly
+- May fail if not in git repo, causing installation failures
+- Better UX: show helpful instructions instead
+
+Changes:
+- Created bin/postinstall.js: Shows setup instructions after install
+- Updated package.json: Added postinstall script, included README/LICENSE in files
+- Enhanced README.md: Clearer installation flow, detailed publishing instructions
+- Added comprehensive publishing guide with prerequisites and steps
+
+Files changed:
+- bin/postinstall.js: New postinstall message script
+- package.json: Added postinstall script, updated files array
+- README.md: Improved installation section, added detailed publishing guide
+
+Result: Package ready for release with user-friendly installation experience
