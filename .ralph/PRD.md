@@ -16,5 +16,5 @@ Clean-up the codebase.
 [x] Review the entire codebase. Fix issues.
 [x] Prepare this package for release to @stafftraveler/ralph-cli. We are going to install it in other repositories to run our Ralph loops. Finish up README.md. Automatically run the init script after installation of the package using pnpm.
 [x] Create a new `/PRD-advise.md` file with items that you suggest can be improved in this package. Also, add instructions on how to publish this package and integrate it in other repositories.
-[ ] Scan the code to verify if it is correct according to the updated AGENTS.md instructions. Update files if needed.
+[x] Scan the code to verify if it is correct according to the updated AGENTS.md instructions. Update files if needed.
 [ ] Scan for code smells: unused exports, dead code, inconsistent patterns, duplicate code. Fix ONE issue per iteration. Repeat as needed.
