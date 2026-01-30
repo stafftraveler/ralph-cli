@@ -1,0 +1,14 @@
+## Iteration 1: Code smell scan & duplicate code fix
+
+**Task**: Scanned webserver.ts for code smells; fixed duplicate polling check
+
+**Decisions**:
+- Identified 7 major code smells in webserver.ts
+- Prioritized fixing duplicate code (lines 1841-1845) as first issue
+- Removed redundant "Skip refresh if user is typing" check in refreshData()
+
+**Files changed**:
+- .ralph/PRD.md (documented 7 code smells)
+- src/lib/webserver.ts (removed duplicate if check)
+
+**Notes**: Large monolithic file needs refactoring - HTML/CSS/JS should be extracted to separate files with build step. This is the main architectural issue to address next.

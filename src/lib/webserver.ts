@@ -1838,11 +1838,6 @@ function getDashboardHtml(data: DashboardData): string {
         setTimeout(refreshData, 2000);
         return;
       }
-      // Skip refresh if user is typing
-      if (isTyping) {
-        setTimeout(refreshData, 2000);
-        return;
-      }
 
       try {
         // Fetch status
