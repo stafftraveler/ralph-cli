@@ -54,13 +54,13 @@ function StatusDisplay({ status }: { status: string | null }) {
 interface UsageDisplayProps {
   state: UseClaudeState;
   sessionCostSoFar?: number;
-  warnCostThreshold?: number;
+  maxCostPerSession?: number;
 }
 
 /**
  * Cost and usage display with optional session total and warning
  */
-function UsageDisplay({ state, sessionCostSoFar, warnCostThreshold }: UsageDisplayProps) {
+function UsageDisplay({ state, sessionCostSoFar, maxCostPerSession }: UsageDisplayProps) {
   const { usage } = state;
 
   if (!usage) {
@@ -69,9 +69,11 @@ function UsageDisplay({ state, sessionCostSoFar, warnCostThreshold }: UsageDispl
 
   const iterationCost = usage.totalCostUsd ?? 0;
   const sessionTotal = (sessionCostSoFar ?? 0) + iterationCost;
-  const isApproachingThreshold =
-    warnCostThreshold !== undefined && sessionTotal >= warnCostThreshold * 0.8;
-  const hasExceededThreshold = warnCostThreshold !== undefined && sessionTotal >= warnCostThreshold;
+
+  // Calculate 80% threshold from maxCostPerSession
+  const warnThreshold = maxCostPerSession !== undefined ? maxCostPerSession * 0.8 : undefined;
+  const isApproachingLimit = warnThreshold !== undefined && sessionTotal >= warnThreshold;
+  const hasExceededLimit = maxCostPerSession !== undefined && sessionTotal >= maxCostPerSession;
 
   return (
     <Box flexDirection="column" marginTop={1}>
@@ -82,17 +84,17 @@ function UsageDisplay({ state, sessionCostSoFar, warnCostThreshold }: UsageDispl
       {sessionCostSoFar !== undefined && sessionCostSoFar > 0 && (
         <Text color="gray">
           Session total: {formatCost(sessionTotal)}
-          {warnCostThreshold !== undefined && <Text> / {formatCost(warnCostThreshold)} limit</Text>}
+          {maxCostPerSession !== undefined && <Text> / {formatCost(maxCostPerSession)} limit</Text>}
         </Text>
       )}
-      {hasExceededThreshold && (
+      {hasExceededLimit && (
         <Text color="red" bold>
-          ⚠ Cost threshold exceeded!
+          ⚠ Cost limit exceeded!
         </Text>
       )}
-      {isApproachingThreshold && !hasExceededThreshold && (
+      {isApproachingLimit && !hasExceededLimit && maxCostPerSession !== undefined && (
         <Text color="yellow">
-          ⚠ Approaching cost threshold ({Math.round((sessionTotal / warnCostThreshold) * 100)}%)
+          ⚠ Approaching cost limit ({Math.round((sessionTotal / maxCostPerSession) * 100)}%)
         </Text>
       )}
     </Box>
@@ -170,7 +172,7 @@ export function IterationRunner({
         <UsageDisplay
           state={state}
           sessionCostSoFar={sessionCostSoFar}
-          warnCostThreshold={config.warnCostThreshold}
+          maxCostPerSession={config.maxCostPerSession}
         />
       </Box>
     );
@@ -194,7 +196,7 @@ export function IterationRunner({
       <UsageDisplay
         state={state}
         sessionCostSoFar={sessionCostSoFar}
-        warnCostThreshold={config.warnCostThreshold}
+        maxCostPerSession={config.maxCostPerSession}
       />
       {debug && state.statusHistory.length > 0 && (
         <Box flexDirection="column" marginTop={1} marginLeft={2}>

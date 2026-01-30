@@ -69,7 +69,7 @@ Already implemented. Verify that these have been implemented correctly.
     - Compare against MAX_COST_PER_SESSION config value
     - Stop execution gracefully if limit would be exceeded
 
-[ ] Add cost warning threshold
+[x] Add cost warning threshold
     - Warn user when approaching cost limit (e.g., 80% of MAX_COST_PER_SESSION)
     - Display warning in UI with current/max cost values
 
@@ -107,3 +107,10 @@ Already implemented. Verify that these have been implemented correctly.
 [ ] Add troubleshooting section to error output
     - Link to relevant docs when available
     - Suggest common fixes for known issues
+
+
+## 5. Remote monitoring
+
+[ ] Install ngrok. Run ngrok when starting a session. Present the ngrok URL in a status bar on the bottom of the terminal while running the script.
+
+[ ] Add a small, simple webserver that presents a mobile-friendly dashboard. The dashboard shows a progress bar indicating the progress (iteration x of y). It also shows the latest status messages (like in the CLI debug mode). Finally, it shows the current costs of the session. Use Tailwind 4 for styling. Make the UI minimalistic but beautiful.

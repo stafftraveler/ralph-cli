@@ -211,3 +211,50 @@ Notes:
 - Cost enforcement prevents starting new iterations when limit reached
 - Complements existing cost warning display at 80% threshold in IterationRunner
 - Next: Add cost warning threshold display in UI (Task 3.2)
+
+## Iteration 9: Add cost warning threshold display
+
+Task: PRD Task 3.2 - Add cost warning threshold (80% of MAX_COST_PER_SESSION)
+
+Decisions:
+- Modified UsageDisplay component to automatically calculate 80% warning from maxCostPerSession
+- Removed separate warnCostThreshold config field (was redundant)
+- Warning now derives from maxCostPerSession * 0.8 automatically
+- Yellow warning displays when session cost >= 80% of limit
+- Red warning displays when session cost >= 100% of limit
+- Shows percentage and "Approaching cost limit" message
+
+Files changed:
+- src/components/IterationRunner.tsx:
+  - Updated UsageDisplay to use maxCostPerSession instead of warnCostThreshold
+  - Calculate 80% threshold inline: maxCostPerSession * 0.8
+  - Display shows session total and max limit when maxCostPerSession is set
+  - Warning at 80%: "⚠ Approaching cost limit (X%)" in yellow
+  - Warning at 100%: "⚠ Cost limit exceeded!" in red
+
+- src/types.ts:
+  - Removed warnCostThreshold field from RalphConfig
+  - Updated maxCostPerSession doc comment to mention 80% warning
+
+- src/lib/config.ts:
+  - Removed warnCostThreshold from DEFAULT_CONFIG
+  - Removed warnCostThreshold parsing case
+
+- src/lib/config.test.ts:
+  - Removed all warnCostThreshold test assertions
+  - Removed WARN_COST_THRESHOLD from test config content
+  - All 93 tests still passing
+
+Implementation details:
+- Warning threshold calculated as: const warnThreshold = maxCostPerSession !== undefined ? maxCostPerSession * 0.8 : undefined
+- isApproachingLimit checks: sessionTotal >= warnThreshold
+- hasExceededLimit checks: sessionTotal >= maxCostPerSession
+- Percentage display: Math.round((sessionTotal / maxCostPerSession) * 100)
+- Type-safe with proper undefined checks
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- Simpler than separate config field - one setting controls both warning and limit
+- Warning automatically appears when approaching limit without extra config
+- Next: Add --max-cost CLI flag (Task 3.3)

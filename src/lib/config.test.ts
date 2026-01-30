@@ -32,7 +32,6 @@ describe("config", () => {
         defaultTemplate: "empty",
         maxCostPerIteration: undefined,
         maxCostPerSession: undefined,
-        warnCostThreshold: undefined,
       });
     });
 
@@ -47,7 +46,6 @@ PRD_TEMPLATES_DIR=my-templates
 DEFAULT_TEMPLATE=new-feature
 MAX_COST_PER_ITERATION=1.50
 MAX_COST_PER_SESSION=10.00
-WARN_COST_THRESHOLD=8.00
 `;
       vi.mocked(readFile).mockResolvedValue(configContent);
 
@@ -63,7 +61,6 @@ WARN_COST_THRESHOLD=8.00
         defaultTemplate: "new-feature",
         maxCostPerIteration: 1.5,
         maxCostPerSession: 10.0,
-        warnCostThreshold: 8.0,
       });
     });
 
@@ -167,7 +164,6 @@ WARN_COST_THRESHOLD=0
 
       expect(config.maxCostPerIteration).toBeUndefined();
       expect(config.maxCostPerSession).toBeUndefined();
-      expect(config.warnCostThreshold).toBeUndefined();
     });
 
     it("should handle lines without equals sign", async () => {
@@ -241,7 +237,6 @@ WARN_COST_THRESHOLD=12.50
 
       expect(config.maxCostPerIteration).toBe(0.5);
       expect(config.maxCostPerSession).toBe(15.99);
-      expect(config.warnCostThreshold).toBe(12.5);
     });
 
     it("should handle non-ENOENT errors and continue with defaults", async () => {
@@ -262,7 +257,6 @@ WARN_COST_THRESHOLD=12.50
         defaultTemplate: "empty",
         maxCostPerIteration: undefined,
         maxCostPerSession: undefined,
-        warnCostThreshold: undefined,
       });
     });
 

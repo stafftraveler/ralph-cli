@@ -11,10 +11,8 @@ export interface RalphConfig {
   defaultTemplate: string;
   /** Maximum cost allowed per iteration in USD. Execution stops if exceeded. */
   maxCostPerIteration?: number;
-  /** Maximum cumulative cost allowed per session in USD. Execution stops if exceeded. */
+  /** Maximum cumulative cost allowed per session in USD. Execution stops if exceeded. Warning shown at 80%. */
   maxCostPerSession?: number;
-  /** Cost threshold in USD at which to show a warning. */
-  warnCostThreshold?: number;
 }
 
 /**
