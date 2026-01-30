@@ -274,6 +274,50 @@ function getDashboardHtml(data: DashboardData): string {
       font-family: 'Monaco', 'Courier New', monospace;
     }
 
+    .connection-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #999999;
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #999999;
+      transition: background 0.3s ease;
+    }
+
+    .connection-dot.connected {
+      background: #4caf50;
+    }
+
+    .connection-dot.disconnected {
+      background: #f44336;
+    }
+
+    .connection-dot.reconnecting {
+      background: #ff9800;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .connection-dot.polling {
+      background: #2196f3;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.4;
+      }
+    }
+
     .progress-section {
       margin-bottom: 24px;
     }
@@ -704,6 +748,10 @@ function getDashboardHtml(data: DashboardData): string {
         color: #999999;
       }
 
+      .connection-status {
+        color: #666666;
+      }
+
       .progress-label {
         color: #999999;
       }
@@ -1089,8 +1137,35 @@ function getDashboardHtml(data: DashboardData): string {
 
     // Update connection status indicator
     function updateConnectionStatus(status) {
-      // Will be implemented when we add the UI indicator
-      console.log('Connection status:', status);
+      const dot = document.getElementById('connection-dot');
+      const text = document.getElementById('connection-text');
+
+      if (!dot || !text) return;
+
+      // Remove all status classes
+      dot.classList.remove('connected', 'disconnected', 'reconnecting', 'polling');
+
+      // Add appropriate class and update text
+      switch (status) {
+        case 'connected':
+          dot.classList.add('connected');
+          text.textContent = 'Connected';
+          break;
+        case 'disconnected':
+          dot.classList.add('disconnected');
+          text.textContent = 'Disconnected';
+          break;
+        case 'reconnecting':
+          dot.classList.add('reconnecting');
+          text.textContent = 'Reconnecting...';
+          break;
+        case 'polling':
+          dot.classList.add('polling');
+          text.textContent = 'HTTP Polling';
+          break;
+        default:
+          text.textContent = 'Unknown';
+      }
     }
 
     // Append output chunk to verbose display (for real-time streaming)
@@ -1315,6 +1390,10 @@ function getDashboardHtml(data: DashboardData): string {
     <div class="header">
       <div class="title">Ralph CLI Dashboard</div>
       <div class="session-id">${data.sessionId}</div>
+      <div class="connection-status">
+        <div class="connection-dot" id="connection-dot"></div>
+        <span id="connection-text">Connecting...</span>
+      </div>
     </div>
 
     <div class="progress-section">

@@ -705,3 +705,44 @@ Notes:
   [x] Fall back to polling if WebSocket connection fails
 - Remaining Phase 7 tasks: UI indicators (pulsing, elapsed time, ETA, connection status)
 
+
+## Iteration 19
+
+Task: Add connection status indicator (Phase 7)
+
+Changes:
+- Added connection-status CSS class with flex layout and subtle styling
+- Added connection-dot CSS class with 8px circular indicator
+- Added state-specific dot colors: green (connected), red (disconnected), orange (reconnecting), blue (polling)
+- Added pulse animation for reconnecting state (1.5s ease-in-out infinite)
+- Implemented updateConnectionStatus() function to update dot and text based on state
+- Added connection status HTML in header below session ID
+- Shows dot + text: "Connected", "Disconnected", "Reconnecting...", or "HTTP Polling"
+- Added dark mode support for connection status text color
+
+Design decisions:
+- Placed in header for visibility without clutter
+- 8px dot is subtle but noticeable
+- Color coding follows convention: green=good, red=bad, orange=warning, blue=info
+- Pulsing animation on reconnecting draws attention to transient state
+- Text provides clarity for users unfamiliar with color codes
+- 11px font size keeps it subtle and non-intrusive
+- 6px gap between dot and text for clean spacing
+
+Visual states:
+- Connected: Green dot, "Connected" text
+- Disconnected: Red dot, "Disconnected" text  
+- Reconnecting: Orange pulsing dot, "Reconnecting..." text
+- Polling: Blue dot, "HTTP Polling" text
+
+Files changed:
+- src/lib/webserver.ts (CSS, HTML, updateConnectionStatus implementation)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 7 task complete (7 of 10 tasks done, 70%)
+- Provides real-time feedback on WebSocket connection health
+- Helps users understand if updates are real-time or polling-based
+
