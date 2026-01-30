@@ -6,6 +6,7 @@ import type { WebSocket } from "ws";
 import { WebSocketServer } from "ws";
 import type { SessionState } from "../types.js";
 import { parsePrdTasks } from "./prd.js";
+import { formatDuration } from "./utils.js";
 
 /**
  * Dashboard data that gets sent to the web UI
@@ -221,23 +222,6 @@ function getDashboardData(): DashboardData {
       status: iter.status,
     })),
   };
-}
-
-/**
- * Format duration in seconds to a human-readable string
- */
-function formatDuration(seconds: number): string {
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes < 60) {
-    return `${minutes}m ${remainingSeconds}s`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return `${hours}h ${remainingMinutes}m`;
 }
 
 /**
@@ -1497,6 +1481,7 @@ function getDashboardHtml(data: DashboardData): string {
     function updateConnectionStatus(status) {
       const dot = document.getElementById('connection-dot');
       const text = document.getElementById('connection-text');
+      const footerStatus = document.getElementById('footer-status');
 
       if (!dot || !text) return;
 
@@ -1508,22 +1493,27 @@ function getDashboardHtml(data: DashboardData): string {
         case 'connected':
           dot.classList.add('connected');
           text.textContent = 'Connected';
+          if (footerStatus) footerStatus.textContent = 'Real-time updates via WebSocket';
           break;
         case 'disconnected':
           dot.classList.add('disconnected');
           text.textContent = 'Disconnected';
+          if (footerStatus) footerStatus.textContent = 'Disconnected';
           break;
         case 'reconnecting':
           dot.classList.add('reconnecting');
           text.textContent = 'Reconnecting...';
+          if (footerStatus) footerStatus.textContent = 'Reconnecting...';
           break;
         case 'polling':
           dot.classList.add('polling');
           text.textContent = 'HTTP Polling';
+          if (footerStatus) footerStatus.textContent = 'Polling every 2 seconds (WebSocket unavailable)';
           break;
         case 'completed':
           dot.classList.add('completed');
           text.textContent = 'Completed';
+          if (footerStatus) footerStatus.textContent = 'Session completed';
           break;
         default:
           text.textContent = 'Unknown';
@@ -1996,7 +1986,7 @@ function getDashboardHtml(data: DashboardData): string {
     </div>
 
     <div class="footer">
-      Auto-refreshing every 2 seconds
+      <span id="footer-status">Real-time updates via WebSocket</span>
     </div>
   </div>
 </body>
