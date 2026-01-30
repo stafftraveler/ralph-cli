@@ -40,3 +40,10 @@ Iteration 4 - Chapter 3: Add iteration adjustment feature
 Decision: Decrement never goes below current iteration (safety)
 Files changed: src/components/App.tsx, src/lib/webserver.ts
 All tests pass, type checks pass, no lint errors
+
+Iteration 5 - Chapter 3: Remove % from progress bar
+- Removed percentage text from HTML template progress-fill div
+- Removed progressFill.textContent update in updateDashboard() JS function
+Reasoning: Bar too short to display percentage text legibly
+Files changed: src/lib/webserver.ts
+All tests pass, type checks pass, no lint errors

@@ -38,7 +38,7 @@ Enhance the dashboard to show detailed status messages from Claude's tool use, i
 [x] The dashboard currently only shows tasks that have not been completed. Previously, it also showed the tasks that are complete (and showed them as ticked off). Please revert to that and show all tasks including the completed ones.
 [x] Add a way to increase/decrease the number of iterations, like in the CLI.
 [ ] Add a button to pause after the next iteration. Add this to the CLI as well (keyboard shortcut in CLI). Add a button to stop on the dashboard. A modal should show to confirm that the user wants to stop the script.
-[ ] Remove the % from the progress bar. The bar isn't high enough to show it anyway.
+[x] Remove the % from the progress bar. The bar isn't high enough to show it anyway.
 [ ] When I open an iteration on the dashboard, it closes after a while. I think the open state may get lost after a re-render.
 [ ] The costs are only shown in the Dashboard, not in the CLI, even not in the summary. Please also show it in the CLI (live while running and in the summary).
 [ ] The costs in the dashboard always show "Total Cost $0.0000". Should we configure the actual costs per token somewhere? I'll list the costs below.

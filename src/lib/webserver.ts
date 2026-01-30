@@ -1603,7 +1603,6 @@ function getDashboardHtml(data: DashboardData): string {
       const progressFill = document.querySelector('.progress-fill');
       if (progressFill) {
         progressFill.style.width = progressPercent + '%';
-        progressFill.textContent = progressPercent.toFixed(0) + '%';
 
         // Add pulsing animation when iteration is actively running
         if (data.currentIterationStartedAt) {
@@ -1917,9 +1916,7 @@ function getDashboardHtml(data: DashboardData): string {
         </div>
       </div>
       <div class="progress-bar">
-        <div class="progress-fill" style="width: ${progressPercent}%">
-          ${progressPercent.toFixed(0)}%
-        </div>
+        <div class="progress-fill" style="width: ${progressPercent}%"></div>
       </div>
     </div>
 
