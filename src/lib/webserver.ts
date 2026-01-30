@@ -295,7 +295,7 @@ function getDashboardHtml(data: DashboardData): string {
       padding: 12px;
       border: 1px solid #e5e5e5;
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
       font-family: inherit;
       transition: border-color 0.2s;
       min-height: 44px;
@@ -321,7 +321,7 @@ function getDashboardHtml(data: DashboardData): string {
       color: white;
       border: none;
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 16px; /* Match input font size */
       font-weight: 500;
       cursor: pointer;
       transition: opacity 0.2s;
@@ -867,6 +867,10 @@ function getDashboardHtml(data: DashboardData): string {
           placeholder="Enter a new task..."
           oninput="handleInput()"
           autocomplete="off"
+          autocorrect="off"
+          autocapitalize="sentences"
+          spellcheck="true"
+          enterkeyhint="done"
         />
         <button type="submit" id="task-button" class="add-task-button">Add</button>
       </form>

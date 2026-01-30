@@ -364,3 +364,38 @@ Notes:
 - Linting passes
 - Design already achieved maximum minimalism in previous iterations
 - Phase 1 task verified complete (2 of 6 tasks now done)
+
+## Iteration 11
+
+Task: Improve input field sizing for mobile keyboards (Phase 4)
+
+Changes:
+- Increased input font-size from 14px to 16px (prevents iOS auto-zoom on focus)
+- Increased button font-size from 14px to 16px (visual consistency)
+- Added mobile keyboard attributes to input element:
+  - autocorrect="off" (disable auto-correct for task names)
+  - autocapitalize="sentences" (capitalize first letter of sentences)
+  - spellcheck="true" (enable spell checking)
+  - enterkeyhint="done" (shows "Done" button on mobile keyboard)
+
+Design decisions:
+- 16px font size is iOS minimum to prevent auto-zoom behavior
+- "Done" enter key hint signals form submission to users
+- Disabled autocorrect to avoid unwanted changes to technical task names
+- Enabled spellcheck to catch typos while preserving exact text
+- Sentence capitalization is natural for task descriptions
+
+Mobile UX improvements:
+- No more annoying zoom-in when tapping input on iOS
+- Better keyboard UX with proper hints and behaviors
+- Consistent font sizing between input and button
+- More comfortable typing experience on mobile
+
+Files changed:
+- src/lib/webserver.ts (input/button font sizes, mobile attributes)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 4 Mobile UX now 4 of 6 tasks complete

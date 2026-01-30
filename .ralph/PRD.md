@@ -37,10 +37,10 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 ### Phase 1: Visual Design Cleanup
 
 [x] Remove the card container and gradient background - use a clean white/dark background
-[ ] Remove gradient from progress bar - use solid color
-[ ] Make 'Total Cost' block smaller and more subtle (inline or smaller font)
-[ ] Use a more minimal color palette (monochrome with accent color)
-[ ] Reduce visual noise - simplify borders, shadows, and decorative elements
+[x] Remove gradient from progress bar - use solid color
+[x] Make 'Total Cost' block smaller and more subtle (inline or smaller font)
+[x] Use a more minimal color palette (monochrome with accent color)
+[x] Reduce visual noise - simplify borders, shadows, and decorative elements
 [x] Add proper spacing using consistent 8px grid system
 
 ### Phase 2: Task Display
@@ -64,7 +64,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 
 [x] Increase touch target sizes to minimum 44px height for all interactive elements
 [x] Add proper touch feedback states (`:active` visual feedback)
-[ ] Improve input field sizing for mobile keyboards
+[x] Improve input field sizing for mobile keyboards
 [x] Add `meta` tags for PWA support (apple-mobile-web-app-capable, theme-color)
 [ ] Support `prefers-color-scheme: dark` media query for automatic dark mode
 [ ] Add responsive breakpoints for different screen sizes
