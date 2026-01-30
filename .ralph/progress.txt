@@ -9,3 +9,11 @@ Iteration 1 - Chapter 1: WebSocket Completed Status
 - Updated updateConnectionStatus() function to handle "completed" status with appropriate styling and text
 Files changed: src/lib/webserver.ts
 All tests pass, type checks pass, no lint errors
+
+Iteration 2 - Chapter 2: Dashboard Detailed Status Display (Already Complete)
+- Verified extractDescription() function already exists in lib/claude.ts (lines 100-114)
+- Verified formatToolStatus() already uses description field for Shell/Bash tools (lines 123-140)
+- Verified CSS text-overflow: ellipsis already applied to .status-text in webserver.ts (lines 436-443)
+- All three tasks were previously implemented, marked complete in PRD
+Files changed: .ralph/PRD.md
+All tests pass, type checks pass, no lint errors

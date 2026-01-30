@@ -27,9 +27,9 @@ Enhance the dashboard to show detailed status messages from Claude's tool use, i
 
 ### Tasks
 
-[ ] Add `extractDescription()` function in `lib/claude.ts` to extract description field from tool input
-[ ] Update `formatToolStatus()` in `lib/claude.ts` to use description field for Shell/Bash tools
-[ ] Add CSS `text-overflow: ellipsis` styling to `.status-text` in webserver.ts dashboard HTML for single-line clipping
+[x] Add `extractDescription()` function in `lib/claude.ts` to extract description field from tool input
+[x] Update `formatToolStatus()` in `lib/claude.ts` to use description field for Shell/Bash tools
+[x] Add CSS `text-overflow: ellipsis` styling to `.status-text` in webserver.ts dashboard HTML for single-line clipping
 
 ---
 
@@ -39,6 +39,7 @@ Enhance the dashboard to show detailed status messages from Claude's tool use, i
 [ ] Add a way to increase/decrease the number of iterations, like in the CLI.
 [ ] Add a button to pause after the next iteration. Add this to the CLI as well (keyboard shortcut in CLI). Add a button to stop on the dashboard. A modal should show to confirm that the user wants to stop the script.
 [ ] Remove the % from the progress bar. The bar isn't high enough to show it anyway.
+[ ] When I open an iteration on the dashboard, it closes after a while. I think the open state may get lost after a re-render.
 
 ## Chapter 4: potential localtunnel replacement
 
@@ -46,7 +47,7 @@ Investigate if there are better alternatives than `localtunnel`. `localtunnel` r
 
 List the alternatives and the results of your research along with your thoughts about this approach in a new `/LOCAL-TUNNEL.md` file.
 
-Requirements:
+### Requirements:
 
 - [ ] The service that replaces `localtunnel` should not require sign up or an account.
 - [ ] The service must be safe
