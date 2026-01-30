@@ -96,6 +96,7 @@ export function appendOutput(chunk: string) {
  */
 export function clearOutput() {
   serverState.outputBuffer = "";
+  broadcastOutputUpdate("");
 }
 
 /**
@@ -1193,8 +1194,8 @@ function getDashboardHtml(data: DashboardData): string {
         if (response.ok) {
           const data = await response.json();
           const output = document.getElementById('verbose-output');
-          if (output && data.output) {
-            output.textContent = data.output;
+          if (output) {
+            output.textContent = data.output ?? '';
             // Auto-scroll to bottom
             output.scrollTop = output.scrollHeight;
           }
@@ -1425,6 +1426,11 @@ function getDashboardHtml(data: DashboardData): string {
 
       const output = document.getElementById('verbose-output');
       if (output) {
+        // Empty chunk signals a reset (from clearOutput)
+        if (chunk === '') {
+          output.textContent = '';
+          return;
+        }
         output.textContent += chunk;
         // Auto-scroll to bottom
         output.scrollTop = output.scrollHeight;
@@ -1516,8 +1522,10 @@ function getDashboardHtml(data: DashboardData): string {
       // Cache iterations for ETA calculation
       if (data.iterations && data.iterations.length > 0) {
         cachedIterations = data.iterations;
-        updateEta();
+      } else {
+        cachedIterations = [];
       }
+      updateEta();
 
       // Update cost
       const costValue = document.querySelector('.cost-value');
@@ -1539,8 +1547,10 @@ function getDashboardHtml(data: DashboardData): string {
 
       // Update progress bar
       const progressFill = document.querySelector('.tasks-progress-fill');
-      if (progressFill && data.totalCount > 0) {
-        const percentage = (data.completedCount / data.totalCount) * 100;
+      if (progressFill) {
+        const percentage = data.totalCount > 0
+          ? (data.completedCount / data.totalCount) * 100
+          : 0;
         progressFill.style.width = percentage + '%';
       }
 
