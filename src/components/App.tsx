@@ -28,7 +28,7 @@ import {
   saveCheckpoint,
   saveSession,
 } from "../lib/session.js";
-import { resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
+import { formatCost, resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
 import type {
   AppPhase,
   CliOptions,
@@ -412,6 +412,19 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
       // Reset retry count on success
       setRetryCount(0);
+
+      // Check cost limit before starting next iteration
+      const sessionCost = updatedSession.totalCostUsd ?? 0;
+      const maxCostPerSession = config.maxCostPerSession;
+
+      if (maxCostPerSession !== undefined && sessionCost >= maxCostPerSession) {
+        setError(
+          `Session cost limit reached: ${formatCost(sessionCost)} / ${formatCost(maxCostPerSession)}. ` +
+            `Stopping after iteration ${result.iteration} of ${totalIterations}.`,
+        );
+        setPhase("summary");
+        return;
+      }
 
       // Move to next iteration
       const nextIteration = result.iteration + 1;

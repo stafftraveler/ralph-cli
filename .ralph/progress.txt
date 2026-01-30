@@ -178,3 +178,36 @@ Notes:
 - Publishes to GitHub Package Registry (@stafftraveler scope)
 - All 93 tests pass, ensuring quality before any release
 - Next: Implement cost limit enforcement features
+
+## Iteration 8: Implement pre-iteration cost limit check
+
+Task: PRD Task 3.1 - Implement pre-iteration cost limit check
+
+Decisions:
+- Added cost limit check in handleIterationComplete callback in App.tsx
+- Check happens AFTER a successful iteration and BEFORE starting the next one
+- Positioned after retry count reset (line 414) and before iteration increment (line 429)
+- Uses existing config.maxCostPerSession configuration value
+- Gracefully stops execution by transitioning to "summary" phase
+- Provides clear error message with formatted costs showing limit exceeded
+
+Files changed:
+- src/components/App.tsx: Added cost limit enforcement in handleIterationComplete
+  - Imported formatCost from utils.js
+  - Added check comparing updatedSession.totalCostUsd against config.maxCostPerSession
+  - If limit exceeded, sets error message and transitions to summary phase
+  - Error message format: "Session cost limit reached: $X.XX / $Y.YY. Stopping after iteration N of M."
+
+Implementation details:
+- Check location: Between line 414 (retry count reset) and line 429 (next iteration start)
+- Uses optional chaining for updatedSession.totalCostUsd with fallback to 0
+- Only enforces limit if maxCostPerSession is defined (undefined means no limit)
+- Uses formatCost utility for consistent cost display in error messages
+- Sets phase to "summary" to ensure graceful shutdown with proper cleanup
+
+Notes:
+- All 93 tests pass
+- Quality checks pass: format, lint, type check
+- Cost enforcement prevents starting new iterations when limit reached
+- Complements existing cost warning display at 80% threshold in IterationRunner
+- Next: Add cost warning threshold display in UI (Task 3.2)
