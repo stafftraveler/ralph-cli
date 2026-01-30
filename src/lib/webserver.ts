@@ -40,6 +40,7 @@ interface WebServerState {
   ralphDir: string;
   outputBuffer: string;
   currentIterationStartedAt: string | null;
+  onIterationsChange?: (newTotal: number) => void;
 }
 
 let serverState: WebServerState = {
@@ -74,6 +75,13 @@ export function updateServerState(state: Partial<WebServerState>) {
   serverState = { ...serverState, ...state };
   // Broadcast update to all connected WebSocket clients
   broadcastUpdate();
+}
+
+/**
+ * Set the callback for when iterations are adjusted from the dashboard
+ */
+export function setIterationsChangeHandler(handler: (newTotal: number) => void) {
+  serverState.onIterationsChange = handler;
 }
 
 /**
@@ -128,6 +136,24 @@ function broadcastOutputUpdate(chunk: string) {
   const message = JSON.stringify({
     type: "output",
     data: chunk,
+  });
+
+  for (const client of wsClients) {
+    if (client.readyState === 1) {
+      // WebSocket.OPEN
+      client.send(message);
+    }
+  }
+}
+
+/**
+ * Broadcast completed message to all connected WebSocket clients
+ */
+function broadcastCompleted() {
+  if (wsClients.size === 0) return;
+
+  const message = JSON.stringify({
+    type: "completed",
   });
 
   for (const client of wsClients) {
@@ -348,6 +374,10 @@ function getDashboardHtml(data: DashboardData): string {
       background: #2196f3;
     }
 
+    .connection-dot.completed {
+      background: #4caf50;
+    }
+
     @keyframes pulse {
       0%, 100% {
         opacity: 1;
@@ -364,9 +394,56 @@ function getDashboardHtml(data: DashboardData): string {
     .progress-label {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       margin-bottom: 8px;
       font-size: 13px;
       color: #666666;
+    }
+
+    .iterations-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .iterations-value {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-weight: 500;
+      color: #000000;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .iteration-adjust-btn {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: #000000;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .iteration-adjust-btn:hover {
+      opacity: 0.8;
+    }
+
+    .iteration-adjust-btn:active {
+      opacity: 0.6;
+      transform: scale(0.95);
+    }
+
+    .iteration-adjust-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
     }
 
     .progress-bar {
@@ -415,6 +492,9 @@ function getDashboardHtml(data: DashboardData): string {
       font-size: 14px;
       color: #000000;
       font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .elapsed-time {
@@ -874,6 +954,15 @@ function getDashboardHtml(data: DashboardData): string {
         color: #999999;
       }
 
+      .iterations-value {
+        color: #ffffff;
+      }
+
+      .iteration-adjust-btn {
+        background: #ffffff;
+        color: #000000;
+      }
+
       .progress-bar {
         background: #333333;
       }
@@ -1106,6 +1195,7 @@ function getDashboardHtml(data: DashboardData): string {
     const MAX_RECONNECT_DELAY = 30000; // 30 seconds max
     const BASE_RECONNECT_DELAY = 1000; // 1 second base
     let useFallbackPolling = false;
+    let sessionCompleted = false;
 
     // Load verbose mode preference from localStorage
     function loadVerbosePreference() {
@@ -1231,6 +1321,9 @@ function getDashboardHtml(data: DashboardData): string {
               appendVerboseOutput(message.data);
             } else if (message.type === 'tasks') {
               updateTasks(message.data);
+            } else if (message.type === 'completed') {
+              sessionCompleted = true;
+              updateConnectionStatus('completed');
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -1243,6 +1336,13 @@ function getDashboardHtml(data: DashboardData): string {
 
         ws.onclose = function() {
           wsConnected = false;
+
+          // Don't reconnect if session is completed
+          if (sessionCompleted) {
+            updateConnectionStatus('completed');
+            return;
+          }
+
           updateConnectionStatus('disconnected');
 
           // Attempt to reconnect with exponential backoff
@@ -1281,6 +1381,12 @@ function getDashboardHtml(data: DashboardData): string {
 
     // Fall back to polling if WebSocket fails
     function fallbackToPolling() {
+      // Don't start polling if session is completed
+      if (sessionCompleted) {
+        updateConnectionStatus('completed');
+        return;
+      }
+
       useFallbackPolling = true;
       updateConnectionStatus('polling');
 
@@ -1395,7 +1501,7 @@ function getDashboardHtml(data: DashboardData): string {
       if (!dot || !text) return;
 
       // Remove all status classes
-      dot.classList.remove('connected', 'disconnected', 'reconnecting', 'polling');
+      dot.classList.remove('connected', 'disconnected', 'reconnecting', 'polling', 'completed');
 
       // Add appropriate class and update text
       switch (status) {
@@ -1414,6 +1520,10 @@ function getDashboardHtml(data: DashboardData): string {
         case 'polling':
           dot.classList.add('polling');
           text.textContent = 'HTTP Polling';
+          break;
+        case 'completed':
+          dot.classList.add('completed');
+          text.textContent = 'Completed';
           break;
         default:
           text.textContent = 'Unknown';
@@ -1491,10 +1601,8 @@ function getDashboardHtml(data: DashboardData): string {
       // Update progress
       const progressPercent = (data.currentIteration / data.totalIterations) * 100;
       const progressFill = document.querySelector('.progress-fill');
-      const progressLabel = document.querySelector('.progress-label span:last-child');
       if (progressFill) {
         progressFill.style.width = progressPercent + '%';
-        progressFill.textContent = progressPercent.toFixed(0) + '%';
 
         // Add pulsing animation when iteration is actively running
         if (data.currentIterationStartedAt) {
@@ -1503,8 +1611,11 @@ function getDashboardHtml(data: DashboardData): string {
           progressFill.classList.remove('active');
         }
       }
-      if (progressLabel) {
-        progressLabel.textContent = 'Iteration ' + data.currentIteration + ' of ' + data.totalIterations;
+
+      // Update iterations value
+      const iterationsValue = document.getElementById('iterations-value');
+      if (iterationsValue) {
+        iterationsValue.textContent = data.totalIterations;
       }
 
       // Update status
@@ -1591,6 +1702,17 @@ function getDashboardHtml(data: DashboardData): string {
         return;
       }
 
+      // Track which iterations are currently expanded before updating DOM
+      const expandedIterations = new Set();
+      const existingDetails = iterationsList.querySelectorAll('.iteration-details.expanded');
+      for (const detail of existingDetails) {
+        const id = detail.id; // e.g., "iteration-details-1"
+        const match = id.match(/iteration-details-(d+)/);
+        if (match) {
+          expandedIterations.add(parseInt(match[1], 10));
+        }
+      }
+
       let html = '';
       for (const iter of iterations) {
         const statusClass = iter.success ? 'success' : 'failure';
@@ -1599,6 +1721,10 @@ function getDashboardHtml(data: DashboardData): string {
         const cost = iter.cost ? iter.cost.toFixed(4) : '0.0000';
         const inputTokens = iter.inputTokens ? iter.inputTokens.toLocaleString() : 'N/A';
         const outputTokens = iter.outputTokens ? iter.outputTokens.toLocaleString() : 'N/A';
+
+        // Check if this iteration was previously expanded
+        const isExpanded = expandedIterations.has(iter.number);
+        const expandedClass = isExpanded ? ' expanded' : '';
 
         html += '<div class="iteration-item" onclick="toggleIterationDetails(' + iter.number + ')">';
         html += '<div class="iteration-summary">';
@@ -1610,8 +1736,8 @@ function getDashboardHtml(data: DashboardData): string {
         html += '<span class="iteration-duration">' + duration + '</span>';
         html += '<span class="iteration-cost">$' + cost + '</span>';
         html += '</div>';
-        html += '<div class="iteration-details" id="iteration-details-' + iter.number + '">';
-        
+        html += '<div class="iteration-details' + expandedClass + '" id="iteration-details-' + iter.number + '">';
+
         if (iter.inputTokens || iter.outputTokens) {
           html += '<div class="iteration-details-row">';
           html += '<span class="iteration-details-label">Input Tokens:</span>';
@@ -1622,14 +1748,14 @@ function getDashboardHtml(data: DashboardData): string {
           html += '<span class="iteration-details-value">' + outputTokens + '</span>';
           html += '</div>';
         }
-        
+
         if (iter.status) {
           html += '<div class="iteration-details-row">';
           html += '<span class="iteration-details-label">Status:</span>';
           html += '<span class="iteration-details-value">' + escapeHtml(iter.status) + '</span>';
           html += '</div>';
         }
-        
+
         html += '</div>';
         html += '</div>';
       }
@@ -1642,6 +1768,53 @@ function getDashboardHtml(data: DashboardData): string {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    // Iteration adjustment functions
+    async function incrementIterations() {
+      try {
+        const response = await fetch('/api/iterations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ action: 'increment' })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // Update will come through WebSocket, but update immediately for responsiveness
+          const iterationsValue = document.getElementById('iterations-value');
+          if (iterationsValue) {
+            iterationsValue.textContent = result.totalIterations;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to increment iterations:', err);
+      }
+    }
+
+    async function decrementIterations() {
+      try {
+        const response = await fetch('/api/iterations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ action: 'decrement' })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // Update will come through WebSocket, but update immediately for responsiveness
+          const iterationsValue = document.getElementById('iterations-value');
+          if (iterationsValue) {
+            iterationsValue.textContent = result.totalIterations;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to decrement iterations:', err);
+      }
     }
 
     // Add task form handling
@@ -1750,12 +1923,15 @@ function getDashboardHtml(data: DashboardData): string {
     <div class="progress-section">
       <div class="progress-label">
         <span>Progress</span>
-        <span>Iteration ${data.currentIteration} of ${data.totalIterations}</span>
+        <div class="iterations-control">
+          <span>Iteration ${data.currentIteration} of</span>
+          <button class="iteration-adjust-btn" onclick="decrementIterations()" title="Decrease iterations">−</button>
+          <span class="iterations-value" id="iterations-value">${data.totalIterations}</span>
+          <button class="iteration-adjust-btn" onclick="incrementIterations()" title="Increase iterations">+</button>
+        </div>
       </div>
       <div class="progress-bar">
-        <div class="progress-fill" style="width: ${progressPercent}%">
-          ${progressPercent.toFixed(0)}%
-        </div>
+        <div class="progress-fill" style="width: ${progressPercent}%"></div>
       </div>
     </div>
 
@@ -1899,6 +2075,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
       handleAddTask(req, res);
       return;
     }
+    if (req.url === "/api/iterations") {
+      handleAdjustIterations(req, res);
+      return;
+    }
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not Found" }));
     return;
@@ -2012,6 +2192,52 @@ async function handleAddTask(req: IncomingMessage, res: ServerResponse) {
 }
 
 /**
+ * Handle POST /api/iterations - Adjust total iterations
+ */
+async function handleAdjustIterations(req: IncomingMessage, res: ServerResponse) {
+  try {
+    const body = (await parseJsonBody(req)) as { action?: string };
+
+    if (!body.action || typeof body.action !== "string") {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Action is required (increment or decrement)" }));
+      return;
+    }
+
+    const action = body.action.toLowerCase();
+    if (action !== "increment" && action !== "decrement") {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Action must be increment or decrement" }));
+      return;
+    }
+
+    let newTotal = serverState.totalIterations;
+    if (action === "increment") {
+      newTotal += 1;
+    } else if (action === "decrement") {
+      // Don't allow going below current iteration
+      newTotal = Math.max(serverState.totalIterations - 1, serverState.currentIteration);
+    }
+
+    // Update server state
+    serverState.totalIterations = newTotal;
+
+    // Call the handler if set (to update App.tsx state)
+    serverState.onIterationsChange?.(newTotal);
+
+    // Broadcast update to all clients
+    broadcastUpdate();
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true, totalIterations: newTotal }));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: message }));
+  }
+}
+
+/**
  * Start the web server on the given port
  *
  * @param port - Port to listen on
@@ -2087,6 +2313,12 @@ export async function startWebServer(port: number) {
  * Stop the web server
  */
 export async function stopWebServer(server: ReturnType<typeof createServer>) {
+  // Broadcast completed message before closing connections
+  broadcastCompleted();
+
+  // Give clients time to receive the completed message before closing
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
   // Close all WebSocket connections
   for (const client of wsClients) {
     client.close();

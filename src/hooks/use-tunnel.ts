@@ -23,6 +23,12 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 2000;
 
 /**
+ * Minimum time a tunnel must stay alive before we attempt reconnection on close.
+ * If a tunnel dies within this period, we assume it's unstable and stop retrying.
+ */
+const CONNECTION_COOLDOWN = 5000;
+
+/**
  * State returned by useTunnel hook
  */
 export interface UseTunnelState {
@@ -108,6 +114,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scheduleReconnectRef = useRef<(() => void) | null>(null);
+  // Track tunnel instance to prevent stale event handlers from affecting new tunnels
+  const tunnelInstanceIdRef = useRef(0);
 
   /**
    * Clear all timers
@@ -148,6 +156,10 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
       closeTunnel();
       clearTimers();
 
+      // Increment instance ID to invalidate any pending events from old tunnels
+      tunnelInstanceIdRef.current += 1;
+      const currentInstanceId = tunnelInstanceIdRef.current;
+
       if (isReconnect) {
         setIsReconnecting(true);
       } else {
@@ -162,7 +174,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
           fetchTunnelPassword(),
         ]);
 
-        if (!isMountedRef.current) {
+        // Check if this tunnel instance is still current
+        if (!isMountedRef.current || currentInstanceId !== tunnelInstanceIdRef.current) {
           tunnel.close();
           return false;
         }
@@ -174,32 +187,66 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
         setIsReconnecting(false);
         setReconnectAttempts(0);
 
-        // Handle tunnel close event
+        // Track when the tunnel was established to detect rapid failures
+        const connectionTime = Date.now();
+
+        // Handle tunnel close event - only act if this is still the current tunnel
         tunnel.on("close", () => {
-          if (isMountedRef.current) {
+          if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
             setUrl(null);
             setPassword(null);
-            // Don't set error here - we'll try to reconnect first
+
+            // Check if tunnel died too quickly (within cooldown period)
+            const timeSinceConnection = Date.now() - connectionTime;
+            if (timeSinceConnection < CONNECTION_COOLDOWN) {
+              // Tunnel is unstable - don't retry, show error
+              setError("Tunnel connection unstable - died immediately after connecting");
+              setIsReconnecting(false);
+              return;
+            }
+
+            // Tunnel lived long enough - try to reconnect
             scheduleReconnectRef.current?.();
           }
         });
 
-        // Handle tunnel error event
+        // Handle tunnel error event - only act if this is still the current tunnel
         tunnel.on("error", (_err: Error) => {
-          if (isMountedRef.current) {
-            // Don't set error here - we'll try to reconnect first
+          if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
+            // Check if tunnel died too quickly (within cooldown period)
+            const timeSinceConnection = Date.now() - connectionTime;
+            if (timeSinceConnection < CONNECTION_COOLDOWN) {
+              // Tunnel is unstable - don't retry, show error
+              setUrl(null);
+              setPassword(null);
+              setError("Tunnel connection unstable - error immediately after connecting");
+              setIsReconnecting(false);
+              return;
+            }
+
+            // Tunnel lived long enough - try to reconnect
             scheduleReconnectRef.current?.();
           }
         });
 
         // Start health check interval
         healthCheckIntervalRef.current = setInterval(async () => {
-          if (!isMountedRef.current || !tunnelRef.current) return;
+          // Check both mounted state and instance ID
+          if (
+            !isMountedRef.current ||
+            !tunnelRef.current ||
+            currentInstanceId !== tunnelInstanceIdRef.current
+          )
+            return;
 
           const currentUrl = tunnelRef.current.url;
           const isHealthy = await checkTunnelHealth(currentUrl);
 
-          if (!isHealthy && isMountedRef.current) {
+          if (
+            !isHealthy &&
+            isMountedRef.current &&
+            currentInstanceId === tunnelInstanceIdRef.current
+          ) {
             // Tunnel is dead, trigger reconnection
             scheduleReconnectRef.current?.();
           }
@@ -207,7 +254,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
         return true;
       } catch (err) {
-        if (isMountedRef.current) {
+        // Check if this instance is still current before handling error
+        if (isMountedRef.current && currentInstanceId === tunnelInstanceIdRef.current) {
           const message = err instanceof Error ? err.message : String(err);
 
           if (isReconnect) {
@@ -278,6 +326,8 @@ export function useTunnel(port: number, enabled = true): UseTunnelState {
 
     return () => {
       isMountedRef.current = false;
+      // Increment instance ID to invalidate any pending async events from old tunnel
+      tunnelInstanceIdRef.current += 1;
       clearTimers();
       closeTunnel();
     };

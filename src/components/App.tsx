@@ -31,7 +31,12 @@ import {
   saveSession,
 } from "../lib/session.js";
 import { formatCost, resetPrdAndProgress, writeIterationLog } from "../lib/utils.js";
-import { startWebServer, stopWebServer, updateServerState } from "../lib/webserver.js";
+import {
+  setIterationsChangeHandler,
+  startWebServer,
+  stopWebServer,
+  updateServerState,
+} from "../lib/webserver.js";
 import type {
   AppPhase,
   CliOptions,
@@ -96,7 +101,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const isInterruptedRef = useRef(false);
   const hasRunDonePluginsRef = useRef(false);
 
-  // Web server and ngrok state
+  // Web server and localtunnes state
   const serverRef = useRef<Server | null>(null);
   const [currentStatus, setCurrentStatus] = useState("Starting...");
   const WEB_SERVER_PORT = 3737;
@@ -176,6 +181,11 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   // Start/stop web server based on phase
   useEffect(() => {
     if (phase === "running") {
+      // Set up handler for dashboard iteration adjustments
+      setIterationsChangeHandler((newTotal) => {
+        setTotalIterations(newTotal);
+      });
+
       // Start web server when entering running phase
       startWebServer(WEB_SERVER_PORT)
         .then((server) => {
