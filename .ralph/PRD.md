@@ -88,7 +88,7 @@ Moved to phase 7
 [x] Add connection state handling (connecting, connected, disconnected, reconnecting)
 [x] Implement automatic reconnection with exponential backoff
 [x] Fall back to polling if WebSocket connection fails
-[ ] Add pulsing/animated indicator when iteration is actively running
+[x] Add pulsing/animated indicator when iteration is actively running
 [x] Show elapsed time for current iteration
 [ ] Display estimated time remaining based on average iteration duration
 [x] Add connection status indicator (connected/reconnecting)
