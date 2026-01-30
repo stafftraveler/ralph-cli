@@ -15,6 +15,7 @@ The mobile dashboard allows users to monitor Ralph sessions from their phone whe
 ## Current State
 
 The dashboard (`src/lib/webserver.ts`) currently provides:
+
 - Progress bar showing iteration progress
 - Current status text
 - Total cost display
@@ -48,7 +49,7 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 [x] Create a "Tasks" section showing all PRD tasks with their status
 [x] Display completed tasks with strikethrough or checkmark styling
 [x] Show task counts (e.g., "3 of 7 tasks complete")
-[ ] Add visual progress indicator for task completion percentage
+[x] Add visual progress indicator for task completion percentage
 
 ### Phase 3: Verbose Mode
 
@@ -106,19 +107,23 @@ The dashboard (`src/lib/webserver.ts`) currently provides:
 ## Technical Notes
 
 ### File Structure
+
 - Main implementation: `src/lib/webserver.ts`
 - PRD parsing: `src/lib/prd.ts` (may need to export task parsing for API)
 
 ### API Endpoints (Current)
+
 - `GET /` - HTML dashboard
 - `GET /api/status` - JSON status data
 - `POST /api/task` - Add task to PRD
 
 ### API Endpoints (New)
+
 - `GET /api/tasks` - Return parsed PRD tasks with completion status
 - `GET /api/output` - Return recent Claude output (for verbose mode)
 
 ### Dependencies
+
 - `ws` package for WebSocket server (Phase 8)
 
 ---

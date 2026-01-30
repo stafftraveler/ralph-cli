@@ -342,6 +342,21 @@ function getDashboardHtml(data: DashboardData): string {
       color: #666666;
     }
 
+    .tasks-progress-bar {
+      height: 4px;
+      background: #e5e5e5;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .tasks-progress-fill {
+      height: 100%;
+      background: #000000;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
     .tasks-list {
       max-height: 400px;
       overflow-y: auto;
@@ -477,6 +492,13 @@ function getDashboardHtml(data: DashboardData): string {
       const tasksCount = document.querySelector('.tasks-count');
       if (tasksCount) {
         tasksCount.textContent = data.completedCount + ' of ' + data.totalCount + ' complete';
+      }
+
+      // Update progress bar
+      const progressFill = document.querySelector('.tasks-progress-fill');
+      if (progressFill && data.totalCount > 0) {
+        const percentage = (data.completedCount / data.totalCount) * 100;
+        progressFill.style.width = percentage + '%';
       }
 
       const tasksList = document.querySelector('.tasks-list');
@@ -626,6 +648,9 @@ function getDashboardHtml(data: DashboardData): string {
       <div class="tasks-header">
         <div class="tasks-title">Tasks</div>
         <div class="tasks-count">Loading...</div>
+      </div>
+      <div class="tasks-progress-bar">
+        <div class="tasks-progress-fill"></div>
       </div>
       <div class="tasks-list">
         <div style="text-align: center; color: #999999; padding: 16px;">Loading tasks...</div>

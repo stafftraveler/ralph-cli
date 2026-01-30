@@ -55,3 +55,30 @@ Notes:
 - Type checking passes
 - Auto-refreshes every 2s alongside status updates
 - Next: Display completed tasks with strikethrough (already done!) and task counts (already done!)
+
+## Iteration 3
+
+Task: Add visual progress indicator for task completion percentage
+
+Changes:
+- Added tasks-progress-bar CSS class with 4px height, subtle gray background
+- Added tasks-progress-fill CSS class with black fill and smooth transition
+- Inserted progress bar HTML between tasks header and tasks list
+- Updated updateTasks() JS function to calculate and update progress bar width
+- Progress bar animates smoothly on updates (0.3s transition)
+
+Design decisions:
+- Used minimal 4px height to keep it subtle and non-intrusive
+- Placed between header and list for natural visual flow
+- Matches main iteration progress bar style but smaller/more subtle
+- Black fill on light gray background consistent with existing design
+- Smooth CSS transition for visual polish
+
+Files changed:
+- src/lib/webserver.ts (added progress bar HTML, CSS, and JS update logic)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Phase 2 (Task Display) now complete!
+- Progress bar updates every 2s with task refresh cycle
