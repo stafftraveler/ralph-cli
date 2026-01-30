@@ -97,6 +97,23 @@ function shortenPath(filePath: string): string {
 }
 
 /**
+ * Extracts a description field from tool input if available
+ */
+function extractDescription(toolInput: unknown): string | undefined {
+  if (typeof toolInput !== "object" || toolInput === null) {
+    return undefined;
+  }
+
+  const input = toolInput as Record<string, unknown>;
+
+  if (typeof input.description === "string") {
+    return input.description;
+  }
+
+  return undefined;
+}
+
+/**
  * Formats a tool use event into a human-friendly status message
  *
  * @param toolName - The raw tool name from the SDK
@@ -104,6 +121,14 @@ function shortenPath(filePath: string): string {
  * @returns Human-friendly status string
  */
 function formatToolStatus(toolName: string, toolInput?: unknown): string {
+  // For Shell/Bash tools, prefer the description field if available
+  if (toolName === "Shell" || toolName === "Bash") {
+    const desc = extractDescription(toolInput);
+    if (desc) {
+      return desc;
+    }
+  }
+
   const description = TOOL_DESCRIPTIONS[toolName] ?? `Using tool: ${toolName}`;
 
   const filePath = extractFilePath(toolInput);
@@ -159,6 +184,44 @@ export interface ClaudeRunResult {
  */
 function isPrdComplete(output: string): boolean {
   return output.includes("<promise>COMPLETE</promise>");
+}
+
+/**
+ * Calculate cost in USD based on token usage and pricing
+ *
+ * Claude Opus 4.5 pricing (per million tokens):
+ * - Base Input: $5
+ * - Output: $25
+ * - Cache writes (5m): $6.25
+ * - Cache reads: $0.50
+ *
+ * Note: This is a fallback when SDK doesn't return total_cost_usd
+ */
+function calculateCost(usage: {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens?: number;
+  cache_creation_input_tokens?: number;
+}): number {
+  const PRICE_PER_MILLION = {
+    baseInput: 5.0,
+    output: 25.0,
+    cacheWrite: 6.25, // 5-minute cache
+    cacheRead: 0.5,
+  };
+
+  // Calculate base input tokens (total input minus cached tokens)
+  const cacheReadTokens = usage.cache_read_input_tokens ?? 0;
+  const cacheWriteTokens = usage.cache_creation_input_tokens ?? 0;
+  const baseInputTokens = usage.input_tokens - cacheReadTokens - cacheWriteTokens;
+
+  // Calculate costs
+  const baseInputCost = (baseInputTokens / 1_000_000) * PRICE_PER_MILLION.baseInput;
+  const outputCost = (usage.output_tokens / 1_000_000) * PRICE_PER_MILLION.output;
+  const cacheReadCost = (cacheReadTokens / 1_000_000) * PRICE_PER_MILLION.cacheRead;
+  const cacheWriteCost = (cacheWriteTokens / 1_000_000) * PRICE_PER_MILLION.cacheWrite;
+
+  return baseInputCost + outputCost + cacheReadCost + cacheWriteCost;
 }
 
 /**
@@ -278,10 +341,23 @@ ${options.prompt}
       // Capture final result with usage
       if (message.type === "result") {
         if (message.usage) {
+          // Use SDK-provided cost if available, otherwise calculate it ourselves
+          let totalCostUsd = message.usage.total_cost_usd ?? 0;
+
+          // Fallback: calculate cost if SDK returns 0
+          if (totalCostUsd === 0 && message.usage.input_tokens && message.usage.input_tokens > 0) {
+            totalCostUsd = calculateCost({
+              input_tokens: message.usage.input_tokens,
+              output_tokens: message.usage.output_tokens ?? 0,
+              cache_read_input_tokens: message.usage.cache_read_input_tokens,
+              cache_creation_input_tokens: message.usage.cache_creation_input_tokens,
+            });
+          }
+
           usage = {
             inputTokens: message.usage.input_tokens ?? 0,
             outputTokens: message.usage.output_tokens ?? 0,
-            totalCostUsd: message.usage.total_cost_usd ?? 0,
+            totalCostUsd,
             cacheReadInputTokens: message.usage.cache_read_input_tokens,
             cacheCreationInputTokens: message.usage.cache_creation_input_tokens,
           };
