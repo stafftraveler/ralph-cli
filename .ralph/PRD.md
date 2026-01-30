@@ -2,23 +2,17 @@
 
 ## Overview
 
-Refactor the codebase.
+Clean-up the codebase.
 
-## Working directory
+## Working file
 
-`src/`
+`src/lib/webserver.ts`
 
-## Constraints
+## Scope
 
-- Preserve existing functionality
-- Maintain backward compatibility
+The dashboard
 
 ## Tasks
 
-✅ Deduplicate code. Move duplicated code in separate component, hooks, and util functions, in their own files. Update the consumers.
-  - Iteration 9: Created debugLog utility to replace 20+ duplicate debug logging patterns
-  - Iteration 2: Consolidated formatDuration function
-
-✅ Extract logic from components. Move the logic into separate hooks or util functions, in separate files. Update the consumers.
-  - Iteration 10: Extracted SummaryView logic into useSummaryData and useAutoExit hooks
-  - Iteration 11: Extracted SessionPrompt session checking into useSessionCheck hook
+[ ] Scan for code smells: identify unused exports, dead code, inconsistent patterns, and duplicate code. Document the issues you discover as tasks in this PRD.md file. Fix ONE issue per iteration.
+[ ] Organize code better. Extract to separate files - Move HTML, CSS, and JS to separate files in src/dashboard/. Use a simple build step - Use esbuild (already a dev dependency pattern in Node projects) to inline them at build time.
