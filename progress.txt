@@ -641,3 +641,67 @@ Pull Request: https://github.com/stafftraveler/ralph-cli/pull/3
 - Verbose mode provides CLI-equivalent visibility
 - Dark mode reduces eye strain
 - Touch-optimized for mobile devices
+
+## Iteration 18
+
+Task: Add WebSocket server alongside HTTP server (Phase 7 - First 4 tasks)
+
+Changes:
+- Installed ws package and @types/ws for WebSocket support
+- Added WebSocketServer to webserver.ts imports
+- Created WebSocket server attached to HTTP server in startWebServer()
+- Added wsClients Set to track connected clients
+- Implemented broadcastUpdate() to push status updates to all connected clients
+- Implemented broadcastOutputUpdate() to stream output chunks in real-time
+- Implemented broadcastTaskUpdate() to push task changes to clients
+- Added WebSocket connection handler with initial state sync
+- Added proper cleanup in stopWebServer() to close WS connections
+- Client-side: Added WebSocket connection with auto-reconnect logic
+- Client-side: Exponential backoff for reconnection (1s -> 2s -> 4s -> 30s max)
+- Client-side: Falls back to polling after 3 failed reconnect attempts
+- Client-side: Handles status, output, and task message types
+- Client-side: Connection state tracking (connected/disconnected/reconnecting/polling)
+- Replaced polling-based refresh with WebSocket push notifications
+- Maintains fallback to HTTP polling if WebSocket unavailable
+
+Design decisions:
+- WebSocket server shares same port as HTTP server (no separate port needed)
+- Sends initial state immediately on client connection (status + tasks)
+- Real-time output streaming for verbose mode (no polling lag)
+- Exponential backoff prevents server hammering during outages
+- Automatic fallback ensures dashboard works even without WS support
+- All broadcasts check client.readyState === 1 (OPEN) before sending
+- Task updates broadcast when PRD modified via API
+
+Architecture:
+- HTTP server handles traditional request/response (GET/POST routes)
+- WebSocket server handles real-time push notifications
+- Server broadcasts on state changes (updateServerState, appendOutput, addTask)
+- Client receives messages and updates UI in real-time
+- Fallback polling preserves existing functionality if WS fails
+
+Connection flow:
+1. Client connects via WebSocket on page load
+2. Server sends initial status + tasks data
+3. Server broadcasts updates as they occur
+4. Client reconnects with backoff if disconnected
+5. Falls back to polling after 3 failed attempts
+
+Files changed:
+- package.json (added ws and @types/ws dependencies)
+- src/lib/webserver.ts (WebSocket server, broadcast functions, client handling)
+
+Notes:
+- All tests pass (86 tests)
+- Type checking passes
+- Linting passes
+- Phase 7 tasks 1-4 complete (40% of phase)
+- Tasks completed:
+  [x] Add WebSocket server alongside HTTP server
+  [x] Broadcast status updates to connected clients in real-time
+  [x] Replace polling with WebSocket connection on the client
+  [x] Add connection state handling (connecting/connected/disconnected/reconnecting)
+  [x] Implement automatic reconnection with exponential backoff
+  [x] Fall back to polling if WebSocket connection fails
+- Remaining Phase 7 tasks: UI indicators (pulsing, elapsed time, ETA, connection status)
+

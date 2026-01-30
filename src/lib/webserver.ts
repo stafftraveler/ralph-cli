@@ -2,6 +2,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import { join } from "node:path";
+import { WebSocketServer } from "ws";
+import type { WebSocket } from "ws";
 import type { SessionState } from "../types.js";
 import { parsePrdTasks } from "./prd.js";
 
@@ -45,6 +47,16 @@ let serverState: WebServerState = {
 };
 
 /**
+ * WebSocket server instance
+ */
+let wss: WebSocketServer | null = null;
+
+/**
+ * Set of connected WebSocket clients
+ */
+const wsClients = new Set<WebSocket>();
+
+/**
  * Maximum size of output buffer in characters (100KB)
  */
 const MAX_OUTPUT_BUFFER_SIZE = 100000;
@@ -54,6 +66,8 @@ const MAX_OUTPUT_BUFFER_SIZE = 100000;
  */
 export function updateServerState(state: Partial<WebServerState>) {
   serverState = { ...serverState, ...state };
+  // Broadcast update to all connected WebSocket clients
+  broadcastUpdate();
 }
 
 /**
@@ -66,6 +80,9 @@ export function appendOutput(chunk: string) {
   if (serverState.outputBuffer.length > MAX_OUTPUT_BUFFER_SIZE) {
     serverState.outputBuffer = serverState.outputBuffer.slice(-MAX_OUTPUT_BUFFER_SIZE);
   }
+
+  // Broadcast output update to WebSocket clients
+  broadcastOutputUpdate(chunk);
 }
 
 /**
@@ -73,6 +90,80 @@ export function appendOutput(chunk: string) {
  */
 export function clearOutput() {
   serverState.outputBuffer = "";
+}
+
+/**
+ * Broadcast status update to all connected WebSocket clients
+ */
+function broadcastUpdate() {
+  if (wsClients.size === 0) return;
+
+  const data = getDashboardData();
+  const message = JSON.stringify({
+    type: "status",
+    data,
+  });
+
+  for (const client of wsClients) {
+    if (client.readyState === 1) {
+      // WebSocket.OPEN
+      client.send(message);
+    }
+  }
+}
+
+/**
+ * Broadcast output chunk to all connected WebSocket clients
+ */
+function broadcastOutputUpdate(chunk: string) {
+  if (wsClients.size === 0) return;
+
+  const message = JSON.stringify({
+    type: "output",
+    data: chunk,
+  });
+
+  for (const client of wsClients) {
+    if (client.readyState === 1) {
+      // WebSocket.OPEN
+      client.send(message);
+    }
+  }
+}
+
+/**
+ * Broadcast task update to all connected WebSocket clients
+ */
+async function broadcastTaskUpdate() {
+  if (wsClients.size === 0) return;
+
+  try {
+    if (!serverState.ralphDir) return;
+
+    const prdPath = join(serverState.ralphDir, "PRD.md");
+    const tasks = await parsePrdTasks(prdPath);
+
+    const completedCount = tasks.filter((t) => t.completed).length;
+    const totalCount = tasks.length;
+
+    const message = JSON.stringify({
+      type: "tasks",
+      data: {
+        tasks,
+        completedCount,
+        totalCount,
+      },
+    });
+
+    for (const client of wsClients) {
+      if (client.readyState === 1) {
+        // WebSocket.OPEN
+        client.send(message);
+      }
+    }
+  } catch (_err) {
+    // Silently fail
+  }
 }
 
 /**
@@ -806,6 +897,15 @@ function getDashboardHtml(data: DashboardData): string {
     // Track verbose mode state
     let verboseMode = false;
 
+    // WebSocket connection state
+    let ws = null;
+    let wsConnected = false;
+    let reconnectAttempt = 0;
+    let reconnectTimeout = null;
+    const MAX_RECONNECT_DELAY = 30000; // 30 seconds max
+    const BASE_RECONNECT_DELAY = 1000; // 1 second base
+    let useFallbackPolling = false;
+
     // Load verbose mode preference from localStorage
     function loadVerbosePreference() {
       try {
@@ -904,8 +1004,119 @@ function getDashboardHtml(data: DashboardData): string {
       }
     }
 
-    // Auto-refresh every 2 seconds
+    // Initialize WebSocket connection
+    function initWebSocket() {
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = protocol + '//' + window.location.host;
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = function() {
+          wsConnected = true;
+          reconnectAttempt = 0;
+          useFallbackPolling = false;
+          updateConnectionStatus('connected');
+        };
+
+        ws.onmessage = function(event) {
+          try {
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'status') {
+              updateDashboard(message.data);
+              updateRelativeTimestamps();
+            } else if (message.type === 'output') {
+              appendVerboseOutput(message.data);
+            } else if (message.type === 'tasks') {
+              updateTasks(message.data);
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onerror = function(err) {
+          console.error('WebSocket error:', err);
+        };
+
+        ws.onclose = function() {
+          wsConnected = false;
+          updateConnectionStatus('disconnected');
+
+          // Attempt to reconnect with exponential backoff
+          reconnectWebSocket();
+        };
+      } catch (err) {
+        console.error('Failed to create WebSocket:', err);
+        fallbackToPolling();
+      }
+    }
+
+    // Reconnect WebSocket with exponential backoff
+    function reconnectWebSocket() {
+      if (useFallbackPolling) return;
+
+      reconnectAttempt++;
+
+      // Calculate delay with exponential backoff
+      const delay = Math.min(
+        BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempt - 1),
+        MAX_RECONNECT_DELAY
+      );
+
+      updateConnectionStatus('reconnecting');
+
+      // After 3 failed attempts, fall back to polling
+      if (reconnectAttempt > 3) {
+        fallbackToPolling();
+        return;
+      }
+
+      reconnectTimeout = setTimeout(() => {
+        initWebSocket();
+      }, delay);
+    }
+
+    // Fall back to polling if WebSocket fails
+    function fallbackToPolling() {
+      useFallbackPolling = true;
+      updateConnectionStatus('polling');
+
+      // Start polling
+      setTimeout(refreshData, 2000);
+    }
+
+    // Update connection status indicator
+    function updateConnectionStatus(status) {
+      // Will be implemented when we add the UI indicator
+      console.log('Connection status:', status);
+    }
+
+    // Append output chunk to verbose display (for real-time streaming)
+    function appendVerboseOutput(chunk) {
+      if (!verboseMode) return;
+
+      const output = document.getElementById('verbose-output');
+      if (output) {
+        output.textContent += chunk;
+        // Auto-scroll to bottom
+        output.scrollTop = output.scrollHeight;
+      }
+    }
+
+    // Auto-refresh every 2 seconds (fallback when WebSocket disconnected)
     async function refreshData() {
+      // Only poll if we're using fallback polling
+      if (!useFallbackPolling) {
+        return;
+      }
+
+      // Skip refresh if user is typing
+      if (isTyping) {
+        setTimeout(refreshData, 2000);
+        return;
+      }
       // Skip refresh if user is typing
       if (isTyping) {
         setTimeout(refreshData, 2000);
@@ -913,35 +1124,34 @@ function getDashboardHtml(data: DashboardData): string {
       }
 
       try {
+        // Fetch status
         const response = await fetch('/api/status');
         if (response.ok) {
           const data = await response.json();
           // Update only the dynamic parts instead of reloading entire page
           updateDashboard(data);
         }
-      } catch (err) {
-        // Silently fail on error
-      }
 
-      // Also refresh tasks
-      try {
+        // Also refresh tasks
         const tasksResponse = await fetch('/api/tasks');
         if (tasksResponse.ok) {
           const tasksData = await tasksResponse.json();
           updateTasks(tasksData);
         }
+
+        // Refresh verbose output if visible
+        if (verboseMode) {
+          await fetchVerboseOutput();
+        }
+
+        // Update relative timestamps
+        updateRelativeTimestamps();
       } catch (err) {
         // Silently fail on error
+        console.error('Polling error:', err);
       }
 
-      // Refresh verbose output if visible
-      if (verboseMode) {
-        await fetchVerboseOutput();
-      }
-
-      // Update relative timestamps
-      updateRelativeTimestamps();
-
+      // Continue polling
       setTimeout(refreshData, 2000);
     }
 
@@ -1093,11 +1303,11 @@ function getDashboardHtml(data: DashboardData): string {
       }
     }
 
-    // Start auto-refresh and load initial data
+    // Start WebSocket connection and load initial data
     loadVerbosePreference();
     loadInitialTasks();
     updateRelativeTimestamps(); // Initial update
-    setTimeout(refreshData, 2000);
+    initWebSocket();
   </script>
 </head>
 <body>
@@ -1363,6 +1573,9 @@ async function handleAddTask(req: IncomingMessage, res: ServerResponse) {
 
     await addTaskToPrd(task);
 
+    // Broadcast task update to WebSocket clients
+    await broadcastTaskUpdate();
+
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ success: true, task }));
   } catch (err) {
@@ -1381,6 +1594,58 @@ async function handleAddTask(req: IncomingMessage, res: ServerResponse) {
 export async function startWebServer(port: number) {
   const server = createServer(handleRequest);
 
+  // Create WebSocket server attached to HTTP server
+  wss = new WebSocketServer({ server });
+
+  // Handle WebSocket connections
+  wss.on("connection", async (ws: WebSocket) => {
+    // Add client to set
+    wsClients.add(ws);
+
+    // Send initial state to newly connected client
+    const data = getDashboardData();
+    ws.send(
+      JSON.stringify({
+        type: "status",
+        data,
+      }),
+    );
+
+    // Send initial tasks data
+    try {
+      if (serverState.ralphDir) {
+        const prdPath = join(serverState.ralphDir, "PRD.md");
+        const tasks = await parsePrdTasks(prdPath);
+        const completedCount = tasks.filter((t) => t.completed).length;
+        const totalCount = tasks.length;
+
+        ws.send(
+          JSON.stringify({
+            type: "tasks",
+            data: {
+              tasks,
+              completedCount,
+              totalCount,
+            },
+          }),
+        );
+      }
+    } catch (_err) {
+      // Silently fail
+    }
+
+    // Handle client disconnect
+    ws.on("close", () => {
+      wsClients.delete(ws);
+    });
+
+    // Handle errors
+    ws.on("error", (err) => {
+      console.error("WebSocket error:", err);
+      wsClients.delete(ws);
+    });
+  });
+
   return new Promise<typeof server>((resolve, reject) => {
     server.listen(port, () => {
       resolve(server);
@@ -1396,6 +1661,18 @@ export async function startWebServer(port: number) {
  * Stop the web server
  */
 export async function stopWebServer(server: ReturnType<typeof createServer>) {
+  // Close all WebSocket connections
+  for (const client of wsClients) {
+    client.close();
+  }
+  wsClients.clear();
+
+  // Close WebSocket server
+  if (wss) {
+    wss.close();
+    wss = null;
+  }
+
   return new Promise<void>((resolve, reject) => {
     server.close((err) => {
       if (err) {
