@@ -276,7 +276,7 @@ OUTPUT_DIR=logs
   console.log(chalk.bold.cyan("\n═══ Init Complete ═══\n"));
   console.log("Next steps:");
   console.log(chalk.dim("  1. Edit .ralph/PRD.md with your tasks"));
-  console.log(chalk.dim("  2. Run: pnpm ralph 5"));
+  console.log(chalk.dim("  2. Run: pnpm ralph"));
   console.log("");
 
   return true;
