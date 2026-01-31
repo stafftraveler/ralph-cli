@@ -104,11 +104,16 @@ export function App({ ralphDir, prompt, options }: AppProps) {
   const [currentStatus, setCurrentStatus] = useState("Starting...");
   const WEB_SERVER_PORT = 3737;
 
-  // Start tunnel for web dashboard (only when running)
-  const tunnelState = useTunnel(WEB_SERVER_PORT, phase === "running");
+  // Start tunnel for web dashboard (when running or dashboard-only)
+  const tunnelState = useTunnel(WEB_SERVER_PORT, phase === "running" || phase === "dashboard-only");
 
   // Handler for quit (shared between keyboard and dashboard)
   const handleQuit = useCallback(() => {
+    // In dashboard-only mode, just exit without summary
+    if (phase === "dashboard-only") {
+      exit();
+      return;
+    }
     isInterruptedRef.current = true;
     if (session && session.iterations.length > 0) {
       shouldShowSummaryRef.current = true;
@@ -116,11 +121,11 @@ export function App({ ralphDir, prompt, options }: AppProps) {
     } else {
       exit();
     }
-  }, [session, exit]);
+  }, [session, exit, phase]);
 
   // Keyboard shortcuts
   const [keyboardState, keyboardActions] = useKeyboardShortcuts({
-    isActive: phase === "running",
+    isActive: phase === "running" || phase === "dashboard-only",
     onQuit: handleQuit,
     onTogglePause: useCallback(() => {
       setPauseAfterIteration((prev) => !prev);
@@ -159,6 +164,68 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         return;
       }
 
+      // Handle --dashboard-only flag - create mock session and start dashboard
+      if (options.dashboardOnly) {
+        const [loadedConfig, root, currentBranch] = await Promise.all([
+          loadConfig(ralphDir),
+          getRepoRoot(),
+          getCurrentBranch(),
+        ]);
+
+        setConfig(loadedConfig);
+        setRepoRoot(root ?? "");
+        setBranch(currentBranch ?? "main");
+
+        // Create mock session with sample data for testing
+        const now = new Date();
+        const mockSession: SessionState = {
+          id: `demo-${now.getTime().toString(36)}`,
+          startedAt: new Date(now.getTime() - 10 * 60 * 1000).toISOString(), // 10 min ago
+          startCommit: "abc1234",
+          branch: currentBranch ?? "main",
+          iterations: [
+            {
+              iteration: 1,
+              startedAt: new Date(now.getTime() - 8 * 60 * 1000).toISOString(),
+              completedAt: new Date(now.getTime() - 5 * 60 * 1000).toISOString(),
+              durationSeconds: 180,
+              success: true,
+              output: "Completed task 1",
+              status: "Implemented feature X",
+              prdComplete: false,
+              usage: {
+                inputTokens: 15000,
+                outputTokens: 3500,
+                totalCostUsd: 0.0823,
+              },
+            },
+            {
+              iteration: 2,
+              startedAt: new Date(now.getTime() - 4 * 60 * 1000).toISOString(),
+              completedAt: new Date(now.getTime() - 1 * 60 * 1000).toISOString(),
+              durationSeconds: 180,
+              success: true,
+              output: "Completed task 2",
+              status: "Fixed bug in Y",
+              prdComplete: false,
+              usage: {
+                inputTokens: 18000,
+                outputTokens: 4200,
+                totalCostUsd: 0.0956,
+              },
+            },
+          ],
+          totalCostUsd: 0.1779,
+        };
+
+        setSession(mockSession);
+        setTotalIterations(5);
+        setCurrentIteration(3);
+        setCurrentStatus("Dashboard test mode - no iterations running");
+        setPhase("dashboard-only");
+        return;
+      }
+
       const [loadedConfig, root, currentBranch] = await Promise.all([
         loadConfig(ralphDir),
         getRepoRoot(),
@@ -187,11 +254,19 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       }
     }
     void initialize();
-  }, [ralphDir, options.noPlugins, options.reset, options.maxCost, options.iterations, exit]);
+  }, [
+    ralphDir,
+    options.noPlugins,
+    options.reset,
+    options.maxCost,
+    options.iterations,
+    options.dashboardOnly,
+    exit,
+  ]);
 
   // Start/stop web server based on phase
   useEffect(() => {
-    if (phase === "running") {
+    if (phase === "running" || phase === "dashboard-only") {
       // Set up handler for dashboard iteration adjustments
       setIterationsChangeHandler((newTotal) => {
         setTotalIterations(newTotal);
@@ -207,7 +282,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
         handleQuit();
       });
 
-      // Start web server when entering running phase
+      // Start web server when entering running or dashboard-only phase
       startWebServer(WEB_SERVER_PORT)
         .then((server) => {
           serverRef.current = server;
@@ -220,7 +295,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
     }
 
     return () => {
-      // Cleanup web server when leaving running phase
+      // Cleanup web server when leaving running/dashboard-only phase
       if (serverRef.current) {
         stopWebServer(serverRef.current).catch(() => {
           // Ignore errors
@@ -232,7 +307,7 @@ export function App({ ralphDir, prompt, options }: AppProps) {
 
   // Update web server state whenever session or iteration changes
   useEffect(() => {
-    if (phase === "running" && session) {
+    if ((phase === "running" || phase === "dashboard-only") && session) {
       updateServerState({
         session,
         currentIteration,
@@ -703,6 +778,36 @@ export function App({ ralphDir, prompt, options }: AppProps) {
             isReconnecting={tunnelState.isReconnecting}
             reconnectAttempts={tunnelState.reconnectAttempts}
           />
+        </Box>
+      )}
+
+      {phase === "dashboard-only" && (
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text bold color="cyan">
+              Dashboard Test Mode
+            </Text>
+          </Box>
+          <Box marginBottom={1}>
+            <Text>The dashboard is running with mock data for testing.</Text>
+          </Box>
+          <Box flexDirection="column" marginBottom={1}>
+            <Text>
+              Local URL: <Text color="blue">http://localhost:{WEB_SERVER_PORT}</Text>
+            </Text>
+            {tunnelState.url && (
+              <Text>
+                Remote URL: <Text color="green">{tunnelState.url}</Text>
+              </Text>
+            )}
+            {tunnelState.isConnecting && <Text color="yellow">Connecting to tunnel...</Text>}
+            {tunnelState.error && <Text color="red">Tunnel error: {tunnelState.error}</Text>}
+          </Box>
+          <Box marginTop={1}>
+            <Text dimColor>Press </Text>
+            <Text bold>q</Text>
+            <Text dimColor> to quit</Text>
+          </Box>
         </Box>
       )}
 

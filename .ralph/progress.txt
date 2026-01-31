@@ -1,0 +1,74 @@
+## Iteration 1: Code smell scan & duplicate code fix
+
+**Task**: Scanned webserver.ts for code smells; fixed duplicate polling check
+
+**Decisions**:
+- Identified 7 major code smells in webserver.ts
+- Prioritized fixing duplicate code (lines 1841-1845) as first issue
+- Removed redundant "Skip refresh if user is typing" check in refreshData()
+
+**Files changed**:
+- .ralph/PRD.md (documented 7 code smells)
+- src/lib/webserver.ts (removed duplicate if check)
+
+**Notes**: Large monolithic file needs refactoring - HTML/CSS/JS should be extracted to separate files with build step. This is the main architectural issue to address next.
+
+## Iteration 2: Replace magic numbers with named constants
+
+**Task**: Replace hardcoded WebSocket ready state value `1` with `WebSocket.OPEN`
+
+**Decisions**:
+- Changed import from `type { WebSocket }` to `{ WebSocket }` to access static constants
+- Replaced all 4 occurrences of `client.readyState === 1` with `client.readyState === WebSocket.OPEN`
+- Removed redundant comments that just repeated the constant name
+
+**Files changed**:
+- src/lib/webserver.ts (imports and 4 readyState checks)
+
+**Notes**: Using named constants improves code readability and prevents magic number errors.
+
+## Iteration 3: Fix broken regex pattern
+
+**Task**: Fix regex pattern in updateIterations function (line 1989)
+
+**Decisions**:
+- Changed `/iteration-details-(d+)/` to `/iteration-details-(\d+)/`
+- Pattern was matching literal "d+" instead of digits
+- Fix enables proper capture of iteration numbers from DOM element IDs
+
+**Files changed**:
+- src/lib/webserver.ts (line 1989 regex pattern)
+
+**Notes**: This bug would prevent expanded iteration details from staying expanded after updates. The backslash escape is required for digit matching.
+
+## Iteration 4: Standardize error handling patterns
+
+**Task**: Make error handling consistent across server and client code
+
+**Decisions**:
+- Server-side WebSocket errors → console.error (important for debugging)
+- Client-side fetch failures → console.error (helps troubleshooting)
+- Non-critical broadcast failures → silent with clarifying comments
+- Fixed missed WebSocket.OPEN constant in broadcastTaskUpdate
+- Clarified all "Silently fail" comments with context
+
+**Files changed**:
+- src/lib/webserver.ts (error handling in 5 locations)
+
+**Notes**: Pattern now clear: log errors that indicate problems, silently handle expected failures (client disconnects). Linter keeps reverting regex fix - may need .biome config adjustment.
+
+## Iteration 5: Extract dashboard HTML template to separate module
+
+**Task**: Split monolithic webserver.ts by extracting getDashboardHtml to separate file
+
+**Decisions**:
+- Created src/dashboard/template.ts with 2224-line getDashboardHtml function
+- Reduced webserver.ts from 2873 to 646 lines (77% reduction)
+- Maintained runtime behavior - no build step needed
+- Removed unused formatDuration import from webserver.ts
+
+**Files changed**:
+- src/dashboard/template.ts (new file, 2226 lines)
+- src/lib/webserver.ts (removed getDashboardHtml, added import)
+
+**Notes**: Major architectural improvement. Webserver now focuses on server logic. Template module handles HTML generation. Further extraction possible: CSS and JS could be separated into their own files within src/dashboard/.

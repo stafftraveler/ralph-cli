@@ -211,6 +211,11 @@ export async function createProgram(): Promise<Command> {
     .option("--create-pr", "Force create PR on completion", false)
     .option("--ci", "CI mode - non-interactive, no Ink UI", false)
     .option("--max-cost <amount>", "Override MAX_COST_PER_SESSION from config (in USD)")
+    .option(
+      "--dashboard-only",
+      "Start dashboard server without running iterations (for testing)",
+      false,
+    )
     .action((iterations, opts) => {
       let parsedIterations: number | undefined;
       if (iterations) {
@@ -245,6 +250,7 @@ export async function createProgram(): Promise<Command> {
           iterations: parsedIterations,
           ci: opts.ci ?? false,
           maxCost,
+          dashboardOnly: opts.dashboardOnly ?? false,
         },
       };
     });
@@ -268,6 +274,7 @@ export async function createProgram(): Promise<Command> {
           createPr: false,
           ci: false,
           maxCost: undefined,
+          dashboardOnly: false,
         },
       };
     });
@@ -295,6 +302,7 @@ export function getParsedArgs(): ParsedArgs {
         createPr: false,
         ci: false,
         maxCost: undefined,
+        dashboardOnly: false,
       },
     };
   }

@@ -316,6 +316,8 @@ export interface CliOptions {
   ci: boolean;
   /** Override MAX_COST_PER_SESSION from CLI */
   maxCost?: number;
+  /** Dashboard-only mode - start server without running iterations */
+  dashboardOnly: boolean;
 }
 
 /**
@@ -329,7 +331,8 @@ export type AppPhase =
   | "session-prompt"
   | "running"
   | "summary"
-  | "error";
+  | "error"
+  | "dashboard-only";
 
 /**
  * PRD template metadata
