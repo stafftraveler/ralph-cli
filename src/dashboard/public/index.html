@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ralph Dashboard">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Ralph CLI Dashboard - Monitor Claude Code iterations remotely">
+  <title>Ralph CLI Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">Ralph CLI Dashboard</div>
+      <div class="session-id" id="session-id">Loading...</div>
+      <div class="connection-status">
+        <div class="connection-dot" id="connection-dot"></div>
+        <span id="connection-text">Connecting...</span>
+      </div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-label">
+        <span>Progress</span>
+        <span>Iteration <span id="current-iteration">0</span> of <span class="iterations-value" id="iterations-value">0</span></span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="status-section">
+      <div class="status-label">Current Status</div>
+      <div class="status-text" id="status-text">Loading...</div>
+      <div class="elapsed-time" id="elapsed-time"></div>
+      <div class="eta-time" id="eta-time"></div>
+    </div>
+
+    <div class="cost-section">
+      <span class="cost-label">Total Cost</span>
+      <span class="cost-value" id="cost-value">$0.0000</span>
+    </div>
+
+    <div class="tasks-section">
+      <div class="tasks-header">
+        <div class="tasks-title">Tasks</div>
+        <div class="tasks-count" id="tasks-count">Loading...</div>
+      </div>
+      <div class="tasks-progress-bar">
+        <div class="tasks-progress-fill" id="tasks-progress-fill"></div>
+      </div>
+      <div class="tasks-list" id="tasks-list">
+        <div style="text-align: center; color: #999999; padding: 16px;">Loading tasks...</div>
+      </div>
+    </div>
+
+    <div class="verbose-section">
+      <div class="verbose-header">
+        <div class="verbose-title">Verbose Output</div>
+        <button id="verbose-toggle" class="verbose-toggle">Show</button>
+      </div>
+      <div id="verbose-output" class="verbose-output hidden"></div>
+    </div>
+
+    <div class="iterations-section">
+      <div class="iterations-title">Iteration History</div>
+      <div class="iterations-list" id="iterations-list">
+        <div class="no-iterations">No completed iterations yet</div>
+      </div>
+    </div>
+
+    <div class="add-task-section">
+      <div class="add-task-title">Add Task to PRD</div>
+      <form class="add-task-form" id="add-task-form">
+        <input
+          type="text"
+          id="task-input"
+          class="add-task-input"
+          placeholder="Enter a new task..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="sentences"
+          spellcheck="true"
+          enterkeyhint="done"
+        />
+        <button type="submit" id="task-button" class="add-task-button">Add</button>
+      </form>
+      <div id="task-feedback" class="add-task-feedback"></div>
+    </div>
+
+    <div class="session-controls-section">
+      <div class="session-controls-title">Session Controls</div>
+
+      <div class="iterations-adjust-row">
+        <span class="iterations-adjust-label">Adjust Iterations</span>
+        <div class="iterations-adjust-buttons">
+          <button id="decrement-btn" class="iteration-adjust-btn" title="Decrease iterations">−</button>
+          <span class="iterations-value-inline" id="iterations-value-controls">0</span>
+          <button id="increment-btn" class="iteration-adjust-btn" title="Increase iterations">+</button>
+        </div>
+      </div>
+
+      <div class="session-control-row">
+        <button id="pause-btn" class="session-control-btn pause-btn">
+          <span class="btn-icon" id="pause-btn-icon">⏸︎</span>
+          <span id="pause-btn-text">Pause After Iteration</span>
+        </button>
+      </div>
+
+      <div class="session-control-row">
+        <button id="stop-btn" class="session-control-btn stop-btn">
+          <span class="btn-icon">⏹︎</span>
+          <span>Stop Session</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stop Confirmation Modal -->
+    <div id="stop-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-title">Stop Session?</div>
+        <div class="modal-message">This will immediately stop the current session. Any work in progress will be saved.</div>
+        <div class="modal-buttons">
+          <button id="modal-cancel-btn" class="modal-btn modal-btn-cancel">Cancel</button>
+          <button id="modal-confirm-btn" class="modal-btn modal-btn-confirm">Stop Session</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span id="footer-status">Real-time updates via WebSocket</span>
+    </div>
+  </div>
+
+  <script src="/scripts.js"></script>
+</body>
+</html>

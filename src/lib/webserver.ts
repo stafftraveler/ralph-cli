@@ -1,11 +1,17 @@
 import { readFile, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { WebSocket, WebSocketServer } from "ws";
 import type { SessionState } from "../types.js";
-import { getDashboardHtml } from "../dashboard/template.js";
 import { parsePrdTasks } from "./prd.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/** Path to the static dashboard files */
+const DASHBOARD_PUBLIC_DIR = join(__dirname, "..", "dashboard", "public");
 
 /**
  * Dashboard data that gets sent to the web UI
@@ -362,18 +368,44 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
-  // HTML dashboard (default route)
+  // Static file serving for dashboard
   if (req.url === "/" || req.url === "/index.html") {
-    const data = getDashboardData();
-    const html = getDashboardHtml(data);
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(html);
+    await serveStaticFile(res, "index.html", "text/html");
+    return;
+  }
+
+  if (req.url === "/styles.css") {
+    await serveStaticFile(res, "styles.css", "text/css");
+    return;
+  }
+
+  if (req.url === "/scripts.js") {
+    await serveStaticFile(res, "scripts.js", "application/javascript");
     return;
   }
 
   // 404 for other routes
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Not Found");
+}
+
+/**
+ * Serve a static file from the dashboard public directory
+ */
+async function serveStaticFile(
+  res: ServerResponse,
+  filename: string,
+  contentType: string,
+) {
+  try {
+    const filePath = join(DASHBOARD_PUBLIC_DIR, filename);
+    const content = await readFile(filePath, "utf-8");
+    res.writeHead(200, { "Content-Type": contentType });
+    res.end(content);
+  } catch (err) {
+    res.writeHead(500, { "Content-Type": "text/plain" });
+    res.end(`Error loading ${filename}`);
+  }
 }
 
 /**
