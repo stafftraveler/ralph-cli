@@ -392,17 +392,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 /**
  * Serve a static file from the dashboard public directory
  */
-async function serveStaticFile(
-  res: ServerResponse,
-  filename: string,
-  contentType: string,
-) {
+async function serveStaticFile(res: ServerResponse, filename: string, contentType: string) {
   try {
     const filePath = join(DASHBOARD_PUBLIC_DIR, filename);
     const content = await readFile(filePath, "utf-8");
     res.writeHead(200, { "Content-Type": contentType });
     res.end(content);
-  } catch (err) {
+  } catch (_err) {
     res.writeHead(500, { "Content-Type": "text/plain" });
     res.end(`Error loading ${filename}`);
   }

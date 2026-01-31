@@ -81,7 +81,9 @@ async function main() {
 
     // Dashboard-only mode always uses the Ink app (never CI mode)
     if (options.dashboardOnly) {
-      const { waitUntilExit } = render(<App ralphDir={ralphDir} prompt={prompt} options={options} />);
+      const { waitUntilExit } = render(
+        <App ralphDir={ralphDir} prompt={prompt} options={options} />,
+      );
       await waitUntilExit();
       stopCaffeinate(options.debug);
       process.exit(0);

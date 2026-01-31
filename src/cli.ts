@@ -211,7 +211,11 @@ export async function createProgram(): Promise<Command> {
     .option("--create-pr", "Force create PR on completion", false)
     .option("--ci", "CI mode - non-interactive, no Ink UI", false)
     .option("--max-cost <amount>", "Override MAX_COST_PER_SESSION from config (in USD)")
-    .option("--dashboard-only", "Start dashboard server without running iterations (for testing)", false)
+    .option(
+      "--dashboard-only",
+      "Start dashboard server without running iterations (for testing)",
+      false,
+    )
     .action((iterations, opts) => {
       let parsedIterations: number | undefined;
       if (iterations) {

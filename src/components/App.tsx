@@ -254,7 +254,15 @@ export function App({ ralphDir, prompt, options }: AppProps) {
       }
     }
     void initialize();
-  }, [ralphDir, options.noPlugins, options.reset, options.maxCost, options.iterations, options.dashboardOnly, exit]);
+  }, [
+    ralphDir,
+    options.noPlugins,
+    options.reset,
+    options.maxCost,
+    options.iterations,
+    options.dashboardOnly,
+    exit,
+  ]);
 
   // Start/stop web server based on phase
   useEffect(() => {
@@ -785,20 +793,15 @@ export function App({ ralphDir, prompt, options }: AppProps) {
           </Box>
           <Box flexDirection="column" marginBottom={1}>
             <Text>
-              Local URL:{" "}
-              <Text color="blue">http://localhost:{WEB_SERVER_PORT}</Text>
+              Local URL: <Text color="blue">http://localhost:{WEB_SERVER_PORT}</Text>
             </Text>
             {tunnelState.url && (
               <Text>
                 Remote URL: <Text color="green">{tunnelState.url}</Text>
               </Text>
             )}
-            {tunnelState.isConnecting && (
-              <Text color="yellow">Connecting to tunnel...</Text>
-            )}
-            {tunnelState.error && (
-              <Text color="red">Tunnel error: {tunnelState.error}</Text>
-            )}
+            {tunnelState.isConnecting && <Text color="yellow">Connecting to tunnel...</Text>}
+            {tunnelState.error && <Text color="red">Tunnel error: {tunnelState.error}</Text>}
           </Box>
           <Box marginTop={1}>
             <Text dimColor>Press </Text>

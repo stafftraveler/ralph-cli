@@ -12,9 +12,9 @@ let currentIterationStartTime = null;
 
 // WebSocket connection state
 let ws = null;
-let wsConnected = false;
+let _wsConnected = false;
 let reconnectAttempt = 0;
-let reconnectTimeout = null;
+let _reconnectTimeout = null;
 const MAX_RECONNECT_DELAY = 30000; // 30 seconds max
 const BASE_RECONNECT_DELAY = 1000; // 1 second base
 let useFallbackPolling = false;
@@ -29,17 +29,17 @@ let cachedIterations = [];
 // Load verbose mode preference from localStorage
 function loadVerbosePreference() {
   try {
-    const saved = localStorage.getItem('ralph-verbose-mode');
+    const saved = localStorage.getItem("ralph-verbose-mode");
     if (saved !== null) {
-      verboseMode = saved === 'true';
+      verboseMode = saved === "true";
       if (verboseMode) {
-        const output = document.getElementById('verbose-output');
-        const toggle = document.getElementById('verbose-toggle');
-        if (output) output.classList.remove('hidden');
-        if (toggle) toggle.textContent = 'Hide';
+        const output = document.getElementById("verbose-output");
+        const toggle = document.getElementById("verbose-toggle");
+        if (output) output.classList.remove("hidden");
+        if (toggle) toggle.textContent = "Hide";
       }
     }
-  } catch (err) {
+  } catch (_err) {
     // localStorage not available, ignore
   }
 }
@@ -47,8 +47,8 @@ function loadVerbosePreference() {
 // Save verbose mode preference to localStorage
 function saveVerbosePreference() {
   try {
-    localStorage.setItem('ralph-verbose-mode', verboseMode.toString());
-  } catch (err) {
+    localStorage.setItem("ralph-verbose-mode", verboseMode.toString());
+  } catch (_err) {
     // localStorage not available, ignore
   }
 }
@@ -56,17 +56,17 @@ function saveVerbosePreference() {
 // Toggle verbose output visibility
 function toggleVerbose() {
   verboseMode = !verboseMode;
-  const output = document.getElementById('verbose-output');
-  const toggle = document.getElementById('verbose-toggle');
+  const output = document.getElementById("verbose-output");
+  const toggle = document.getElementById("verbose-toggle");
 
   if (verboseMode) {
-    if (output) output.classList.remove('hidden');
-    if (toggle) toggle.textContent = 'Hide';
+    if (output) output.classList.remove("hidden");
+    if (toggle) toggle.textContent = "Hide";
     // Immediately fetch output when showing
     fetchVerboseOutput();
   } else {
-    if (output) output.classList.add('hidden');
-    if (toggle) toggle.textContent = 'Show';
+    if (output) output.classList.add("hidden");
+    if (toggle) toggle.textContent = "Show";
   }
 
   saveVerbosePreference();
@@ -83,21 +83,21 @@ function formatRelativeTime(timestamp) {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffSeconds < 60) {
-    return diffSeconds === 1 ? '1s ago' : diffSeconds + 's ago';
+    return diffSeconds === 1 ? "1s ago" : `${diffSeconds}s ago`;
   } else if (diffMinutes < 60) {
-    return diffMinutes === 1 ? '1m ago' : diffMinutes + 'm ago';
+    return diffMinutes === 1 ? "1m ago" : `${diffMinutes}m ago`;
   } else if (diffHours < 24) {
-    return diffHours === 1 ? '1h ago' : diffHours + 'h ago';
+    return diffHours === 1 ? "1h ago" : `${diffHours}h ago`;
   } else {
-    return diffDays === 1 ? '1d ago' : diffDays + 'd ago';
+    return diffDays === 1 ? "1d ago" : `${diffDays}d ago`;
   }
 }
 
 // Update all relative timestamps on the page
 function updateRelativeTimestamps() {
-  const timestampElements = document.querySelectorAll('.iteration-timestamp');
+  const timestampElements = document.querySelectorAll(".iteration-timestamp");
   for (const element of timestampElements) {
-    const timestamp = element.getAttribute('data-timestamp');
+    const timestamp = element.getAttribute("data-timestamp");
     if (timestamp) {
       element.textContent = formatRelativeTime(timestamp);
     }
@@ -109,76 +109,76 @@ async function fetchVerboseOutput() {
   if (!verboseMode) return;
 
   try {
-    const response = await fetch('/api/output');
+    const response = await fetch("/api/output");
     if (response.ok) {
       const data = await response.json();
-      const output = document.getElementById('verbose-output');
+      const output = document.getElementById("verbose-output");
       if (output) {
-        output.textContent = data.output ?? '';
+        output.textContent = data.output ?? "";
         // Auto-scroll to bottom
         output.scrollTop = output.scrollHeight;
       }
     }
   } catch (err) {
-    console.error('Failed to fetch verbose output:', err);
+    console.error("Failed to fetch verbose output:", err);
   }
 }
 
 // Initialize WebSocket connection
 function initWebSocket() {
   try {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = protocol + '//' + window.location.host;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}`;
 
     ws = new WebSocket(wsUrl);
 
-    ws.onopen = function() {
-      wsConnected = true;
+    ws.onopen = () => {
+      _wsConnected = true;
       reconnectAttempt = 0;
       useFallbackPolling = false;
-      updateConnectionStatus('connected');
+      updateConnectionStatus("connected");
     };
 
-    ws.onmessage = function(event) {
+    ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
 
-        if (message.type === 'status') {
+        if (message.type === "status") {
           updateDashboard(message.data);
           updateRelativeTimestamps();
-        } else if (message.type === 'output') {
+        } else if (message.type === "output") {
           appendVerboseOutput(message.data);
-        } else if (message.type === 'tasks') {
+        } else if (message.type === "tasks") {
           updateTasks(message.data);
-        } else if (message.type === 'completed') {
+        } else if (message.type === "completed") {
           sessionCompleted = true;
-          updateConnectionStatus('completed');
+          updateConnectionStatus("completed");
         }
       } catch (err) {
-        console.error('Error parsing WebSocket message:', err);
+        console.error("Error parsing WebSocket message:", err);
       }
     };
 
-    ws.onerror = function(err) {
-      console.error('WebSocket error:', err);
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
     };
 
-    ws.onclose = function() {
-      wsConnected = false;
+    ws.onclose = () => {
+      _wsConnected = false;
 
       // Don't reconnect if session is completed
       if (sessionCompleted) {
-        updateConnectionStatus('completed');
+        updateConnectionStatus("completed");
         return;
       }
 
-      updateConnectionStatus('disconnected');
+      updateConnectionStatus("disconnected");
 
       // Attempt to reconnect with exponential backoff
       reconnectWebSocket();
     };
   } catch (err) {
-    console.error('Failed to create WebSocket:', err);
+    console.error("Failed to create WebSocket:", err);
     fallbackToPolling();
   }
 }
@@ -190,12 +190,9 @@ function reconnectWebSocket() {
   reconnectAttempt++;
 
   // Calculate delay with exponential backoff
-  const delay = Math.min(
-    BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempt - 1),
-    MAX_RECONNECT_DELAY
-  );
+  const delay = Math.min(BASE_RECONNECT_DELAY * 2 ** (reconnectAttempt - 1), MAX_RECONNECT_DELAY);
 
-  updateConnectionStatus('reconnecting');
+  updateConnectionStatus("reconnecting");
 
   // After 3 failed attempts, fall back to polling
   if (reconnectAttempt > 3) {
@@ -203,7 +200,7 @@ function reconnectWebSocket() {
     return;
   }
 
-  reconnectTimeout = setTimeout(() => {
+  _reconnectTimeout = setTimeout(() => {
     initWebSocket();
   }, delay);
 }
@@ -212,58 +209,58 @@ function reconnectWebSocket() {
 function fallbackToPolling() {
   // Don't start polling if session is completed
   if (sessionCompleted) {
-    updateConnectionStatus('completed');
+    updateConnectionStatus("completed");
     return;
   }
 
   useFallbackPolling = true;
-  updateConnectionStatus('polling');
+  updateConnectionStatus("polling");
 
   // Start polling
   setTimeout(refreshData, 2000);
 }
 
 // Toggle iteration details visibility
-function toggleIterationDetails(iterationNumber) {
-  const detailsEl = document.getElementById('iteration-details-' + iterationNumber);
+function _toggleIterationDetails(iterationNumber) {
+  const detailsEl = document.getElementById(`iteration-details-${iterationNumber}`);
   if (detailsEl) {
-    detailsEl.classList.toggle('expanded');
+    detailsEl.classList.toggle("expanded");
   }
 }
 
 // Format elapsed time in seconds to human-readable string
 function formatElapsedTime(seconds) {
   if (seconds < 60) {
-    return seconds + 's';
+    return `${seconds}s`;
   }
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
   if (minutes < 60) {
-    return minutes + 'm ' + remainingSeconds + 's';
+    return `${minutes}m ${remainingSeconds}s`;
   }
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
-  return hours + 'h ' + remainingMinutes + 'm';
+  return `${hours}h ${remainingMinutes}m`;
 }
 
 // Format duration for iteration display (matches server-side formatDuration)
 function formatDuration(seconds) {
-  if (seconds < 60) return seconds + 's';
+  if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  if (minutes < 60) return minutes + 'm ' + remainingSeconds + 's';
+  if (minutes < 60) return `${minutes}m ${remainingSeconds}s`;
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
-  return hours + 'h ' + remainingMinutes + 'm';
+  return `${hours}h ${remainingMinutes}m`;
 }
 
 // Update elapsed time display
 function updateElapsedTime() {
-  const elapsedTimeEl = document.getElementById('elapsed-time');
+  const elapsedTimeEl = document.getElementById("elapsed-time");
   if (!elapsedTimeEl) return;
 
   if (!currentIterationStartTime) {
-    elapsedTimeEl.textContent = '';
+    elapsedTimeEl.textContent = "";
     return;
   }
 
@@ -272,9 +269,9 @@ function updateElapsedTime() {
   const elapsedSeconds = Math.floor((now - startTime) / 1000);
 
   if (elapsedSeconds >= 0) {
-    elapsedTimeEl.textContent = 'Elapsed: ' + formatElapsedTime(elapsedSeconds);
+    elapsedTimeEl.textContent = `Elapsed: ${formatElapsedTime(elapsedSeconds)}`;
   } else {
-    elapsedTimeEl.textContent = '';
+    elapsedTimeEl.textContent = "";
   }
 }
 
@@ -282,7 +279,7 @@ function calculateAverageDuration(iterations) {
   if (!iterations || iterations.length === 0) return null;
 
   // Only use successful iterations for ETA calculation
-  const successfulIterations = iterations.filter(iter => iter.durationSeconds > 0);
+  const successfulIterations = iterations.filter((iter) => iter.durationSeconds > 0);
   if (successfulIterations.length === 0) return null;
 
   const totalDuration = successfulIterations.reduce((sum, iter) => sum + iter.durationSeconds, 0);
@@ -291,17 +288,17 @@ function calculateAverageDuration(iterations) {
 
 // Update ETA display
 function updateEta() {
-  const etaEl = document.getElementById('eta-time');
+  const etaEl = document.getElementById("eta-time");
   if (!etaEl) return;
 
   if (!currentIterationStartTime || cachedIterations.length === 0) {
-    etaEl.textContent = '';
+    etaEl.textContent = "";
     return;
   }
 
   const avgDuration = calculateAverageDuration(cachedIterations);
   if (!avgDuration) {
-    etaEl.textContent = '';
+    etaEl.textContent = "";
     return;
   }
 
@@ -312,53 +309,54 @@ function updateEta() {
   const remainingSeconds = avgDuration - elapsedSeconds;
 
   if (remainingSeconds > 0) {
-    etaEl.textContent = 'ETA: ' + formatElapsedTime(remainingSeconds);
+    etaEl.textContent = `ETA: ${formatElapsedTime(remainingSeconds)}`;
   } else {
     // Show that we're past the expected time
-    etaEl.textContent = 'ETA: +' + formatElapsedTime(Math.abs(remainingSeconds));
+    etaEl.textContent = `ETA: +${formatElapsedTime(Math.abs(remainingSeconds))}`;
   }
 }
 
 // Update connection status indicator
 function updateConnectionStatus(status) {
-  const dot = document.getElementById('connection-dot');
-  const text = document.getElementById('connection-text');
-  const footerStatus = document.getElementById('footer-status');
+  const dot = document.getElementById("connection-dot");
+  const text = document.getElementById("connection-text");
+  const footerStatus = document.getElementById("footer-status");
 
   if (!dot || !text) return;
 
   // Remove all status classes
-  dot.classList.remove('connected', 'disconnected', 'reconnecting', 'polling', 'completed');
+  dot.classList.remove("connected", "disconnected", "reconnecting", "polling", "completed");
 
   // Add appropriate class and update text
   switch (status) {
-    case 'connected':
-      dot.classList.add('connected');
-      text.textContent = 'Connected';
-      if (footerStatus) footerStatus.textContent = 'Real-time updates via WebSocket';
+    case "connected":
+      dot.classList.add("connected");
+      text.textContent = "Connected";
+      if (footerStatus) footerStatus.textContent = "Real-time updates via WebSocket";
       break;
-    case 'disconnected':
-      dot.classList.add('disconnected');
-      text.textContent = 'Disconnected';
-      if (footerStatus) footerStatus.textContent = 'Disconnected';
+    case "disconnected":
+      dot.classList.add("disconnected");
+      text.textContent = "Disconnected";
+      if (footerStatus) footerStatus.textContent = "Disconnected";
       break;
-    case 'reconnecting':
-      dot.classList.add('reconnecting');
-      text.textContent = 'Reconnecting...';
-      if (footerStatus) footerStatus.textContent = 'Reconnecting...';
+    case "reconnecting":
+      dot.classList.add("reconnecting");
+      text.textContent = "Reconnecting...";
+      if (footerStatus) footerStatus.textContent = "Reconnecting...";
       break;
-    case 'polling':
-      dot.classList.add('polling');
-      text.textContent = 'HTTP Polling';
-      if (footerStatus) footerStatus.textContent = 'Polling every 2 seconds (WebSocket unavailable)';
+    case "polling":
+      dot.classList.add("polling");
+      text.textContent = "HTTP Polling";
+      if (footerStatus)
+        footerStatus.textContent = "Polling every 2 seconds (WebSocket unavailable)";
       break;
-    case 'completed':
-      dot.classList.add('completed');
-      text.textContent = 'Completed';
-      if (footerStatus) footerStatus.textContent = 'Session completed';
+    case "completed":
+      dot.classList.add("completed");
+      text.textContent = "Completed";
+      if (footerStatus) footerStatus.textContent = "Session completed";
       break;
     default:
-      text.textContent = 'Unknown';
+      text.textContent = "Unknown";
   }
 }
 
@@ -366,11 +364,11 @@ function updateConnectionStatus(status) {
 function appendVerboseOutput(chunk) {
   if (!verboseMode) return;
 
-  const output = document.getElementById('verbose-output');
+  const output = document.getElementById("verbose-output");
   if (output) {
     // Empty chunk signals a reset (from clearOutput)
-    if (chunk === '') {
-      output.textContent = '';
+    if (chunk === "") {
+      output.textContent = "";
       return;
     }
     output.textContent += chunk;
@@ -394,7 +392,7 @@ async function refreshData() {
 
   try {
     // Fetch status
-    const response = await fetch('/api/status');
+    const response = await fetch("/api/status");
     if (response.ok) {
       const data = await response.json();
       // Update only the dynamic parts instead of reloading entire page
@@ -402,7 +400,7 @@ async function refreshData() {
     }
 
     // Also refresh tasks
-    const tasksResponse = await fetch('/api/tasks');
+    const tasksResponse = await fetch("/api/tasks");
     if (tasksResponse.ok) {
       const tasksData = await tasksResponse.json();
       updateTasks(tasksData);
@@ -416,7 +414,7 @@ async function refreshData() {
     // Update relative timestamps
     updateRelativeTimestamps();
   } catch (err) {
-    console.error('Polling error:', err);
+    console.error("Polling error:", err);
   }
 
   // Continue polling
@@ -425,29 +423,28 @@ async function refreshData() {
 
 function updateDashboard(data) {
   // Update session ID
-  const sessionIdEl = document.getElementById('session-id');
+  const sessionIdEl = document.getElementById("session-id");
   if (sessionIdEl && data.sessionId) {
     sessionIdEl.textContent = data.sessionId;
   }
 
   // Update progress
-  const progressPercent = data.totalIterations > 0
-    ? (data.currentIteration / data.totalIterations) * 100
-    : 0;
-  const progressFill = document.getElementById('progress-fill');
+  const progressPercent =
+    data.totalIterations > 0 ? (data.currentIteration / data.totalIterations) * 100 : 0;
+  const progressFill = document.getElementById("progress-fill");
   if (progressFill) {
-    progressFill.style.width = progressPercent + '%';
+    progressFill.style.width = `${progressPercent}%`;
 
     // Add pulsing animation when iteration is actively running
     if (data.currentIterationStartedAt) {
-      progressFill.classList.add('active');
+      progressFill.classList.add("active");
     } else {
-      progressFill.classList.remove('active');
+      progressFill.classList.remove("active");
     }
   }
 
   // Update current iteration
-  const currentIterationEl = document.getElementById('current-iteration');
+  const currentIterationEl = document.getElementById("current-iteration");
   if (currentIterationEl) {
     currentIterationEl.textContent = data.currentIteration;
   }
@@ -456,7 +453,7 @@ function updateDashboard(data) {
   updateIterationsValue(data.totalIterations);
 
   // Update status
-  const statusText = document.getElementById('status-text');
+  const statusText = document.getElementById("status-text");
   if (statusText) {
     statusText.textContent = data.status;
   }
@@ -476,9 +473,9 @@ function updateDashboard(data) {
   updateEta();
 
   // Update cost
-  const costValue = document.getElementById('cost-value');
+  const costValue = document.getElementById("cost-value");
   if (costValue) {
-    costValue.textContent = '$' + data.totalCost.toFixed(4);
+    costValue.textContent = `$${data.totalCost.toFixed(4)}`;
   }
 
   // Update pause state
@@ -494,27 +491,25 @@ function updateDashboard(data) {
 }
 
 function updateTasks(data) {
-  const tasksCount = document.getElementById('tasks-count');
+  const tasksCount = document.getElementById("tasks-count");
   if (tasksCount) {
-    tasksCount.textContent = data.completedCount + ' of ' + data.totalCount + ' complete';
+    tasksCount.textContent = `${data.completedCount} of ${data.totalCount} complete`;
   }
 
   // Update progress bar
-  const progressFill = document.getElementById('tasks-progress-fill');
+  const progressFill = document.getElementById("tasks-progress-fill");
   if (progressFill) {
-    const percentage = data.totalCount > 0
-      ? (data.completedCount / data.totalCount) * 100
-      : 0;
-    progressFill.style.width = percentage + '%';
+    const percentage = data.totalCount > 0 ? (data.completedCount / data.totalCount) * 100 : 0;
+    progressFill.style.width = `${percentage}%`;
   }
 
-  const tasksList = document.getElementById('tasks-list');
+  const tasksList = document.getElementById("tasks-list");
   if (!tasksList) return;
 
   // Group tasks by phase
   const tasksByPhase = {};
   for (const task of data.tasks) {
-    const phase = task.phase || 'Other';
+    const phase = task.phase || "Other";
     if (!tasksByPhase[phase]) {
       tasksByPhase[phase] = [];
     }
@@ -522,22 +517,22 @@ function updateTasks(data) {
   }
 
   // Rebuild the tasks list
-  let html = '';
+  let html = "";
   for (const phase in tasksByPhase) {
-    html += '<div class="phase-header">' + escapeHtml(phase) + '</div>';
+    html += `<div class="phase-header">${escapeHtml(phase)}</div>`;
     for (const task of tasksByPhase[phase]) {
-      const completedClass = task.completed ? ' completed' : '';
+      const completedClass = task.completed ? " completed" : "";
       html += '<div class="task-item">';
-      html += '<div class="task-checkbox' + completedClass + '"></div>';
-      html += '<div class="task-text' + completedClass + '">' + escapeHtml(task.text) + '</div>';
-      html += '</div>';
+      html += `<div class="task-checkbox${completedClass}"></div>`;
+      html += `<div class="task-text${completedClass}">${escapeHtml(task.text)}</div>`;
+      html += "</div>";
     }
   }
   tasksList.innerHTML = html;
 }
 
 function updateIterations(iterations) {
-  const iterationsList = document.getElementById('iterations-list');
+  const iterationsList = document.getElementById("iterations-list");
   if (!iterationsList) return;
 
   if (!iterations || iterations.length === 0) {
@@ -547,7 +542,7 @@ function updateIterations(iterations) {
 
   // Track which iterations are currently expanded before updating DOM
   const expandedIterations = new Set();
-  const existingDetails = iterationsList.querySelectorAll('.iteration-details.expanded');
+  const existingDetails = iterationsList.querySelectorAll(".iteration-details.expanded");
   for (const detail of existingDetails) {
     const id = detail.id; // e.g., "iteration-details-1"
     const match = id.match(/iteration-details-(\d+)/);
@@ -556,51 +551,56 @@ function updateIterations(iterations) {
     }
   }
 
-  let html = '';
+  let html = "";
   for (const iter of iterations) {
-    const statusClass = iter.success ? 'success' : 'failure';
-    const statusIcon = iter.success ? '✓' : '✗';
+    const statusClass = iter.success ? "success" : "failure";
+    const statusIcon = iter.success ? "✓" : "✗";
     const duration = formatDuration(iter.durationSeconds || 0);
-    const cost = iter.cost ? iter.cost.toFixed(4) : '0.0000';
-    const inputTokens = iter.inputTokens ? iter.inputTokens.toLocaleString() : 'N/A';
-    const outputTokens = iter.outputTokens ? iter.outputTokens.toLocaleString() : 'N/A';
+    const cost = iter.cost ? iter.cost.toFixed(4) : "0.0000";
+    const inputTokens = iter.inputTokens ? iter.inputTokens.toLocaleString() : "N/A";
+    const outputTokens = iter.outputTokens ? iter.outputTokens.toLocaleString() : "N/A";
 
     // Check if this iteration was previously expanded
     const isExpanded = expandedIterations.has(iter.number);
-    const expandedClass = isExpanded ? ' expanded' : '';
+    const expandedClass = isExpanded ? " expanded" : "";
 
-    html += '<div class="iteration-item" onclick="toggleIterationDetails(' + iter.number + ')">';
+    html += `<div class="iteration-item" onclick="toggleIterationDetails(${iter.number})">`;
     html += '<div class="iteration-summary">';
-    html += '<span class="iteration-status ' + statusClass + '">' + statusIcon + '</span>';
+    html += `<span class="iteration-status ${statusClass}">${statusIcon}</span>`;
     html += '<div class="iteration-info">';
-    html += '<span class="iteration-number">Iteration ' + iter.number + '</span>';
-    html += '<span class="iteration-timestamp" data-timestamp="' + iter.timestamp + '"></span>';
-    html += '</div>';
-    html += '<span class="iteration-duration">' + duration + '</span>';
-    html += '<span class="iteration-cost">$' + cost + '</span>';
-    html += '</div>';
-    html += '<div class="iteration-details' + expandedClass + '" id="iteration-details-' + iter.number + '">';
+    html += `<span class="iteration-number">Iteration ${iter.number}</span>`;
+    html += `<span class="iteration-timestamp" data-timestamp="${iter.timestamp}"></span>`;
+    html += "</div>";
+    html += `<span class="iteration-duration">${duration}</span>`;
+    html += `<span class="iteration-cost">$${cost}</span>`;
+    html += "</div>";
+    html +=
+      '<div class="iteration-details' +
+      expandedClass +
+      '" id="iteration-details-' +
+      iter.number +
+      '">';
 
     if (iter.inputTokens || iter.outputTokens) {
       html += '<div class="iteration-details-row">';
       html += '<span class="iteration-details-label">Input Tokens:</span>';
-      html += '<span class="iteration-details-value">' + inputTokens + '</span>';
-      html += '</div>';
+      html += `<span class="iteration-details-value">${inputTokens}</span>`;
+      html += "</div>";
       html += '<div class="iteration-details-row">';
       html += '<span class="iteration-details-label">Output Tokens:</span>';
-      html += '<span class="iteration-details-value">' + outputTokens + '</span>';
-      html += '</div>';
+      html += `<span class="iteration-details-value">${outputTokens}</span>`;
+      html += "</div>";
     }
 
     if (iter.status) {
       html += '<div class="iteration-details-row">';
       html += '<span class="iteration-details-label">Status:</span>';
-      html += '<span class="iteration-details-value">' + escapeHtml(iter.status) + '</span>';
-      html += '</div>';
+      html += `<span class="iteration-details-value">${escapeHtml(iter.status)}</span>`;
+      html += "</div>";
     }
 
-    html += '</div>';
-    html += '</div>';
+    html += "</div>";
+    html += "</div>";
   }
 
   iterationsList.innerHTML = html;
@@ -608,7 +608,7 @@ function updateIterations(iterations) {
 }
 
 function escapeHtml(text) {
-  const div = document.createElement('div');
+  const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
 }
@@ -616,12 +616,12 @@ function escapeHtml(text) {
 // Iteration adjustment functions
 async function incrementIterations() {
   try {
-    const response = await fetch('/api/iterations', {
-      method: 'POST',
+    const response = await fetch("/api/iterations", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ action: 'increment' })
+      body: JSON.stringify({ action: "increment" }),
     });
 
     if (response.ok) {
@@ -630,18 +630,18 @@ async function incrementIterations() {
       updateIterationsValue(result.totalIterations);
     }
   } catch (err) {
-    console.error('Failed to increment iterations:', err);
+    console.error("Failed to increment iterations:", err);
   }
 }
 
 async function decrementIterations() {
   try {
-    const response = await fetch('/api/iterations', {
-      method: 'POST',
+    const response = await fetch("/api/iterations", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ action: 'decrement' })
+      body: JSON.stringify({ action: "decrement" }),
     });
 
     if (response.ok) {
@@ -650,26 +650,26 @@ async function decrementIterations() {
       updateIterationsValue(result.totalIterations);
     }
   } catch (err) {
-    console.error('Failed to decrement iterations:', err);
+    console.error("Failed to decrement iterations:", err);
   }
 }
 
 // Update all iterations value displays
 function updateIterationsValue(value) {
-  const iterationsValue = document.getElementById('iterations-value');
-  const iterationsValueControls = document.getElementById('iterations-value-controls');
+  const iterationsValue = document.getElementById("iterations-value");
+  const iterationsValueControls = document.getElementById("iterations-value-controls");
   if (iterationsValue) iterationsValue.textContent = value;
   if (iterationsValueControls) iterationsValueControls.textContent = value;
 }
 
 async function togglePause() {
   try {
-    const response = await fetch('/api/pause', {
-      method: 'POST',
+    const response = await fetch("/api/pause", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ pause: !isPaused })
+      body: JSON.stringify({ pause: !isPaused }),
     });
 
     if (response.ok) {
@@ -678,76 +678,76 @@ async function togglePause() {
       updatePauseButton(isPaused);
     }
   } catch (err) {
-    console.error('Failed to toggle pause:', err);
+    console.error("Failed to toggle pause:", err);
   }
 }
 
 function updatePauseButton(paused) {
-  const pauseBtn = document.getElementById('pause-btn');
-  const pauseBtnText = document.getElementById('pause-btn-text');
-  const pauseBtnIcon = document.getElementById('pause-btn-icon');
+  const pauseBtn = document.getElementById("pause-btn");
+  const pauseBtnText = document.getElementById("pause-btn-text");
+  const pauseBtnIcon = document.getElementById("pause-btn-icon");
 
   if (pauseBtn) {
     if (paused) {
-      pauseBtn.classList.add('active');
-      if (pauseBtnIcon) pauseBtnIcon.textContent = '▶︎';
-      if (pauseBtnText) pauseBtnText.textContent = 'Resume';
+      pauseBtn.classList.add("active");
+      if (pauseBtnIcon) pauseBtnIcon.textContent = "▶︎";
+      if (pauseBtnText) pauseBtnText.textContent = "Resume";
     } else {
-      pauseBtn.classList.remove('active');
-      if (pauseBtnIcon) pauseBtnIcon.textContent = '⏸︎';
-      if (pauseBtnText) pauseBtnText.textContent = 'Pause After Iteration';
+      pauseBtn.classList.remove("active");
+      if (pauseBtnIcon) pauseBtnIcon.textContent = "⏸︎";
+      if (pauseBtnText) pauseBtnText.textContent = "Pause After Iteration";
     }
   }
 }
 
 // Stop modal functions
 function showStopModal() {
-  const modal = document.getElementById('stop-modal');
+  const modal = document.getElementById("stop-modal");
   if (modal) {
-    modal.classList.remove('hidden');
+    modal.classList.remove("hidden");
   }
 }
 
 function hideStopModal() {
-  const modal = document.getElementById('stop-modal');
+  const modal = document.getElementById("stop-modal");
   if (modal) {
-    modal.classList.add('hidden');
+    modal.classList.add("hidden");
   }
 }
 
 async function confirmStop() {
   try {
-    const response = await fetch('/api/stop', {
-      method: 'POST',
+    const response = await fetch("/api/stop", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
-      }
+        "Content-Type": "application/json",
+      },
     });
 
     if (response.ok) {
       hideStopModal();
       // Update connection status to show stopping
-      updateConnectionStatus('completed');
+      updateConnectionStatus("completed");
     }
   } catch (err) {
-    console.error('Failed to stop session:', err);
+    console.error("Failed to stop session:", err);
   }
 }
 
 // Set up button event listeners
 function setupButtonListeners() {
-  const incrementBtn = document.getElementById('increment-btn');
-  const decrementBtn = document.getElementById('decrement-btn');
-  const pauseBtn = document.getElementById('pause-btn');
-  const stopBtn = document.getElementById('stop-btn');
-  const modalCancelBtn = document.getElementById('modal-cancel-btn');
-  const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-  const verboseToggle = document.getElementById('verbose-toggle');
-  const addTaskForm = document.getElementById('add-task-form');
-  const taskInput = document.getElementById('task-input');
+  const incrementBtn = document.getElementById("increment-btn");
+  const decrementBtn = document.getElementById("decrement-btn");
+  const pauseBtn = document.getElementById("pause-btn");
+  const stopBtn = document.getElementById("stop-btn");
+  const modalCancelBtn = document.getElementById("modal-cancel-btn");
+  const modalConfirmBtn = document.getElementById("modal-confirm-btn");
+  const verboseToggle = document.getElementById("verbose-toggle");
+  const addTaskForm = document.getElementById("add-task-form");
+  const taskInput = document.getElementById("task-input");
 
   if (incrementBtn) {
-    incrementBtn.addEventListener('click', function(e) {
+    incrementBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       incrementIterations();
@@ -755,7 +755,7 @@ function setupButtonListeners() {
   }
 
   if (decrementBtn) {
-    decrementBtn.addEventListener('click', function(e) {
+    decrementBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       decrementIterations();
@@ -763,7 +763,7 @@ function setupButtonListeners() {
   }
 
   if (pauseBtn) {
-    pauseBtn.addEventListener('click', function(e) {
+    pauseBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       togglePause();
@@ -771,7 +771,7 @@ function setupButtonListeners() {
   }
 
   if (stopBtn) {
-    stopBtn.addEventListener('click', function(e) {
+    stopBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       showStopModal();
@@ -779,7 +779,7 @@ function setupButtonListeners() {
   }
 
   if (modalCancelBtn) {
-    modalCancelBtn.addEventListener('click', function(e) {
+    modalCancelBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       hideStopModal();
@@ -787,7 +787,7 @@ function setupButtonListeners() {
   }
 
   if (modalConfirmBtn) {
-    modalConfirmBtn.addEventListener('click', function(e) {
+    modalConfirmBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       confirmStop();
@@ -795,7 +795,7 @@ function setupButtonListeners() {
   }
 
   if (verboseToggle) {
-    verboseToggle.addEventListener('click', function(e) {
+    verboseToggle.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       toggleVerbose();
@@ -803,16 +803,16 @@ function setupButtonListeners() {
   }
 
   if (addTaskForm) {
-    addTaskForm.addEventListener('submit', addTask);
+    addTaskForm.addEventListener("submit", addTask);
   }
 
   if (taskInput) {
-    taskInput.addEventListener('input', handleInput);
+    taskInput.addEventListener("input", handleInput);
   }
 
   // Close modal when clicking outside
-  document.addEventListener('click', function(event) {
-    const modal = document.getElementById('stop-modal');
+  document.addEventListener("click", (event) => {
+    const modal = document.getElementById("stop-modal");
     if (modal && event.target === modal) {
       hideStopModal();
     }
@@ -822,49 +822,49 @@ function setupButtonListeners() {
 // Add task form handling
 async function addTask(event) {
   event.preventDefault();
-  const input = document.getElementById('task-input');
-  const button = document.getElementById('task-button');
-  const feedback = document.getElementById('task-feedback');
+  const input = document.getElementById("task-input");
+  const button = document.getElementById("task-button");
+  const feedback = document.getElementById("task-feedback");
   const task = input.value.trim();
 
   if (!task) {
-    feedback.textContent = 'Please enter a task';
-    feedback.className = 'add-task-feedback error';
+    feedback.textContent = "Please enter a task";
+    feedback.className = "add-task-feedback error";
     return;
   }
 
   // Disable form while submitting
   input.disabled = true;
   button.disabled = true;
-  feedback.textContent = 'Adding task...';
-  feedback.className = 'add-task-feedback';
+  feedback.textContent = "Adding task...";
+  feedback.className = "add-task-feedback";
 
   try {
-    const response = await fetch('/api/task', {
-      method: 'POST',
+    const response = await fetch("/api/task", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ task })
+      body: JSON.stringify({ task }),
     });
 
     const result = await response.json();
 
     if (response.ok) {
-      input.value = '';
-      feedback.textContent = 'Task added successfully!';
-      feedback.className = 'add-task-feedback success';
+      input.value = "";
+      feedback.textContent = "Task added successfully!";
+      feedback.className = "add-task-feedback success";
       // Clear success message after 3 seconds
       setTimeout(() => {
-        feedback.textContent = '';
+        feedback.textContent = "";
       }, 3000);
     } else {
-      feedback.textContent = result.error || 'Failed to add task';
-      feedback.className = 'add-task-feedback error';
+      feedback.textContent = result.error || "Failed to add task";
+      feedback.className = "add-task-feedback error";
     }
-  } catch (err) {
-    feedback.textContent = 'Network error - please try again';
-    feedback.className = 'add-task-feedback error';
+  } catch (_err) {
+    feedback.textContent = "Network error - please try again";
+    feedback.className = "add-task-feedback error";
   } finally {
     input.disabled = false;
     button.disabled = false;
@@ -884,26 +884,26 @@ function handleInput() {
 // Load initial status data from API
 async function loadInitialStatus() {
   try {
-    const response = await fetch('/api/status');
+    const response = await fetch("/api/status");
     if (response.ok) {
       const data = await response.json();
       updateDashboard(data);
     }
   } catch (err) {
-    console.error('Failed to load initial status:', err);
+    console.error("Failed to load initial status:", err);
   }
 }
 
 // Load tasks on page load
 async function loadInitialTasks() {
   try {
-    const response = await fetch('/api/tasks');
+    const response = await fetch("/api/tasks");
     if (response.ok) {
       const data = await response.json();
       updateTasks(data);
     }
   } catch (err) {
-    console.error('Failed to load initial tasks:', err);
+    console.error("Failed to load initial tasks:", err);
   }
 }
 
@@ -918,7 +918,7 @@ function init() {
   setupButtonListeners();
 
   // Update elapsed time and ETA every second
-  setInterval(function() {
+  setInterval(() => {
     updateElapsedTime();
     updateEta();
   }, 1000);
@@ -928,8 +928,8 @@ function init() {
 }
 
 // Start when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
 } else {
   init();
 }
