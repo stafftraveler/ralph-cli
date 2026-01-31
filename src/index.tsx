@@ -79,6 +79,14 @@ async function main() {
     const resolvedOptions =
       options.ci && options.iterations === undefined ? { ...options, iterations: 1 } : options;
 
+    // Dashboard-only mode always uses the Ink app (never CI mode)
+    if (options.dashboardOnly) {
+      const { waitUntilExit } = render(<App ralphDir={ralphDir} prompt={prompt} options={options} />);
+      await waitUntilExit();
+      stopCaffeinate(options.debug);
+      process.exit(0);
+    }
+
     // Use CI mode if requested or if stdin is not a TTY
     if (options.ci || !process.stdin.isTTY) {
       await runCi(ralphDir, prompt, resolvedOptions);
